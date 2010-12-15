@@ -1,0 +1,5 @@
+
+Thanks for install rtsp_client.  We hope you get some good streaming out of it!
+
+Take a look at the README to help get started.
+
