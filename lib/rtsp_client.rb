@@ -2,7 +2,7 @@ require 'rubygems'
 require 'pathname'
 require 'timeout'
 require 'socket'
-require 'rtsp_client/request_messages'
+require File.dirname(__FILE__) + '/rtsp_client/request_messages'
 
 #  Document me!
 class RTSPClient
@@ -73,7 +73,10 @@ class RTSPClient
     size = 0
 
     response[:status] = readline
-    raise unless response[:status].include? "RTSP/1.0 200 OK"
+    unless response[:status].include? "RTSP/1.0 200 OK"
+      message = "Did not recieve RTSP/1.0 200 OK.  Instead got '#{response[:status]}'"
+      raise message
+    end
 
     while line = readline
       break if line == "\r\n"
