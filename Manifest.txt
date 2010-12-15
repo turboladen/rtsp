@@ -1,0 +1,8 @@
+.autotest
+History.txt
+Manifest.txt
+README.txt
+Rakefile
+bin/rtsp_client
+lib/rtsp_client.rb
+test/test_rtsp_client.rb
