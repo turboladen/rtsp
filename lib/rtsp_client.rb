@@ -1,9 +1,9 @@
 require 'pathname'
 
 #  Document me!
-module RtspClient
+module RTSPClient
   VERSION = '0.0.1'
-  _WWW = 'http://confluence.pelco.org/wiki/display/syssoft/'
+  WWW = 'http://github.com/turboladen/rtsp_client'
   LIBRARY_ROOT = File.dirname(__FILE__)
   PROJECT_ROOT = Pathname.new(LIBRARY_ROOT).parent
 end
