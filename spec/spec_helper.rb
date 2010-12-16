@@ -7,5 +7,5 @@ rescue LoadError
 end
 
 $:.unshift(File.dirname(__FILE__) + '/../lib')
-require 'rtsp_client'
+require 'rtsp'
 require 'rspec'

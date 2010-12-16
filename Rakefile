@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'hoe'
 require 'yard'
-require File.expand_path(File.dirname(__FILE__)) + '/lib/rtsp_client'
+require File.expand_path(File.dirname(__FILE__)) + '/lib/rtsp'
 
 Hoe.plugin :newgem
 Hoe.plugin :yard
@@ -11,21 +11,21 @@ Hoe.plugins.delete :rubyforge
 # Gets the description from the README file
 def get_descr_from_readme
   paragraph_count = 0
+
   File.readlines('README.rdoc', '').each do |paragraph|
     paragraph_count += 1
-    if paragraph_count == 2
-      return paragraph
-    end
+
+    return paragraph if paragraph_count == 2
   end
 end
 
 # The main Gemspec definition
-Hoe.spec 'rtsp_client' do
+Hoe.spec 'rtsp' do
   self.summary        = 'Library to allow RTSP streaming from RTSP-enabled devices.'
   self.developer('Steve Loveless & Mike Kirby', 'steve.loveless@gmail.com, mkirby@gmail.com')
   self.post_install_message = File.readlines 'PostInstall.txt'
-  self.version        = RTSPClient::VERSION
-  self.url            = RTSPClient::WWW
+  self.version        = RTSP::VERSION
+  self.url            = RTSP::WWW
   self.description    = get_descr_from_readme
   self.readme_file    = 'README.rdoc'
   self.history_file   = 'History.txt'

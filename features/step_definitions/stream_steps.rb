@@ -1,6 +1,6 @@
 Given /^an RTSP server at "([^"]*)" and port (\d+)$/ do |ip_address, port|
   @rtp_port = port
-  @client = RTSPClient.new :host => ip_address
+  @client = RTSP::Client.new :host => ip_address
   @client.setup :port => @rtp_port.to_i
 end
 

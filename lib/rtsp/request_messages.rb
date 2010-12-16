@@ -1,4 +1,4 @@
-class RTSPClient
+module RTSP
   class RequestMessages
     def initialize
       @RTSP_VER = "RTSP/1.0"

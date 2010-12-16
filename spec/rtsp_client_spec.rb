@@ -5,7 +5,7 @@ describe Kernel do
     Dir[File.dirname(__FILE__) + '/../lib/**/*.rb']
   end
 
-  # Try to require each of the files in RTSPClient
+  # Try to require each of the files in RTSP
   get_requires.each do |r|
     it "should require #{r}" do
 
@@ -16,12 +16,12 @@ describe Kernel do
   end
 end
 
-describe RTSPClient do
+describe RTSP do
   it "should have a VERSION constant" do
-    RTSPClient.const_defined?('VERSION').should be_true
+    RTSP.const_defined?('VERSION').should be_true
   end
 
   it "should have a WWW constant" do
-    RTSPClient.const_defined?('WWW').should be_true
+    RTSP.const_defined?('WWW').should be_true
   end
 end
