@@ -15,55 +15,67 @@ module RTSP
       @socket = options[:socket]              || TCPSocket.new(@host, @port)
       @stream_path = options[:stream_path]    || "/stream1"
       @stream_tracks = options[:stream_tacks] || ["/track1"]
+      @timeout = options[:timeout]            || 2
       @session
     end
 
+    # TODO: update sequence
+    # @return [Hash] The response formatted as a Hash.
     def options
-      response = send @rtsp_messages.options(rtsp_url(@host, @stream_path))
-      #TODO: update sequence
+      send @rtsp_messages.options(rtsp_url(@host, @stream_path))
     end
 
+    # TODO: update sequence
+    # TODO: get tracks, IP's, ports, multicast/unicast
+    # @return [Hash] The response formatted as a Hash.
     def describe
-      response = send @rtsp_messages.describe(rtsp_url(@host, @stream_path))
-      #TODO: update sequence
-      #TODO: get tracks, IP's, ports, multicast/unicast
+      send @rtsp_messages.describe(rtsp_url(@host, @stream_path))
     end
 
+    # TODO: update sequence
+    # TODO: get session
+    # @return [Hash] The response formatted as a Hash.
     def setup(options={})
       response = send @rtsp_messages.setup(rtsp_url(@host, @stream_path+@stream_tracks[0]), options)
       @session = response["session"]
-      #TODO: update sequence
-      #TODO: get session
+
+      response
     end
 
+    # TODO: update sequence
+    # TODO: get session
+    # @return [Hash] The response formatted as a Hash.
     def play
-      response = send @rtsp_messages.play(rtsp_url(@host, @stream_path), @session)
-      #TODO: update sequence
-      #TODO: get session
+      send @rtsp_messages.play(rtsp_url(@host, @stream_path), @session)
     end
 
+    # @return [Hash] The response formatted as a Hash.
     def teardown
       response = send @rtsp_messages.teardown(rtsp_url(@host, @stream_path), @session)
       #@socket.close if @socket.open?
       @socket = nil
+
+      response
     end
 
     def connect
-      timeout(2) { @socket = TCPSocket.new(@host, @port) } #rescue @socket = nil
+      timeout(@timeout) { @socket = TCPSocket.new(@host, @port) } #rescue @socket = nil
     end
 
     def connected?
-      true unless @socket == nil
+      @socket == nil ? true : false
     end
 
     def disconnect
-      timeout(2) { @socket.close } rescue @socket = nil
+      timeout(@timeout) { @socket.close } rescue @socket = nil
     end
 
+    # @param [?]
     def send(message)
-      recv if timeout(2) { @socket.send(message, 0) }
+      recv if timeout(@timeout) { @socket.send(message, 0) }
     end
 
+    # @return [Hash]
     def recv
       response = Hash.new
       size = 0
@@ -85,23 +97,34 @@ module RTSP
 
       size = response["Content-Length"].to_i if response.has_key?("Content-Length")
       response[:body] = read_nonblock(size).split("\r\n") unless size == 0
-      return response
+
+      response
     end
 
-    def read_nonblock(size, options = {})
+    # @param [Number] size
+    # @param [Hash] options
+    # @option options [Number] time Duration to read on the non-blocking socket.
+    def read_nonblock(size, options={})
       options[:time] ||= 1
       buffer = nil
       timeout(options[:time]) { buffer = @socket.read_nonblock(size) }
-      return buffer
+
+      buffer
     end
 
+    # @return [String]
     def readline(options = {})
       options[:time] ||= 1
       line = nil
       timeout(options[:time]) { line = @socket.readline }
-      return line
+
+      line
     end
 
+    # @param [String] host
+    # @param [String] path
+    # @return [String] The RTSP URL.
+    # TODO: Maybe this should return a URI instead?
     def rtsp_url(host, path)
       "rtsp://#{host}#{path}"
     end
