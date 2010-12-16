@@ -25,6 +25,7 @@ Then /^I should receive data on the same port$/ do
 
     data.should_not be_nil
   rescue Timeout::Error
+    raise "Data not recieved within timeout"
   ensure
     socket.close
   end
