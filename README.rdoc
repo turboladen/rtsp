@@ -1,26 +1,40 @@
 = rtsp_client
 
-* FIX (url)
+* https://github.com/turboladen/rtsp
 
 == DESCRIPTION:
 
-FIX (describe your package)
+This library intends to follow the RTSP RFC document (2326) to allow for working
+with RTSP servers.  At this point, it's up to you to parse the data from a play
+call, but we'll get there.  ...eventually.
+
+For more information, see the RFC at:
+http://www.ietf.org/rfc/rfc2326.txt
 
 == FEATURES/PROBLEMS:
 
-* FIX (list of features or problems)
+* RTSP client
+* Currently, only unicast
 
 == SYNOPSIS:
 
-  FIX (code sample of usage)
+The uber-quick get started:
+
+  rtsp_client = RTSP::Client.new :host => "192.168.1.10"
+  rtsp_client.setup :port => 8554
+  rtsp_client.play
+  rtsp_client.teardown
 
 == REQUIREMENTS:
 
-* FIX (list of requirements)
+* Ruby
+    * 1.8.7
+    * 1.9.1
+    * 1.9.2
 
 == INSTALL:
 
-* FIX (sudo gem install, anything else)
+* (sudo) gem install rtsp
 
 == DEVELOPERS:
 

@@ -4,6 +4,8 @@ require 'socket'
 require File.dirname(__FILE__) + '/request_messages'
 
 module RTSP
+
+  # Allows for pulling streams from an RTSP server.
   class Client
     def initialize(options={})
       @rtsp_messages = options[:rtsp_types]   || RTSP::RequestMessages.new

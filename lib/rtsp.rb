@@ -1,6 +1,7 @@
 require 'pathname'
 
-#  Document me!
+# This base module simply defines properties about the library.  See child
+# classes/modules for the meat.
 module RTSP
   VERSION = '0.0.1'
   WWW = 'http://github.com/turboladen/rtsp'
