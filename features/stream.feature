@@ -4,7 +4,7 @@ Feature: Stream from an RTSP server
   So that I can view its contents
   
   Scenario: Play
-    Given an RTSP server at "10.221.222.217" and port 9010
+    Given an RTSP server at "10.221.222.235" and port 9010
     When I play a stream from that server
     Then I should not receive any errors
     And I should receive data on the same port
