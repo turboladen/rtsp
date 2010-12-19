@@ -14,6 +14,5 @@ features/support/world.rb
 lib/rtsp.rb
 lib/rtsp/client.rb
 lib/rtsp/request_messages.rb
-lib/rtsp/status_code.rb
 spec/rtsp_client_spec.rb
 spec/spec_helper.rb
