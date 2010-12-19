@@ -83,6 +83,7 @@ module RTSP
       response[:status] = readline
       unless response[:status].include? "RTSP/1.0 200 OK"
         message = "Did not recieve RTSP/1.0 200 OK.  Instead got '#{response[:status]}'"
+        message = message + "Full response:\n#{response}"
         raise message
       end
 
@@ -125,6 +126,8 @@ module RTSP
     # @param [String] path
     # @return [String] The RTSP URL.
     # TODO: Maybe this should return a URI instead?
+    # TODO: Looks like this could also be rtspu:// (RFC Section 3.2)
+    # TODO: Looks like this should also take a port (RFC Section 3.2)
     def rtsp_url(host, path)
       "rtsp://#{host}#{path}"
     end
