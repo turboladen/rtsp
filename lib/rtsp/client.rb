@@ -7,13 +7,15 @@ module RTSP
 
   # Allows for pulling streams from an RTSP server.
   class Client
-    def initialize(options={})
+    def initialize(url, options={})
+      uri = URI.parse url
+      @scheme = uri.scheme || "rtsp"
+      @host = (uri.host ? uri.host : uri.path)
+      @port = uri.port || 554
+      @path = uri.host ? uri.path : "/stream1"
       @rtsp_messages = options[:rtsp_types]   || RTSP::RequestMessages.new
-      @host = options[:host]                  || "127.0.0.1"
-      @port = options[:port]                  || 554
       @sequence = options[:sequence]          || 0
       @socket = options[:socket]              || TCPSocket.new(@host, @port)
-      @stream_path = options[:stream_path]    || "/stream1"
       @stream_tracks = options[:stream_tacks] || ["/track1"]
       @timeout = options[:timeout]            || 2
       @session

@@ -20,7 +20,7 @@ http://www.ietf.org/rfc/rfc2326.txt
 
 The uber-quick get started:
 
-  rtsp_client = RTSP::Client.new :host => "192.168.1.10"
+  rtsp_client = RTSP::Client.new "192.168.1.10"
   rtsp_client.setup :port => 8554
   rtsp_client.play
   rtsp_client.teardown

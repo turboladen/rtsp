@@ -1,11 +1,11 @@
 Given /^an RTSP server at "([^"]*)" and port (\d+)$/ do |ip_address, port|
   @rtp_port = port
-  @client = RTSP::Client.new :host => ip_address
+  @client = RTSP::Client.new ip_address
   @client.setup :port => @rtp_port.to_i
 end
 Given /^an RTSP server at "([^"]*)" and port (\d+) and URL "([^"]*)"$/ do |ip_address, port, path|
   @rtp_port = port
-  @client = RTSP::Client.new :host => ip_address
+  @client = RTSP::Client.new ip_address
   @client.setup( { :port => @rtp_port.to_i, :stream_path => path })
 end
 

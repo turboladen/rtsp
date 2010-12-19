@@ -1,3 +1,7 @@
 #!/usr/bin/env ruby
 
-abort "you need to write me"
+require 'rtsp/client'
+
+# Allows for running an RTSP client
+rtsp_client = RTSP::Client.new "rtsp://64.202.98.91:554/gs.sdp"
+rtsp_client.setup
