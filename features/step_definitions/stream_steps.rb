@@ -3,6 +3,11 @@ Given /^an RTSP server at "([^"]*)" and port (\d+)$/ do |ip_address, port|
   @client = RTSP::Client.new :host => ip_address
   @client.setup :port => @rtp_port.to_i
 end
+Given /^an RTSP server at "([^"]*)" and port (\d+) and URL "([^"]*)"$/ do |ip_address, port, path|
+  @rtp_port = port
+  @client = RTSP::Client.new :host => ip_address
+  @client.setup( { :port => @rtp_port.to_i, :stream_path => path })
+end
 
 When /^I play a stream from that server$/ do
   @play_result = lambda { @client.play }
@@ -20,6 +25,7 @@ Then /^I should receive data on the same port$/ do
     status = Timeout::timeout(5) do
       while data = socket.recvfrom(102400)[0]
         puts "marker size:#{data.size}"
+        puts "data: #{data}" if data =~ /\r\n/
       end
     end
 
@@ -28,5 +34,10 @@ Then /^I should receive data on the same port$/ do
     # Blind rescue
   ensure
     socket.close
+    @client.teardown
   end
+end
+
+When /^I ask the server to describe$/ do
+  puts @client.describe
 end
