@@ -14,12 +14,31 @@ module RTSP
       message << "CSeq: #{options[:sequence]}\r\n\r\n"
     end
 
+    # See section 10.2
+    # 
+    # @param [String] stream
+    # @param [Hash] options
+    # @option options [Number] sequence
+    # @option options [Array]
     def describe(stream, options={})
       options[:sequence] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
       options[:accept]   ||= RTSP_ACCEPT_TYPE
       message =  "DESCRIBE #{stream} #{RTSP_VER}\r\n"
       message << "CSeq: #{options[:sequence]}\r\n"
       message << "Accept: #{options[:accept]}\r\n\r\n"
+    end
+
+    # @param [String] stream
+    # @param [Number] session
+    # @param [Hash] 
+    def announce(stream, session, options={})
+      options[:content_type] ||= RTSP_ACCEPT_TYPE
+      message =  "ANNOUNCE #{stream} #{RTSP_VER}\r\n"
+      message << "CSeq: #{options[:sequence]}\r\n"
+      message << "Date: "
+      message << "Session: #{session}"
+      message << "Content-Type: #{options[:content_type]}\r\n"
+      message << "Content-Length: #{options[:content_length]}\r\n"
     end
 
     def setup(track, options={})
@@ -43,11 +62,39 @@ module RTSP
       message << "Range: npt=#{options[:npt]}\r\n\r\n"
     end
 
+    def pause(stream, session, sequence)
+      message =  "PAUSE #{stream} #{RTSP_VER}\r\n"
+      message << "CSeq: #{sequence}\r\n"
+      message << "Session: #{session}\r\n"
+    end
+    
     def teardown(stream, session, options={})
       options[:sequence] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
       message =  "TEARDOWN #{stream} #{RTSP_VER}\r\n"
       message << "CSeq: #{options[:sequence]}\r\n"
       message << "Session: #{session}\r\n\r\n"
+    end
+    
+    def get_parameter(stream, session, options={})
+      message =  "GET_PARAMETER #{stream} #{RTSP_VER}\r\n"
+      message << "CSeq: #{options[:sequence]}\r\n"
+      message << "Content-Type: #{options[:content_type]}\r\n"
+      message << "Content-Length: #{options[:content_length]}\r\n"
+      message << "Session: #{session}\r\n\r\n"
+    end
+    
+    def set_parameter(stream, options={})
+      message =  "SET_PARAMETER #{stream} #{RTSP_VER}\r\n"
+      message << "CSeq: #{options[:sequence]}\r\n"
+      message << "Content-Type: #{options[:content_type]}\r\n"
+      message << "Content-Length: #{options[:content_length]}\r\n"
+    end
+
+    def record(stream, session, options={})
+      message =  "RECORD #{stream} #{RTSP_VER}\r\n"
+      message << "CSeq: #{options[:sequence]}\r\n"
+      message << "Session: #{session}\r\n\r\n"
+      message << "Conference: #{options[:conference]}\r\n\r\n"
     end
   end
 end
