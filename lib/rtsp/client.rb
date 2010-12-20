@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'timeout'
 require 'socket'
+require 'uri'
 require File.dirname(__FILE__) + '/request_messages'
 
 module RTSP
@@ -24,21 +25,21 @@ module RTSP
     # TODO: update sequence
     # @return [Hash] The response formatted as a Hash.
     def options
-      send @rtsp_messages.options(rtsp_url(@host, @stream_path))
+      send_rtsp @rtsp_messages.options(rtsp_url(@host, @stream_path))
     end
 
     # TODO: update sequence
     # TODO: get tracks, IP's, ports, multicast/unicast
     # @return [Hash] The response formatted as a Hash.
     def describe
-      send @rtsp_messages.describe(rtsp_url(@host, @stream_path))
+      send_rtsp @rtsp_messages.describe(rtsp_url(@host, @stream_path))
     end
 
     # TODO: update sequence
     # TODO: get session
     # @return [Hash] The response formatted as a Hash.
     def setup(options={})
-      response = send @rtsp_messages.setup(rtsp_url(@host, @stream_path+@stream_tracks[0]), options)
+      response = send_rtsp @rtsp_messages.setup(rtsp_url(@host, @stream_path+@stream_tracks[0]), options)
       @session = response["session"]
 
       response
@@ -48,12 +49,12 @@ module RTSP
     # TODO: get session
     # @return [Hash] The response formatted as a Hash.
     def play
-      send @rtsp_messages.play(rtsp_url(@host, @stream_path), @session)
+      send_rtsp @rtsp_messages.play(rtsp_url(@host, @stream_path), @session)
     end
 
     # @return [Hash] The response formatted as a Hash.
     def teardown
-      response = send @rtsp_messages.teardown(rtsp_url(@host, @stream_path), @session)
+      response = send_rtsp @rtsp_messages.teardown(rtsp_url(@host, @stream_path), @session)
       #@socket.close if @socket.open?
       @socket = nil
 
@@ -73,7 +74,7 @@ module RTSP
     end
 
     # @param [?]
-    def send(message)
+    def send_rtsp(message)
       recv if timeout(@timeout) { @socket.send(message, 0) }
     end
 
