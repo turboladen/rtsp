@@ -9,8 +9,8 @@ with RTSP servers.  At this point, it's up to you to parse the data from a play
 call, but we'll get there.  ...eventually.
 
 For more information
-  RTSP: http://www.ietf.org/rfc/rfc2326.txt
-  SDP: http://www.ietf.org/rfc/rfc2327.txt
+ RTSP: http://www.ietf.org/rfc/rfc2326.txt
+ SDP: http://www.ietf.org/rfc/rfc2327.txt
 
 == FEATURES/PROBLEMS:
 
