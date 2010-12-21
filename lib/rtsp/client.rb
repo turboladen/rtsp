@@ -10,6 +10,7 @@ module RTSP
 
   # Allows for pulling streams from an RTSP server.
   class Client
+    attr_reader :uri
 
     # @param [String] url URL to the resource to stream.  If no scheme is given, "rtsp"
     # is assumed.  If no port is given, 554 is assumed.  If no path is given, "/stream1"
