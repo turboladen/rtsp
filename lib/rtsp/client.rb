@@ -118,10 +118,8 @@ module RTSP
     # @return [Hash]
     def recv
       size = 0
-      socket_data, sender_sockaddr = @socket.recvfrom 1024
+      socket_data, sender_sockaddr = @socket.recvfrom 102400
       response = RTSP::Response.new socket_data
-require 'ap'
-ap response
 =begin
       response = parse_header
       unless response[:status].include? "RTSP/1.0 200 OK"
@@ -173,12 +171,7 @@ ap response
     end
 =end
 
-    # @param [String] host
-    # @param [String] path
     # @return [String] The RTSP URL.
-    # TODO: Maybe this should return a URI instead?
-    # TODO: Looks like this could also be rtspu:// (RFC Section 3.2)
-    # TODO: Looks like this should also take a port (RFC Section 3.2)
     def rtsp_url
       @uri.to_s
     end

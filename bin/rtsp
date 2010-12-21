@@ -1,7 +1,34 @@
 #!/usr/bin/env ruby
 
-require 'rtsp/client'
+require File.expand_path(File.dirname(__FILE__)) + '/../lib/rtsp/client'
+require 'tempfile'
 
 # Allows for running an RTSP client
-rtsp_client = RTSP::Client.new "rtsp://64.202.98.91:554/gs.sdp"
-rtsp_client.setup
+#rtsp_client = RTSP::Client.new "rtsp://64.202.98.91:554/gs.sdp"
+#rtsp_client.setup
+
+rtsp_client = RTSP::Client.new "192.168.10.219"
+rtsp_client.setup :port => 8554
+rtsp_client.play
+
+socket = UDPSocket.new
+socket.bind "0.0.0.0", 8554
+streamed_file = Tempfile.new "spectra_hd_streamed_file"
+
+begin
+  Timeout::timeout(60) do
+    while data = socket.recvfrom(102400).first
+      puts "data size = #{data.size}"
+      streamed_file.write data
+    end
+  end
+rescue Timeout::Error
+  # blah
+end
+
+socket.close
+rtsp_client.teardown
+
+require 'fileutils'
+FileUtils.cp(streamed_file, "/Users/sloveless/Desktop/")
+streamed_file.close
