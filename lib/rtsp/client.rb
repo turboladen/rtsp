@@ -45,7 +45,7 @@ module RTSP
       @logger.debug "Sending OPTIONS to #{@uri.host}#{@stream_path}"
       response = send_rtsp @rtsp_messages.options(rtsp_url(@uri.host, @stream_path))
       @logger.debug "Recieved response:"
-      @logger.debug respone
+      @logger.debug response
     end
 
     # TODO: update sequence
