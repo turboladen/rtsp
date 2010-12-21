@@ -23,8 +23,8 @@ describe SDP do
     end
 
     it "has a version number of 0" do
-      @parsed_sdp[:version].should == 0
-      @parsed_sdp[:version].class.should == Fixnum
+      @parsed_sdp[:version].should == "0"
+      @parsed_sdp[:version].class.should == String
     end
 
     context "origin" do
@@ -72,6 +72,32 @@ describe SDP do
     it "has a URI of 'http://www.example.com/seminars/sdp.pdf'" do
       @parsed_sdp[:uri].to_s.should == "http://www.example.com/seminars/sdp.pdf"
       @parsed_sdp[:uri].class.should == String
+    end
+
+    it "has an email address of 'j.doe@example.com (Jane Doe)'" do
+      @parsed_sdp[:email_address].should == "j.doe@example.com (Jane Doe)"
+      @parsed_sdp[:email_address].class.should == String
+    end
+
+    it "does NOT have a phone number" do
+      @parsed_sdp[:phone_number].should be_nil
+    end
+
+    context "connection data" do
+      it "has a nettype of 'IN'" do
+        @parsed_sdp[:connection_data][:net_type].should == 'IN'
+        @parsed_sdp[:connection_data][:net_type].class.should == String
+      end
+
+      it "has a addrtype of 'IP4'" do
+        @parsed_sdp[:connection_data][:addr_type].should == 'IP4'
+        @parsed_sdp[:connection_data][:addr_type].class.should == String
+      end
+
+      it "has a connection address of '224.2.17.12/127'" do
+        @parsed_sdp[:connection_data][:connection_address].should == '224.2.17.12/127'
+        @parsed_sdp[:connection_data][:connection_address].class.should == String
+      end
     end
   end
 end
