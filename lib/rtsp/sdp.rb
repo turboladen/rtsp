@@ -7,7 +7,13 @@ class SDP
     :uri => /^u=(.*)/,
     :email_address => /^e=(.*)/,
     :phone_number => /^p=(.*)/,
-    :connection_data => /^c=(.*)/
+    :connection_data => /^c=(.*)/,
+    :bandwidth => /^b=(.*)/,          # Multi-type
+    :timing => /^t=(.*)/,             # Multi-type
+    :repeat_times => /^r=(.*)/,       # Multi-type
+    :time_zones => /^z=(.*)/,         # Multi-type
+    :encryption_keys => /^k=(.*)/,    # Multi-type
+    :attributes => /^a=(.*)/
   }
 
   def self.parse_sdp sdp_text

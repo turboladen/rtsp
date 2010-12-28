@@ -4,3 +4,4 @@ require 'timeout'
 
 $:.unshift(File.dirname(__FILE__) + '/../../lib')
 require 'rtsp/client'
+require 'rtsp/sdp'
