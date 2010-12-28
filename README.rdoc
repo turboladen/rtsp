@@ -8,8 +8,11 @@ This library intends to follow the RTSP RFC document (2326) to allow for working
 with RTSP servers.  At this point, it's up to you to parse the data from a play
 call, but we'll get there.  ...eventually.
 
-For more information, see the RFC at:
-http://www.ietf.org/rfc/rfc2326.txt
+For more information
+
+RTSP: http://www.ietf.org/rfc/rfc2326.txt
+
+SDP: http://www.ietf.org/rfc/rfc2327.txt
 
 == FEATURES/PROBLEMS:
 
