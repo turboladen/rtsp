@@ -65,12 +65,16 @@ class SDP < Hash
   end
 
   # TODO: The origin <username> MUST NOT contain spaces.
+  # TODO: Its
+  #      usage is up to the creating tool, so long as <sess-version> is
+  #      increased when a modification is made to the session data.  Again,
+  #      it is RECOMMENDED that an NTP format timestamp is used.
   def initialize fields={}
     self[:version] = SDP_VERSION || fields[:version]
     self[:origin] = Hash.new
     self[:origin][:username] = Etc.getlogin  || fields[:username]
     ntp = Net::NTP.get
-    self[:origin][:session_id] = ntp.receive_timestamp.to_i
-    #self[:origin][:session_id] = Fixnum.new
+    self[:origin][:session_id] = ntp.receive_timestamp.to_i  || fields[:origin][:session_id]
+    self[:origin][:session_version] = ntp.receive_timestamp.to_i || fields[:origin][:session_version]
   end
 end
