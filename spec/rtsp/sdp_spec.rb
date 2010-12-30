@@ -139,7 +139,13 @@ describe SDP do
         end
 
         it "initializes :origin[:net_type] to be 'IN'" do
+          @sdp[:origin][:net_type].class.should == String
           @sdp[:origin][:net_type].should == "IN"
+        end
+
+        it "initializes :origin[:address_type] to be :IP4" do
+          @sdp[:origin][:net_type].class.should == Symbol
+          @sdp[:origin][:net_type].should == :IP4
         end
       end
     end
