@@ -1,4 +1,9 @@
-class SDP
+require 'etc'
+require 'net/ntp'
+
+class SDP < Hash
+  SDP_VERSION = 0
+
   SDP_TYPE = {
     :version => /^v=(.*)/,
     :origin => /^o=(.*)/,
@@ -57,5 +62,15 @@ class SDP
     connection_data[:connection_address]  = connection_data_params[2]
 
     connection_data
+  end
+
+  # TODO: The origin <username> MUST NOT contain spaces.
+  def initialize fields={}
+    self[:version] = SDP_VERSION || fields[:version]
+    self[:origin] = Hash.new
+    self[:origin][:username] = Etc.getlogin  || fields[:username]
+    ntp = Net::NTP.get
+    self[:origin][:session_id] = ntp.receive_timestamp.to_i
+    #self[:origin][:session_id] = Fixnum.new
   end
 end

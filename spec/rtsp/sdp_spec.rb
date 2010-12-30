@@ -100,4 +100,40 @@ describe SDP do
       end
     end
   end
+
+  context "SDP_VERSION" do
+    it "has an SDP_VERSION constant defined" do
+      SDP.const_defined?('SDP_VERSION').should be_true
+    end
+
+    it "is set to 0" do
+      SDP::SDP_VERSION.should == 0
+    end
+  end
+
+  context "creates SDP files" do
+    before do
+      @sdp = SDP.new
+    end
+
+    context "#initialize defaults" do
+      it "initializes version to 0" do
+        @sdp[:version].should == 0
+      end
+
+      context ":origin" do
+        it "initializes :origin as a Hash" do
+          @sdp[:origin].class.should == Hash
+        end
+
+        it "initializes :origin[:username] to be my username" do
+          @sdp[:origin][:username].should == Etc.getlogin
+        end
+
+        it "initializes :origin[:session_id] to be an NTP timestamp" do
+          @sdp[:origin][:session_id].class.should == Fixnum
+        end
+      end
+    end
+  end
 end
