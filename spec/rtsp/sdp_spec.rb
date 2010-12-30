@@ -138,8 +138,8 @@ describe SDP do
           @sdp[:origin][:session_version].class.should == Fixnum
         end
 
-        it "initializes :origin[:net_type] to be 'IN4'" do
-          @sdp[:origin][:net_type].should == "IN4"
+        it "initializes :origin[:net_type] to be 'IN'" do
+          @sdp[:origin][:net_type].should == "IN"
         end
       end
     end
