@@ -70,13 +70,25 @@ class SDP < Hash
   #      increased when a modification is made to the session data.  Again,
   #      it is RECOMMENDED that an NTP format timestamp is used.
   def initialize fields={}
-    self[:version] = SDP_VERSION || fields[:version]
+    self[:version]                    = SDP_VERSION   || fields[:version]
     self[:origin] = Hash.new
-    self[:origin][:username] = Etc.getlogin  || fields[:username]
+    self[:origin][:username]          = Etc.getlogin  || fields[:username]
     ntp = Net::NTP.get
     self[:origin][:session_id] = ntp.receive_timestamp.to_i  || fields[:origin][:session_id]
     self[:origin][:session_version] = ntp.receive_timestamp.to_i || fields[:origin][:session_version]
-    self[:origin][:net_type] = 'IN' || fields[:origin][:net_type]
-    self[:origin][:address_type] = :IP4 || fields[:origin][:address_type]
+    self[:origin][:net_type]          = 'IN'          || fields[:origin][:net_type]
+    self[:origin][:address_type]      = :IP4          || fields[:origin][:address_type]
+    self[:origin][:unicast_address]   = get_local_ip  || fields[:origin][:unicast_address]
+  end
+
+  def get_local_ip
+    orig, Socket.do_not_reverse_lookup = Socket.do_not_reverse_lookup, true  # turn off reverse DNS resolution temporarily
+
+    UDPSocket.open do |s|
+      s.connect '64.233.187.99', 1
+      s.addr.last
+    end
+  ensure
+    Socket.do_not_reverse_lookup = orig
   end
 end

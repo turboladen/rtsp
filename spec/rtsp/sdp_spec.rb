@@ -147,6 +147,11 @@ describe SDP do
           @sdp[:origin][:address_type].class.should == Symbol
           @sdp[:origin][:address_type].should == :IP4
         end
+
+        it "initializes :origin[:unicast_address] to be the local IP" do
+          @sdp[:origin][:unicast_address].class.should == String
+          @sdp[:origin][:unicast_address].should == sdp.get_local_ip
+        end
       end
     end
   end
