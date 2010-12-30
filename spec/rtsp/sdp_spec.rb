@@ -150,7 +150,7 @@ describe SDP do
 
         it "initializes :origin[:unicast_address] to be the local IP" do
           @sdp[:origin][:unicast_address].class.should == String
-          @sdp[:origin][:unicast_address].should == sdp.get_local_ip
+          @sdp[:origin][:unicast_address].should == @sdp.get_local_ip
         end
       end
     end
