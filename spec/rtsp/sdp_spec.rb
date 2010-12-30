@@ -117,7 +117,7 @@ describe SDP do
     end
 
     context "#initialize defaults" do
-      it "initializes version to 0" do
+      it "initializes :version to 0" do
         @sdp[:version].should == 0
       end
 
@@ -152,6 +152,10 @@ describe SDP do
           @sdp[:origin][:unicast_address].class.should == String
           @sdp[:origin][:unicast_address].should == @sdp.get_local_ip
         end
+      end
+
+      it "initializes :session_name to ' '" do
+        @sdp[:session_name].should == ' '
       end
     end
   end

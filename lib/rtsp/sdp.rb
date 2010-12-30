@@ -79,6 +79,7 @@ class SDP < Hash
     self[:origin][:net_type]          = 'IN'          || fields[:origin][:net_type]
     self[:origin][:address_type]      = :IP4          || fields[:origin][:address_type]
     self[:origin][:unicast_address]   = get_local_ip  || fields[:origin][:unicast_address]
+    self[:session_name]               = " "           || fields[:session_name]
   end
 
   def get_local_ip
