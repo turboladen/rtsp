@@ -46,7 +46,7 @@ class SDP < Hash
     origin[:session_id]       = origin_params[1]
     origin[:session_version]  = origin_params[2].to_i # Should be NTP timestamp
     origin[:net_type]         = origin_params[3]
-    origin[:address_type]        = origin_params[4]
+    origin[:address_type]     = origin_params[4].to_sym
     origin[:unicast_address]  = origin_params[5]
 
     origin
@@ -58,7 +58,7 @@ class SDP < Hash
     connection_data = {}
     connection_data_params = connection_data_line.split(" ")
     connection_data[:net_type]            = connection_data_params[0]
-    connection_data[:address_type]           = connection_data_params[1]
+    connection_data[:address_type]        = connection_data_params[1].to_sym
     connection_data[:connection_address]  = connection_data_params[2]
 
     connection_data

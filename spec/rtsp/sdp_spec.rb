@@ -48,9 +48,9 @@ describe SDP do
         @parsed_sdp[:origin][:net_type].class.should == String
       end
 
-      it "has a addr_type of 'IP4'" do
-        @parsed_sdp[:origin][:addr_type].should == "IP4"
-        @parsed_sdp[:origin][:addr_type].class.should == String
+      it "has a addr_type of :IP4" do
+        @parsed_sdp[:origin][:address_type].should == :IP4
+        @parsed_sdp[:origin][:address_type].class.should == Symbol
       end
 
       it "has a unicast_address of '10.47.16.5'" do
@@ -89,9 +89,9 @@ describe SDP do
         @parsed_sdp[:connection_data][:net_type].class.should == String
       end
 
-      it "has a addrtype of 'IP4'" do
-        @parsed_sdp[:connection_data][:addr_type].should == 'IP4'
-        @parsed_sdp[:connection_data][:addr_type].class.should == String
+      it "has a addrtype of :IP4" do
+        @parsed_sdp[:connection_data][:address_type].should == :IP4
+        @parsed_sdp[:connection_data][:address_type].class.should == Symbol
       end
 
       it "has a connection address of '224.2.17.12/127'" do
@@ -144,8 +144,8 @@ describe SDP do
         end
 
         it "initializes :origin[:address_type] to be :IP4" do
-          @sdp[:origin][:net_type].class.should == Symbol
-          @sdp[:origin][:net_type].should == :IP4
+          @sdp[:origin][:address_type].class.should == Symbol
+          @sdp[:origin][:address_type].should == :IP4
         end
       end
     end
