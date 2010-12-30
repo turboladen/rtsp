@@ -76,5 +76,6 @@ class SDP < Hash
     ntp = Net::NTP.get
     self[:origin][:session_id] = ntp.receive_timestamp.to_i  || fields[:origin][:session_id]
     self[:origin][:session_version] = ntp.receive_timestamp.to_i || fields[:origin][:session_version]
+    self[:origin][:net_type] = 'IN4' || fields[:origin][:net_type]
   end
 end

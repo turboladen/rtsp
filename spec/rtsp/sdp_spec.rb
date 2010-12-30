@@ -137,6 +137,10 @@ describe SDP do
         it "initializes :origin[:session_version] to be an NTP timestamp" do
           @sdp[:origin][:session_version].class.should == Fixnum
         end
+
+        it "initializes :origin[:net_type] to be 'IN4'" do
+          @sdp[:origin][:net_type].should == "IN4"
+        end
       end
     end
   end
