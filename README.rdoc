@@ -12,7 +12,7 @@ For more information
 
 RTSP: http://www.ietf.org/rfc/rfc2326.txt
 
-SDP: http://www.ietf.org/rfc/rfc2327.txt
+SDP: http://tools.ietf.org/html/rfc4566
 
 == FEATURES/PROBLEMS:
 
