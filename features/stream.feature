@@ -11,7 +11,7 @@ Feature: Stream from an RTSP server
     And I should receive data on the same port
 
   Scenario: Describe
-    Given an RTSP server at "64.202.98.91" and port 554 and URL "/gs.sdp"
+    Given I know what the describe response looks like
     When I ask the server to describe
     Then I should not receive any errors
     And I should receive data on the same port

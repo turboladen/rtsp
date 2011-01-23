@@ -4,11 +4,23 @@ require File.expand_path(File.dirname(__FILE__)) + '/../lib/rtsp/client'
 require 'tempfile'
 
 # Allows for running an RTSP client
-#rtsp_client = RTSP::Client.new "rtsp://64.202.98.91:554/gs.sdp"
-#rtsp_client.setup
+rtsp_client = RTSP::Client.new "rtsp://64.202.98.91:554/gs.sdp"
+response = rtsp_client.describe
+puts "code:           #{response.code}"
+puts "message:        #{response.message}"
+puts "server:         #{response.server}"
+puts "cseq:           #{response.cseq}"
+puts "cache_control:  #{response.cache_control}"
+puts "content_length: #{response.content_length}"
+puts "date:           #{response.date}"
+puts "expires:        #{response.expires}"
+puts "content_type:   #{response.content_type}"
+puts "content_base:   #{response.content_base}"
+exit
+rtsp_client.setup
 
-rtsp_client = RTSP::Client.new "192.168.10.219"
-rtsp_client.setup :port => 8554
+#rtsp_client = RTSP::Client.new "192.168.10.219"
+#rtsp_client.setup :port => 8554
 rtsp_client.play
 
 socket = UDPSocket.new
@@ -16,7 +28,7 @@ socket.bind "0.0.0.0", 8554
 streamed_file = Tempfile.new "spectra_hd_streamed_file"
 
 begin
-  Timeout::timeout(60) do
+  Timeout::timeout(5) do
     while data = socket.recvfrom(102400).first
       puts "data size = #{data.size}"
       streamed_file.write data

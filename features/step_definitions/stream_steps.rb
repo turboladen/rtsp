@@ -3,10 +3,13 @@ Given /^an RTSP server at "([^"]*)" and port (\d+)$/ do |ip_address, port|
   @client = RTSP::Client.new ip_address
   @client.setup :port => @rtp_port.to_i
 end
+
 Given /^an RTSP server at "([^"]*)" and port (\d+) and URL "([^"]*)"$/ do |ip_address, port, path|
+  uri = "rtsp://#{ip_address}:#{port}#{path}"
   @rtp_port = port
-  @client = RTSP::Client.new ip_address
-  @client.setup( { :port => @rtp_port.to_i, :stream_path => path })
+  @client = RTSP::Client.new uri
+  #@client.setup( { :port => @rtp_port.to_i, :stream_path => path })
+  @client.setup( { :port => @rtp_port.to_i })
 end
 
 When /^I play a stream from that server$/ do
@@ -36,6 +39,10 @@ Then /^I should receive data on the same port$/ do
     socket.close
     @client.teardown
   end
+end
+
+Given /^I know what the describe response looks like$/ do
+  @response_text = DESCRIBE_RESPONSE
 end
 
 When /^I ask the server to describe$/ do
