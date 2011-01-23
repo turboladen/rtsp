@@ -3,6 +3,7 @@ Feature: Stream from an RTSP server
   I want to be able to pull an RTSP stream from a server
   So that I can view its contents
   
+  @wip
   Scenario: Play
     Given an RTSP server at "10.221.222.235" and port 9010 and URL ""
     When I play a stream from that server
