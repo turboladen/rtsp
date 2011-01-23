@@ -65,15 +65,6 @@ module RTSP
       buffer
     end
 
-=begin
-    def inspect
-      message = "<#{self.class} "
-      instance_variables.each do |v|
-        message << v.to_s + "=" + instance_variable_get("#{v}")
-      end
-      message << " }>"
-    end
-=end
     private
 
     def create_reader(name, value)
