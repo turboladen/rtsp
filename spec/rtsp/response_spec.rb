@@ -12,22 +12,22 @@ Content-Type: application/sdp\r\n
 x-Accept-Retransmit: our-retransmit\r\n
 x-Accept-Dynamic-Rate: 1\r\n
 Content-Base: rtsp://64.202.98.91:554/gs.sdp/\r\n
-\r\n
-v=0\r\n
-o=- 545877020 467920391 IN IP4 127.0.0.1\r\n
-s=Groove Salad from SomaFM [aacPlus]\r\n
-i=Downtempo Ambient Groove\r\n
-c=IN IP4 0.0.0.0\r\n
-t=0 0\r\n
-a=x-qt-text-cmt:Orban Opticodec-PC\r\n
-a=x-qt-text-nam:Groove Salad from SomaFM [aacPlus]\r\n
-a=x-qt-text-inf:Downtempo Ambient Groove\r\n
-a=control:*\r\n
-m=audio 0 RTP/AVP 96\r\n
-b=AS:48\r\n
-a=rtpmap:96 MP4A-LATM/44100/2\r\n
-a=fmtp:96 cpresent=0;config=400027200000\r\n
-a=control:trackID=1\r\n
+\r\n\r\n
+v=0
+o=- 545877020 467920391 IN IP4 127.0.0.1
+s=Groove Salad from SomaFM [aacPlus]
+i=Downtempo Ambient Groove
+c=IN IP4 0.0.0.0
+t=0 0
+a=x-qt-text-cmt:Orban Opticodec-PC
+a=x-qt-text-nam:Groove Salad from SomaFM [aacPlus]
+a=x-qt-text-inf:Downtempo Ambient Groove
+a=control:*
+m=audio 0 RTP/AVP 96
+b=AS:48
+a=rtpmap:96 MP4A-LATM/44100/2
+a=fmtp:96 cpresent=0;config=400027200000
+a=control:trackID=1
 }
 
 describe RTSP::Response do
@@ -55,6 +55,13 @@ describe RTSP::Response do
       @response.x_accept_retransmit.should == "our-retransmit"
       @response.x_accept_dynamic_rate.should == "1"
       @response.content_base.should == "rtsp://64.202.98.91:554/gs.sdp/"
+    end
+
+    it "body is a parsed SDP::Description" do
+      @response.body.should be_kind_of SDP::Description
+      sdp_info = @response.body
+      sdp_info.protocol_version.should == "0"
+      sdp_info.name.should == "Groove Salad from SomaFM [aacPlus]"
     end
   end
 end

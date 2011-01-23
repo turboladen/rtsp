@@ -10,10 +10,14 @@ module RTSP
     
     def initialize(response)
       response_array = response.split "\r\n\r\n"
+      if response_array.empty?
+        response_array = response.split "\n\n"
+      end
+
       head = response_array.first
       body = response_array.last == head ? "" : response_array.last
       parse_head(head)
-      parse_body(body)
+      @body = parse_body(body)
     end
 
     # Reads through each line of the RTSP response and creates a
@@ -41,19 +45,12 @@ module RTSP
 
     def parse_body body
       #response[:body] = read_nonblock(size).split("\r\n") unless @content_length == 0
-      if @content_type == "application/sdp"
-        @sdp_info = SDP.parse body
-      else
-        body_lines = []
-        lines = body.split "\r\n"
-      
-        lines.each_with_index do |line, i|
-          if line =~ /^\w\=/
-            body_lines << line
-          end
-        end
+      if body =~ /^(\r\n|\n)/
+        body.gsub!(/^(\r\n|\n)/, '')
+      end
 
-        @body = lines
+      if @content_type == "application/sdp"
+        return SDP.parse body
       end
     end
 
