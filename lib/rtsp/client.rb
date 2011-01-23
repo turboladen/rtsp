@@ -1,15 +1,21 @@
 require 'rubygems'
-require 'timeout'
-require 'socket'
-require 'uri'
 require 'logger'
-require File.dirname(__FILE__) + '/request_messages'
-require File.dirname(__FILE__) + '/response'
+require 'socket'
+require 'tempfile'
+require 'timeout'
+require 'uri'
+
+require 'rtsp/request_messages'
+require 'rtsp/response'
 
 module RTSP
 
   # Allows for pulling streams from an RTSP server.
   class Client
+    include RTSP::RequestMessages
+
+    MAX_BYTES_TO_RECEIVE = 1500
+
     attr_reader :uri
 
     # @param [String] url URL to the resource to stream.  If no scheme is given, "rtsp"
@@ -18,20 +24,31 @@ module RTSP
     def initialize(url, options={})
       @uri = URI.parse url
       fill_out_uri
-      @rtsp_messages = options[:rtsp_types]    || RTSP::RequestMessages.new
       @sequence = options[:sequence]           || 0
       @socket = options[:socket]               || TCPSocket.new(@uri.host, @uri.port)
       @stream_tracks = options[:stream_tracks] || ["/track1"]
       @timeout = options[:timeout]             || 2
       @session
       @logger = Logger.new(STDOUT)
+      
+      if options[:capture_file_path] && options[:capture_duration]
+        @capture_file_path = options[:capture_file_path]
+        @capture_duration = options[:capture_duration]
+        setup_capture
+      end
+    end
+
+    def setup_capture
+      @capture_file = File.open(@capture_file_path, File::WRONLY|File::EXCL|File::CREAT)
+      @capture_socket = UDPSocket.new
+      @capture_socket.bind "0.0.0.0", @uri.port
     end
 
     def fill_out_uri
       @uri.scheme ||= "rtsp"
       @uri.host = (@uri.host ? @uri.host : @uri.path)
       @uri.port ||= 554
-      #@uri.path ||= @uri.host + "/stream1"
+
       if @uri.path == @uri.host
         @uri.path = "/stream1"
       else
@@ -43,7 +60,7 @@ module RTSP
     # @return [Hash] The response formatted as a Hash.
     def options
       @logger.debug "Sending OPTIONS to #{@uri.host}#{@stream_path}"
-      response = send_rtsp @rtsp_messages.options(rtsp_url(@uri.host, @stream_path))
+      response = send_rtsp RequestMessages.options(rtsp_url(@uri.host, @stream_path))
       @logger.debug "Recieved response:"
       @logger.debug response
     end
@@ -53,7 +70,7 @@ module RTSP
     # @return [Hash] The response formatted as a Hash.
     def describe
       @logger.debug "Sending DESCRIBE to #{@uri.host}#{@stream_path}"
-      response = send_rtsp(@rtsp_messages.describe(rtsp_url))
+      response = send_rtsp(RequestMessages.describe(rtsp_url))
 
       @logger.debug "Recieved response:"
       @logger.debug response.inspect
@@ -67,7 +84,7 @@ module RTSP
     def setup(options={})
       @uri.port = options[:port] if options[:port]
       @logger.debug "Sending SETUP to #{@uri.host}#{@stream_path}"
-      response = send_rtsp @rtsp_messages.setup(rtsp_url, options)
+      response = send_rtsp RequestMessages.setup(rtsp_url, options)
       @session = response.session
 
       @logger.debug "Recieved response:"
@@ -81,16 +98,31 @@ module RTSP
     # @return [Hash] The response formatted as a Hash.
     def play
       @logger.debug "Sending PLAY to #{@uri.host}#{@stream_path}"
-      response = send_rtsp @rtsp_messages.play(rtsp_url, @session)
+      response = send_rtsp RequestMessages.play(rtsp_url, @session)
       @logger.debug "Recieved response:"
       @logger.debug response
+
+      if @capture_file_path
+        begin
+          Timeout::timeout(@capture_duration) do
+            while data = @capture_socket.recvfrom(102400).first
+              @logger.debug "data size = #{data.size}"
+              @capture_file_path.write data
+            end
+          end
+        rescue Timeout::Error
+          # Blind rescue
+        end
+
+        @capture_socket.close
+      end
 
       response
     end
 
     # @return [Hash] The response formatted as a Hash.
     def teardown
-      response = send_rtsp @rtsp_messages.teardown(rtsp_url, @session)
+      response = send_rtsp RequestMessages.teardown(rtsp_url, @session)
       #@socket.close if @socket.open?
       @socket = nil
 
@@ -119,8 +151,15 @@ module RTSP
     # @return [Hash]
     def recv
       size = 0
-      socket_data, sender_sockaddr = @socket.recvfrom 102400
+      socket_data, sender_sockaddr = @socket.recvfrom MAX_BYTES_TO_RECEIVE
       response = RTSP::Response.new socket_data
+
+      #unless response.message == "OK"
+      #  message = "Did not recieve RTSP/1.0 200 OK.  Instead got '#{response.status}'"
+      #  message = message + "Full response:\n#{response.inspect}"
+      #  raise message
+      #
+      # end
 =begin
       response = parse_header
       unless response[:status].include? "RTSP/1.0 200 OK"
