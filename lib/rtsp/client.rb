@@ -63,6 +63,8 @@ module RTSP
       response = send_rtsp RequestMessages.options(rtsp_url(@uri.host, @stream_path))
       @logger.debug "Recieved response:"
       @logger.debug response
+
+      response
     end
 
     # TODO: update sequence
@@ -75,7 +77,27 @@ module RTSP
       @logger.debug "Recieved response:"
       @logger.debug response.inspect
 
+      @sdp_info = response.body
       response
+    end
+
+    def aggregate_control_track
+      aggregate_control = @sdp_info.attributes.find_all do |a|
+        a[:attribute] == "control"
+      end
+
+      aggregate_control.first[:value]
+    end
+
+    def media_control_tracks
+      tracks = []
+      @sdp_info.media_sections.each do |media_section|
+        media_section[:attributes].each do |a|
+          tracks << a[:value] if a[:attribute] == "control"
+        end
+      end
+
+      tracks
     end
 
     # TODO: update sequence
