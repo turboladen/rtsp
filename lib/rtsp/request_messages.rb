@@ -11,7 +11,7 @@ module RTSP
 
     def self.options(stream, options={})
       options[:sequence] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      message =  "OPTIONS #{stream} #{TSP_VER}\r\n"
+      message =  "OPTIONS #{stream} #{RTSP_VER}\r\n"
       message << "CSeq: #{options[:sequence]}\r\n\r\n"
     end
 
