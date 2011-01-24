@@ -16,7 +16,8 @@ module RTSP
 
     MAX_BYTES_TO_RECEIVE = 1500
 
-    attr_reader :uri
+    attr_reader   :uri
+    attr_accessor :stream_tracks
 
     # @param [String] url URL to the resource to stream.  If no scheme is given, "rtsp"
     # is assumed.  If no port is given, 554 is assumed.  If no path is given, "/stream1"
@@ -60,7 +61,8 @@ module RTSP
     # @return [Hash] The response formatted as a Hash.
     def options
       @logger.debug "Sending OPTIONS to #{@uri.host}#{@stream_path}"
-      response = send_rtsp RequestMessages.options(rtsp_url(@uri.host, @stream_path))
+      #response = send_rtsp RequestMessages.options(rtsp_url(@uri.host, @stream_path))
+      response = send_rtsp RequestMessages.options(rtsp_url)
       @logger.debug "Recieved response:"
       @logger.debug response
 
@@ -81,33 +83,14 @@ module RTSP
       response
     end
 
-    def aggregate_control_track
-      aggregate_control = @sdp_info.attributes.find_all do |a|
-        a[:attribute] == "control"
-      end
-
-      aggregate_control.first[:value]
-    end
-
-    def media_control_tracks
-      tracks = []
-      @sdp_info.media_sections.each do |media_section|
-        media_section[:attributes].each do |a|
-          tracks << a[:value] if a[:attribute] == "control"
-        end
-      end
-
-      tracks
-    end
-
     # TODO: update sequence
     # TODO: get session
     # @return [Hash] The response formatted as a Hash.
     def setup(options={})
       @uri.port = options[:port] if options[:port]
       @logger.debug "Sending SETUP to #{@uri.host}#{@stream_path}"
-      response = send_rtsp RequestMessages.setup(rtsp_url, options)
-      @session = response.session
+      response = send_rtsp RequestMessages.setup(@stream_tracks.first, options)
+      #@session = response.session
 
       @logger.debug "Recieved response:"
       @logger.debug response
@@ -118,9 +101,10 @@ module RTSP
     # TODO: update sequence
     # TODO: get session
     # @return [Hash] The response formatted as a Hash.
-    def play
+    def play(options={})
       @logger.debug "Sending PLAY to #{@uri.host}#{@stream_path}"
-      response = send_rtsp RequestMessages.play(rtsp_url, @session)
+      #response = send_rtsp RequestMessages.play(rtsp_url, @session)
+      response = send_rtsp RequestMessages.play(rtsp_url, options[:session])
       @logger.debug "Recieved response:"
       @logger.debug response
 
@@ -138,6 +122,18 @@ module RTSP
 
         @capture_socket.close
       end
+
+      response
+    end
+
+    def pause(options={})
+      @logger.debug "Sending PAUSE to #{@uri.host}#{@stream_path}"
+      response = send_rtsp RequestMessages.pause(@stream_tracks.first, options[:session],
+        options[:sequence])
+      #@session = response.session
+
+      @logger.debug "Recieved response:"
+      @logger.debug response
 
       response
     end
@@ -168,6 +164,25 @@ module RTSP
     # @param []
     def send_rtsp(message)
       recv if timeout(@timeout) { @socket.send(message, 0) }
+    end
+
+    def aggregate_control_track
+      aggregate_control = @sdp_info.attributes.find_all do |a|
+        a[:attribute] == "control"
+      end
+
+      aggregate_control.first[:value]
+    end
+
+    def media_control_tracks
+      tracks = []
+      @sdp_info.media_sections.each do |media_section|
+        media_section[:attributes].each do |a|
+          tracks << a[:value] if a[:attribute] == "control"
+        end
+      end
+
+      tracks
     end
 
     # @return [Hash]

@@ -1,10 +1,12 @@
 #!/usr/bin/env ruby
 
-require File.expand_path(File.dirname(__FILE__)) + '/../lib/rtsp/client'
+$:.unshift File.expand_path(File.dirname(__FILE__) + '/../lib/')
+require 'rtsp/client'
 require 'tempfile'
 
 # Allows for running an RTSP client
 rtsp_client = RTSP::Client.new "rtsp://64.202.98.91:554/gs.sdp"
+rtsp_client.options
 response = rtsp_client.describe
 puts "code:           #{response.code}"
 puts "message:        #{response.message}"
@@ -16,12 +18,35 @@ puts "date:           #{response.date}"
 puts "expires:        #{response.expires}"
 puts "content_type:   #{response.content_type}"
 puts "content_base:   #{response.content_base}"
+
+# content_base is the base URI for any track to work with
+track = URI.parse response.content_base
+puts rtsp_client.aggregate_control_track
+puts rtsp_client.media_control_tracks
+
+# Add the first media_control_track to the URI
+puts track.path += rtsp_client.media_control_tracks.first 
+puts track.to_s
+
+# Replace the client's list of tracks with the available track
+rtsp_client.stream_tracks[0] = track.to_s
+response = rtsp_client.setup(:destination => 'unicast')
+puts session = response.session
+puts transport_info = response.transport
+
+if response.message == "OK"
+  r = rtsp_client.play(:session => session)
+  cseq = r.cseq
+  sleep 5
+  rtsp_client.pause({ :session => session, :sequence => cseq })
+  rtsp_client.teardown
+end
 exit
-rtsp_client.setup
+
+
 
 #rtsp_client = RTSP::Client.new "192.168.10.219"
 #rtsp_client.setup :port => 8554
-rtsp_client.play
 
 socket = UDPSocket.new
 socket.bind "0.0.0.0", 8554
