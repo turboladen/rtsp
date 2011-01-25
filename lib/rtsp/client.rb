@@ -66,6 +66,8 @@ module RTSP
       @logger.debug "Recieved response:"
       @logger.debug response
 
+      @session = response.cseq
+
       response
     end
 
@@ -79,7 +81,10 @@ module RTSP
       @logger.debug "Recieved response:"
       @logger.debug response.inspect
 
+      @session = response.cseq
       @sdp_info = response.body
+      @content_base = response.content_base
+
       response
     end
 
@@ -90,10 +95,11 @@ module RTSP
       @uri.port = options[:port] if options[:port]
       @logger.debug "Sending SETUP to #{@uri.host}#{@stream_path}"
       response = send_rtsp RequestMessages.setup(@stream_tracks.first, options)
-      #@session = response.session
 
       @logger.debug "Recieved response:"
       @logger.debug response
+
+      @session = response.cseq
 
       response
     end
@@ -103,10 +109,12 @@ module RTSP
     # @return [Hash] The response formatted as a Hash.
     def play(options={})
       @logger.debug "Sending PLAY to #{@uri.host}#{@stream_path}"
-      #response = send_rtsp RequestMessages.play(rtsp_url, @session)
+      session = options[:session] || @session
       response = send_rtsp RequestMessages.play(rtsp_url, options[:session])
+
       @logger.debug "Recieved response:"
       @logger.debug response
+      @session = response.cseq
 
       if @capture_file_path
         begin
@@ -130,17 +138,20 @@ module RTSP
       @logger.debug "Sending PAUSE to #{@uri.host}#{@stream_path}"
       response = send_rtsp RequestMessages.pause(@stream_tracks.first, options[:session],
         options[:sequence])
-      #@session = response.session
 
       @logger.debug "Recieved response:"
       @logger.debug response
+      @session = response.cseq
 
       response
     end
 
     # @return [Hash] The response formatted as a Hash.
     def teardown
+      @logger.debug "Sending TEARDOWN to #{@uri.host}#{@stream_path}"
       response = send_rtsp RequestMessages.teardown(rtsp_url, @session)
+      @logger.debug "Recieved response:"
+      @logger.debug response
       #@socket.close if @socket.open?
       @socket = nil
 
