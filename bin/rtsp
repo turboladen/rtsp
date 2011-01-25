@@ -6,7 +6,13 @@ require 'tempfile'
 
 # Allows for running an RTSP client
 rtsp_client = RTSP::Client.new "rtsp://64.202.98.91:554/gs.sdp"
-rtsp_client.options
+response = rtsp_client.options
+puts "code:           #{response.code}"
+puts "message:        #{response.message}"
+puts "server:         #{response.server}"
+puts "cseq:           #{response.cseq}"
+puts "public:         #{response.public}"
+
 response = rtsp_client.describe
 puts "code:           #{response.code}"
 puts "message:        #{response.message}"
@@ -31,19 +37,35 @@ puts track.to_s
 # Replace the client's list of tracks with the available track
 rtsp_client.stream_tracks[0] = track.to_s
 response = rtsp_client.setup(:destination => 'unicast')
-puts session = response.session
-puts transport_info = response.transport
+puts "code:           #{response.code}"
+puts "message:        #{response.message}" 
+puts "server:         #{response.server}"
+puts "cseq:           #{response.cseq}"
+puts "session:        #{response.session}"
+puts "transport:      #{response.transport}"
+session = response.session
+transport_info = response.transport
 
 if response.message == "OK"
   r = rtsp_client.play(:session => session)
+  puts "code:           #{r.code}"
+  puts "message:        #{r.message}"
+  puts "server:         #{r.server}"
+  puts "cseq:           #{r.cseq}"
+  puts "session:        #{r.session}"
+  puts "range:          #{r.range}"
+  puts "rtp_info:       #{r.rtp_info}"
   cseq = r.cseq
   sleep 5
-  rtsp_client.pause({ :session => session, :sequence => cseq })
-  rtsp_client.teardown
+  #rtsp_client.pause({ :session => session, :sequence => cseq })
+  r2 = rtsp_client.teardown
+  puts "code:           #{r2.code}"
+  puts "message:        #{r2.message}"
+  puts "server:         #{r2.server}"
+  puts "cseq:           #{r2.cseq}"
+  puts "connection:     #{r2.connection}"
 end
 exit
-
-
 
 #rtsp_client = RTSP::Client.new "192.168.10.219"
 #rtsp_client.setup :port => 8554
