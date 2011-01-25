@@ -27,8 +27,6 @@ module RTSP
       message =  "DESCRIBE #{stream} #{RTSP_VER}\r\n"
       message << "CSeq: #{options[:sequence]}\r\n"
       message << "Accept: #{options[:accept]}\r\n\r\n"
-
-      message
     end
 
     # @param [String] stream
