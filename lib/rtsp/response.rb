@@ -50,7 +50,7 @@ module RTSP
       end
 
       if @content_type == "application/sdp"
-        return SDP.parse body
+        SDP.parse body
       end
     end
 
