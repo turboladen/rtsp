@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'hoe'
 require 'yard'
+require 'bundle/setup'
 require File.expand_path(File.dirname(__FILE__)) + '/lib/rtsp'
 
 Hoe.plugin :newgem
