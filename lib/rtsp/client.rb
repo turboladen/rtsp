@@ -62,7 +62,7 @@ module RTSP
     # @return [Hash] The response formatted as a Hash.
     def describe
       @logger.debug "Sending DESCRIBE to #{@server_uri.host}#{@stream_path}"
-      response = send_rtsp(RequestMessages.describe(@server_uri.to_s))
+      response = send_rtsp(RequestMessages.describe("#{@server_uri.to_s}#{@stream_path}"))
 
       @logger.debug "Recieved response:"
       @logger.debug response.inspect
@@ -78,10 +78,9 @@ module RTSP
     # TODO: get session
     # @return [Hash] The response formatted as a Hash.
     def setup(options={})
-      #@server_uri.port = options[:port] if options[:port]
       @logger.debug "Sending SETUP to #{@server_uri.host}#{@stream_path}"
-      #response = send_rtsp RequestMessages.setup("#{@server_uri.to_s}/#{@stream_tracks.first}", options)
-      response = send_rtsp RequestMessages.setup(@content_base, options)
+      setup_url = @content_base || "#{@server_uri.to_s}#{@stream_path}"
+      response = send_rtsp RequestMessages.setup(setup_url, options)
 
       @logger.debug "Recieved response:"
       @logger.debug response
