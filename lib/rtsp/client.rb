@@ -23,10 +23,10 @@ module RTSP
     # is assumed.  If no port is given, 554 is assumed.  If no path is given, "/stream1"
     # is assumed.
     def initialize(url, options={})
-      @uri = URI.parse url
-      fill_out_uri
+      @server_uri = URI.parse url
+      fill_out_server_uri
       @sequence = options[:sequence]           || 0
-      @socket = options[:socket]               || TCPSocket.new(@uri.host, @uri.port)
+      @socket = options[:socket]               || TCPSocket.new(@server_uri.host, @server_uri.port)
       @stream_tracks = options[:stream_tracks] || ["/track1"]
       @timeout = options[:timeout]             || 2
       @session
@@ -42,27 +42,26 @@ module RTSP
     def setup_capture
       @capture_file = File.open(@capture_file_path, File::WRONLY|File::EXCL|File::CREAT)
       @capture_socket = UDPSocket.new
-      @capture_socket.bind "0.0.0.0", @uri.port
+      @capture_socket.bind "0.0.0.0", @server_uri.port
     end
 
     def fill_out_uri
-      @uri.scheme ||= "rtsp"
-      @uri.host = (@uri.host ? @uri.host : @uri.path)
-      @uri.port ||= 554
+      @server_uri.scheme ||= "rtsp"
+      @server_uri.host = (@server_uri.host ? @server_uri.host : @server_uri.path)
+      @server_uri.port ||= 554
 
-      if @uri.path == @uri.host
-        @uri.path = "/stream1"
+      if @server_uri.path == @server_uri.host
+        @server_uri.path = "/stream1"
       else
-        @uri.path
+        @server_uri.path
       end
     end
 
     # TODO: update sequence
     # @return [Hash] The response formatted as a Hash.
     def options
-      @logger.debug "Sending OPTIONS to #{@uri.host}#{@stream_path}"
-      #response = send_rtsp RequestMessages.options(rtsp_url(@uri.host, @stream_path))
-      response = send_rtsp RequestMessages.options(rtsp_url)
+      @logger.debug "Sending OPTIONS to #{@server_uri.host}#{@stream_path}"
+      response = send_rtsp RequestMessages.options(@server_uri.to_s)
       @logger.debug "Recieved response:"
       @logger.debug response
 
@@ -75,8 +74,8 @@ module RTSP
     # TODO: get tracks, IP's, ports, multicast/unicast
     # @return [Hash] The response formatted as a Hash.
     def describe
-      @logger.debug "Sending DESCRIBE to #{@uri.host}#{@stream_path}"
-      response = send_rtsp(RequestMessages.describe(rtsp_url))
+      @logger.debug "Sending DESCRIBE to #{@server_uri.host}#{@stream_path}"
+      response = send_rtsp(RequestMessages.describe(@server_uri.to_s))
 
       @logger.debug "Recieved response:"
       @logger.debug response.inspect
@@ -92,9 +91,10 @@ module RTSP
     # TODO: get session
     # @return [Hash] The response formatted as a Hash.
     def setup(options={})
-      @uri.port = options[:port] if options[:port]
-      @logger.debug "Sending SETUP to #{@uri.host}#{@stream_path}"
-      response = send_rtsp RequestMessages.setup(@stream_tracks.first, options)
+      #@server_uri.port = options[:port] if options[:port]
+      @logger.debug "Sending SETUP to #{@server_uri.host}#{@stream_path}"
+      #response = send_rtsp RequestMessages.setup("#{@server_uri.to_s}/#{@stream_tracks.first}", options)
+      response = send_rtsp RequestMessages.setup(@content_base, options)
 
       @logger.debug "Recieved response:"
       @logger.debug response
@@ -108,9 +108,9 @@ module RTSP
     # TODO: get session
     # @return [Hash] The response formatted as a Hash.
     def play(options={})
-      @logger.debug "Sending PLAY to #{@uri.host}#{@stream_path}"
+      @logger.debug "Sending PLAY to #{@server_uri.host}#{@stream_path}"
       session = options[:session] || @session
-      response = send_rtsp RequestMessages.play(rtsp_url, options[:session])
+      response = send_rtsp RequestMessages.play(@server_uri.to_s, options[:session])
 
       @logger.debug "Recieved response:"
       @logger.debug response
@@ -135,7 +135,7 @@ module RTSP
     end
 
     def pause(options={})
-      @logger.debug "Sending PAUSE to #{@uri.host}#{@stream_path}"
+      @logger.debug "Sending PAUSE to #{@server_uri.host}#{@stream_path}"
       response = send_rtsp RequestMessages.pause(@stream_tracks.first, options[:session],
         options[:sequence])
 
@@ -148,8 +148,8 @@ module RTSP
 
     # @return [Hash] The response formatted as a Hash.
     def teardown
-      @logger.debug "Sending TEARDOWN to #{@uri.host}#{@stream_path}"
-      response = send_rtsp RequestMessages.teardown(rtsp_url, @session)
+      @logger.debug "Sending TEARDOWN to #{@server_uri.host}#{@stream_path}"
+      response = send_rtsp RequestMessages.teardown(@server_uri.to_s, @session)
       @logger.debug "Recieved response:"
       @logger.debug response
       #@socket.close if @socket.open?
@@ -259,10 +259,5 @@ module RTSP
       line
     end
 =end
-
-    # @return [String] The RTSP URL.
-    def rtsp_url
-      @uri.to_s
-    end
   end
 end
