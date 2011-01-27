@@ -19,13 +19,13 @@ module RTSP
     attr_reader   :server_uri
     attr_accessor :stream_tracks
 
-    # @param [String] url URL to the resource to stream.  If no scheme is given, "rtsp"
-    # is assumed.  If no port is given, 554 is assumed.  If no path is given, "/stream1"
-    # is assumed.
+    # @param [String] url URL to the resource to stream.  If no scheme is given,
+    # "rtsp" is assumed.  If no port is given, 554 is assumed.  If no path is
+    # given, "/stream1"is assumed.
     def initialize(url, options={})
-      @server_uri = URI.parse url
-      fill_out_server_uri
-      @socket = options[:socket]               || TCPSocket.new(@server_uri.host, @server_uri.port)
+      @server_uri = build_server_uri(url)
+      @socket = options[:socket]               || TCPSocket.new(@server_uri.host,
+                                                                @server_uri.port)
       @stream_tracks = options[:stream_tracks] || ["/track1"]
       @timeout = options[:timeout]             || 2
       @session
@@ -97,7 +97,8 @@ module RTSP
     def play(options={})
       @logger.debug "Sending PLAY to #{@server_uri.host}#{@stream_path}"
       session = options[:session] || @session
-      response = send_rtsp RequestMessages.play(@server_uri.to_s, options[:session])
+      response = send_rtsp RequestMessages.play(@server_uri.to_s,
+                                                options[:session])
 
       @logger.debug "Recieved response:"
       @logger.debug response
@@ -123,8 +124,9 @@ module RTSP
 
     def pause(options={})
       @logger.debug "Sending PAUSE to #{@server_uri.host}#{@stream_path}"
-      response = send_rtsp RequestMessages.pause(@stream_tracks.first, options[:session],
-        options[:sequence])
+      response = send_rtsp RequestMessages.pause(@stream_tracks.first,
+                                                 options[:session],
+                                                  options[:sequence])
 
       @logger.debug "Recieved response:"
       @logger.debug response
@@ -250,18 +252,21 @@ module RTSP
     # Privates!
     private
 
-    def fill_out_server_uri
-      @server_uri.scheme ||= "rtsp"
-      #@server_uri.host = (@server_uri.host ? @server_uri.host : @server_uri.path)
-      @server_uri.port ||= 554
+    def build_server_uri(url)
+      unless url =~ /^rtsp/
+        url = "rtsp://#{url}"
+      end
+
+      server_uri = URI.parse url
+      server_uri.port ||= 554
 
       #if @server_uri.path == @server_uri.host
       #  @server_uri.path = "/stream1"
       #else
       #  @server_uri.path
       #end
-puts @server_uri.host
-puts @server_uri
+
+      server_uri
     end
   end
 end
