@@ -25,7 +25,6 @@ module RTSP
     def initialize(url, options={})
       @server_uri = URI.parse url
       fill_out_server_uri
-      @sequence = options[:sequence]           || 0
       @socket = options[:socket]               || TCPSocket.new(@server_uri.host, @server_uri.port)
       @stream_tracks = options[:stream_tracks] || ["/track1"]
       @timeout = options[:timeout]             || 2
@@ -253,14 +252,16 @@ module RTSP
 
     def fill_out_server_uri
       @server_uri.scheme ||= "rtsp"
-      @server_uri.host = (@server_uri.host ? @server_uri.host : @server_uri.path)
+      #@server_uri.host = (@server_uri.host ? @server_uri.host : @server_uri.path)
       @server_uri.port ||= 554
 
-      if @server_uri.path == @server_uri.host
-        @server_uri.path = "/stream1"
-      else
-        @server_uri.path
-      end
+      #if @server_uri.path == @server_uri.host
+      #  @server_uri.path = "/stream1"
+      #else
+      #  @server_uri.path
+      #end
+puts @server_uri.host
+puts @server_uri
     end
   end
 end
