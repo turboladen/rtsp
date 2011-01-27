@@ -16,7 +16,7 @@ module RTSP
 
     MAX_BYTES_TO_RECEIVE = 1500
 
-    attr_reader   :uri
+    attr_reader   :server_uri
     attr_accessor :stream_tracks
 
     # @param [String] url URL to the resource to stream.  If no scheme is given, "rtsp"
@@ -43,18 +43,6 @@ module RTSP
       @capture_file = File.open(@capture_file_path, File::WRONLY|File::EXCL|File::CREAT)
       @capture_socket = UDPSocket.new
       @capture_socket.bind "0.0.0.0", @server_uri.port
-    end
-
-    def fill_out_uri
-      @server_uri.scheme ||= "rtsp"
-      @server_uri.host = (@server_uri.host ? @server_uri.host : @server_uri.path)
-      @server_uri.port ||= 554
-
-      if @server_uri.path == @server_uri.host
-        @server_uri.path = "/stream1"
-      else
-        @server_uri.path
-      end
     end
 
     # TODO: update sequence
@@ -259,5 +247,20 @@ module RTSP
       line
     end
 =end
+    #--------------------------------------------------------------------------
+    # Privates!
+    private
+
+    def fill_out_server_uri
+      @server_uri.scheme ||= "rtsp"
+      @server_uri.host = (@server_uri.host ? @server_uri.host : @server_uri.path)
+      @server_uri.port ||= 554
+
+      if @server_uri.path == @server_uri.host
+        @server_uri.path = "/stream1"
+      else
+        @server_uri.path
+      end
+    end
   end
 end

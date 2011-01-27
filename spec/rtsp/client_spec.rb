@@ -8,10 +8,10 @@ describe RTSP::Client do
     end
 
     it "with scheme, IP, port, and path" do
-      @rtsp_client.uri.scheme.should == "rtsp"
-      @rtsp_client.uri.host.should == "64.202.98.91"
-      @rtsp_client.uri.port.should == 554
-      @rtsp_client.uri.path.should == "/sa.sdp"
+      @rtsp_client.server_uri.scheme.should == "rtsp"
+      @rtsp_client.server_uri.host.should == "64.202.98.91"
+      @rtsp_client.server_uri.port.should == 554
+      @rtsp_client.server_uri.path.should == "/sa.sdp"
     end
   end
 end
