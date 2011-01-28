@@ -1,6 +1,12 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 require 'rtsp/response'
 
+OPTIONS_RESPONSE = %Q{ RTSP/1.0 200 OK\r\n
+CSeq: 1\r\n
+Date: Fri, Jan 28 2011 01:14:42 GMT\r\n
+Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r\n
+}
+
 DESCRIBE_RESPONSE = %Q{ RTSP/1.0 200 OK\r\n
 Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )\r\n
 Cseq: 1\r\n
@@ -31,6 +37,28 @@ a=control:trackID=1
 }
 
 describe RTSP::Response do
+  context "options" do
+    before do
+      @response = RTSP::Response.new OPTIONS_RESPONSE
+    end
+
+    it "returns a 200 code" do
+      @response.code.should == 200
+    end
+
+    it "returns 'OK' message" do
+      @response.message.should == 'OK'
+    end
+
+    it "returns the date header" do
+      @response.date.should == 'Fri, Jan 28 2011 01:14:42 GMT'
+    end
+
+    it "returns the supported methods in the Public header" do
+      @response.public.should == 'OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE'
+    end
+  end
+
   context "describe" do
     before do
       @response = RTSP::Response.new DESCRIBE_RESPONSE

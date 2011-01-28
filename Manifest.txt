@@ -1,11 +1,14 @@
 .autotest
+.infinity_test
+.rspec
 Gemfile
+Gemfile.lock
 History.txt
 Manifest.txt
 PostInstall.txt
 README.rdoc
 Rakefile
-bin/rtsp_client
+bin/rtsp
 features/step_definitions/stream_steps.rb
 features/stream.feature
 features/support/common.rb
@@ -14,5 +17,10 @@ features/support/world.rb
 lib/rtsp.rb
 lib/rtsp/client.rb
 lib/rtsp/request_messages.rb
-spec/rtsp_client_spec.rb
+lib/rtsp/response.rb
+lib/rtsp/status_code.rb
+spec/.rspec
+spec/rtsp/client_spec.rb
+spec/rtsp/response_spec.rb
+spec/rtsp_spec.rb
 spec/spec_helper.rb
