@@ -30,6 +30,7 @@ module RTSP
       @timeout = options[:timeout]             || 2
       @session
       @logger = Logger.new(STDOUT)
+      @logger.datetime_format = "%b %d %T"
       
       if options[:capture_file_path] && options[:capture_duration]
         @capture_file_path = options[:capture_file_path]
