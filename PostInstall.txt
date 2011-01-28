@@ -1,5 +1,7 @@
 
 Thanks for installing rtsp.  We hope you get some good streaming out of it!
 
-Take a look at the README to help get started.
+Take a look at the README to help get you started.
 
+NOTE: This is only an alpha version!!  It is not well tested and doesn't have
+much error handling built in yet.
