@@ -10,6 +10,7 @@ module RTSP
     
     def initialize(response)
       response_array = response.split "\r\n\r\n"
+
       if response_array.empty?
         response_array = response.split "\n\n"
       end
