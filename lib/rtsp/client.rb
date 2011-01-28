@@ -76,6 +76,7 @@ module RTSP
 
     # TODO: update sequence
     # TODO: get session
+    # TODO: parse Transport header (http://tools.ietf.org/html/rfc2326#section-12.39)
     # @return [Hash] The response formatted as a Hash.
     def setup(options={})
       @logger.debug "Sending SETUP to #{@server_uri.host}#{@stream_path}"

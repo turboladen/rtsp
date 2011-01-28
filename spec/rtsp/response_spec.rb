@@ -36,6 +36,26 @@ a=fmtp:96 cpresent=0;config=400027200000
 a=control:trackID=1
 }
 
+SETUP_RESPONSE = %Q{ RTSP/1.0 200 OK\r\n
+CSeq: 1\r\n
+Date: Fri, Jan 28 2011 01:14:42 GMT\r\n
+Transport: RTP/AVP;unicast;destination=10.221.222.186;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701\r\n
+Session: 118\r\n
+}
+
+PLAY_RESPONSE = %Q{ RTSP/1.0 200 OK\r\n
+CSeq: 1\r\n
+Date: Fri, Jan 28 2011 01:14:42 GMT\r\n
+Range: npt=0.000-\r\n
+Session: 118\r\n
+RTP-Info: url=rtsp://10.221.222.235/stream1/track1;seq=17320;rtptime=400880602\r\n
+}
+
+TEARDOWN_RESPONSE = %Q{ RTSP/1.0 200 OK\r\n
+CSeq: 1\r\n
+Date: Fri, Jan 28 2011 01:14:47 GMT\r\n
+}
+
 describe RTSP::Response do
   context "options" do
     before do
@@ -90,6 +110,80 @@ describe RTSP::Response do
       sdp_info = @response.body
       sdp_info.protocol_version.should == "0"
       sdp_info.name.should == "Groove Salad from SomaFM [aacPlus]"
+    end
+  end
+
+  context "setup" do
+    before do
+      @response = RTSP::Response.new SETUP_RESPONSE
+    end
+
+    it "returns a 200 code" do
+      @response.code.should == 200
+    end
+
+    it "returns 'OK' message" do
+      @response.message.should == 'OK'
+    end
+
+    it "returns the date header" do
+      @response.date.should == 'Fri, Jan 28 2011 01:14:42 GMT'
+    end
+
+    it "returns the supported transport" do
+      @response.transport.should == 'RTP/AVP;unicast;destination=10.221.222.186;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701'
+    end
+
+    it "returns the session" do
+      @response.session.should == '118'
+    end
+  end
+
+  context "play" do
+    before do
+      @response = RTSP::Response.new PLAY_RESPONSE
+    end
+
+    it "returns a 200 code" do
+      @response.code.should == 200
+    end
+
+    it "returns 'OK' message" do
+      @response.message.should == 'OK'
+    end
+
+    it "returns the date header" do
+      @response.date.should == 'Fri, Jan 28 2011 01:14:42 GMT'
+    end
+
+    it "returns the supported range" do
+      @response.range.should == 'npt=0.000-'
+    end
+
+    it "returns the session" do
+      @response.session.should == '118'
+    end
+
+    it "returns the rtp_info" do
+      @response.rtp_info.should == 'url=rtsp://10.221.222.235/stream1/track1;seq=17320;rtptime=400880602'
+    end
+  end
+
+  context "teardown" do
+    before do
+      @response = RTSP::Response.new TEARDOWN_RESPONSE
+    end
+
+    it "returns a 200 code" do
+      @response.code.should == 200
+    end
+
+    it "returns 'OK' message" do
+      @response.message.should == 'OK'
+    end
+
+    it "returns the date header" do
+      @response.date.should == 'Fri, Jan 28 2011 01:14:47 GMT'
     end
   end
 end
