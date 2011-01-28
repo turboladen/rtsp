@@ -19,11 +19,11 @@ module RTSP
     attr_reader   :server_uri
     attr_accessor :stream_tracks
 
-    # @param [String] url URL to the resource to stream.  If no scheme is given,
+    # @param [String] rtsp_url URL to the resource to stream.  If no scheme is given,
     # "rtsp" is assumed.  If no port is given, 554 is assumed.  If no path is
     # given, "/stream1"is assumed.
-    def initialize(url, options={})
-      @server_uri = build_server_uri(url)
+    def initialize(rtsp_url, options={})
+      @server_uri = build_server_uri(rtsp_url)
       @socket = options[:socket]               || TCPSocket.new(@server_uri.host,
                                                                 @server_uri.port)
       @stream_tracks = options[:stream_tracks] || ["/track1"]

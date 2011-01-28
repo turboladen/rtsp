@@ -1,27 +1,55 @@
 #!/usr/bin/env ruby
 
+require 'rubygems'
+require 'tempfile'
+require 'optparse'
+
 $:.unshift File.expand_path(File.dirname(__FILE__) + '/../lib/')
 require 'rtsp/client'
-require 'tempfile'
+
+options = {}
+
+optparse = OptionParser.new do |opts|
+  opts.banner = "Usage: #{__FILE__} [options] url"
+
+  options[:debug] = false
+  opts.on('-d', '--debug', "Turn on debug logging. (not hooked up!)") do
+    options[:debug] = true
+  end
+
+  opts.on('--show-tracks', "Show available tracks from the given URL.") do |url|
+    rtsp_client = RTSP::Client.new(url)
+    puts rtsp_client.stream_tracks
+  end
+
+  opts.on('-h', '--help', "You're looking at it.") do
+    puts opts
+    exit
+  end
+end
+
+optparse.parse!
 
 # Allows for running an RTSP client
-rtsp_client = RTSP::Client.new "rtsp://64.202.98.91:554/gs.sdp"
+url = ARGV.first || "rtsp://64.202.98.91:554/sa.sdp"
+
+rtsp_client = RTSP::Client.new(url)
 response = rtsp_client.options
 puts "code:           #{response.code}"
 puts "message:        #{response.message}"
-puts "server:         #{response.server}"
+#puts "server:         #{response.server}"
 puts "cseq:           #{response.cseq}"
 puts "public:         #{response.public}"
 
 response = rtsp_client.describe
 puts "code:           #{response.code}"
 puts "message:        #{response.message}"
-puts "server:         #{response.server}"
+puts "server:         #{response.server}" if response.respond_to? "server"
 puts "cseq:           #{response.cseq}"
-puts "cache_control:  #{response.cache_control}"
+puts "cache_control:  #{response.cache_control}" if response.respond_to? "cache_control"
 puts "content_length: #{response.content_length}"
 puts "date:           #{response.date}"
-puts "expires:        #{response.expires}"
+puts "expires:        #{response.expires}" if response.respond_to? "expires"
 puts "content_type:   #{response.content_type}"
 puts "content_base:   #{response.content_base}"
 
@@ -39,7 +67,7 @@ rtsp_client.stream_tracks[0] = track.to_s
 response = rtsp_client.setup(:destination => 'unicast')
 puts "code:           #{response.code}"
 puts "message:        #{response.message}" 
-puts "server:         #{response.server}"
+puts "server:         #{response.server}" if response.respond_to? "server"
 puts "cseq:           #{response.cseq}"
 puts "session:        #{response.session}"
 puts "transport:      #{response.transport}"
@@ -50,7 +78,7 @@ if response.message == "OK"
   r = rtsp_client.play(:session => session)
   puts "code:           #{r.code}"
   puts "message:        #{r.message}"
-  puts "server:         #{r.server}"
+  puts "server:         #{r.server}" if response.respond_to? "server"
   puts "cseq:           #{r.cseq}"
   puts "session:        #{r.session}"
   puts "range:          #{r.range}"
@@ -61,9 +89,9 @@ if response.message == "OK"
   r2 = rtsp_client.teardown
   puts "code:           #{r2.code}"
   puts "message:        #{r2.message}"
-  puts "server:         #{r2.server}"
+  puts "server:         #{r2.server}" if r2.respond_to? "server"
   puts "cseq:           #{r2.cseq}"
-  puts "connection:     #{r2.connection}"
+  puts "connection:     #{r2.connection}" if r2.respond_to? "connection"
 end
 exit
 
