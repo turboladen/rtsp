@@ -1,5 +1,8 @@
 module RTSP
-  # This class defines the basic wrappers for RTSP methods.
+
+  # This module defines the template strings that make up RTSP methods.  Other
+  # objects should use these for building request messages to communicate in
+  # RTSP.
   module RequestMessages
     RTSP_VER = "RTSP/1.0"
     RTSP_ACCEPT_TYPE = "application/sdp"
