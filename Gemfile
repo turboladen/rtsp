@@ -1,10 +1,10 @@
 source :rubygems
 
-gem "net-ntp", ">=2.0.0", :require => "net/ntp"
 gem 'sdp', '~> 0.2.0'
 
 group :development do
   gem "rspec", '~> 2.4.0'
+  gem "hoe-yard", :require => "hoe/yard"
   gem 'yard', '~> 0.6.0'
   gem 'infinity_test'
   gem 'metric_fu'

@@ -1,7 +1,8 @@
-require 'rubygems'
+require 'rubygems' if RUBY_VERSION < "1.9.0"
 require 'hoe'
 require 'hoe/yard'
 require 'yard'
+require 'newgem/tasks'
 require 'bundler/setup'
 require File.expand_path(File.dirname(__FILE__)) + '/lib/rtsp'
 
@@ -33,11 +34,11 @@ Hoe.spec 'rtsp' do
   self.history_file   = 'History.txt'
   self.rspec_options  += ['--color', '--format', 'documentation']
   self.extra_deps     += [
-      ['']
+      ['sdp', '~>0.2.0']
   ]
   self.extra_dev_deps += [
       ['rspec', ">=2.0.1"],
-      ['yard', '>=0.6.3'],
+      ['yard', '>=0.6.4'],
       ['cucumber'],
       ['hoe-yard', '>=0.1.2']
   ]
