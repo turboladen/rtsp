@@ -270,4 +270,35 @@ module RTSP
       server_uri
     end
   end
+
+  # Override Ruby's logger message format to provide our own.  Also, output
+  # to STDOUT if not already outputting there.  Also, log to syslog server
+  # if configured.
+  #
+  # @param [String] severity Describes the log level (ERROR, INFO, ...)
+  # @param [DateTime] datetime The timestamp of the message to be logged
+  # @param [String] progname The name of the program that is logging
+  # @param [String] message The actual log message
+  # @return [String] The formatted message with ANSI codes stripped.
+  def format_message(severity, datetime, progname, message)
+    prog_name = " <#{progname}>" if progname
+
+    # Use the constant's setting unless we decide to redefine datetime_format.
+    datetime_format = DATETIME_FORMAT unless datetime_format
+    datetime = datetime.strftime(datetime_format).to_s
+
+    outstr = "[#{datetime}]:#{COLOR_MAP[severity]}:#{prog_name} #{message}\n"
+    puts outstr unless @log_file_location == STDOUT
+
+    if @log_server_status
+      server_log(severity, datetime, progname, message)
+    end
+
+    # Delete all ANSI codes in returned String.
+    if @log_file_location == STDOUT
+      outstr
+    else
+      outstr.gsub(/\x1B\[[0-9;]*[mK]/, '')
+    end
+  end
 end
