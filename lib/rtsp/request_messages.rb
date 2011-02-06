@@ -19,7 +19,8 @@ module RTSP
     # @return [String] The formatted request message to send.
     def self.options(stream, sequence=RTSP_DEFAULT_SEQUENCE_NUMBER)
       message =  "OPTIONS #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{sequence}\r\n\r\n"
+      message << "CSeq: #{sequence}\r\n"
+      message << "\r\n"
     end
 
     # See section 10.2
@@ -38,7 +39,8 @@ module RTSP
 
       message =  "DESCRIBE #{stream} #{RTSP_VER}\r\n"
       message << "CSeq: #{options[:sequence]}\r\n"
-      message << "Accept: #{accepts}\r\n\r\n"
+      message << "Accept: #{accepts}\r\n"
+      message << "\r\n"
     end
 
     # @param [String] stream
@@ -53,6 +55,7 @@ module RTSP
       message << "Session: #{session}"
       message << "Content-Type: #{options[:content_type]}\r\n"
       message << "Content-Length: #{options[:content_length]}\r\n"
+      message << "\r\n"
     end
 
     # @return [String] The formatted request message to send.
@@ -65,7 +68,8 @@ module RTSP
       message << "CSeq: #{options[:sequence]}\r\n"
       message << "Transport: #{options[:transport]};"
       message <<            "#{options[:destination]};"
-      message <<            "client_port=#{options[:port]}-#{options[:port]+1}\r\n\r\n"
+      message <<            "client_port=#{options[:port]}-#{options[:port]+1}\r\n"
+      message << "\r\n"
     end
 
     # @return [String] The formatted request message to send.
@@ -75,7 +79,8 @@ module RTSP
       message =  "PLAY #{stream} #{RTSP_VER}\r\n"
       message << "CSeq: #{options[:sequence]}\r\n"
       message << "Session: #{session}\r\n"
-      message << "Range: npt=#{options[:npt]}\r\n\r\n"
+      message << "Range: npt=#{options[:npt]}\r\n"
+      message << "\r\n"
     end
 
     # @return [String] The formatted request message to send.
@@ -83,6 +88,7 @@ module RTSP
       message =  "PAUSE #{stream} #{RTSP_VER}\r\n"
       message << "CSeq: #{sequence}\r\n"
       message << "Session: #{session}\r\n"
+      message << "\r\n"
     end
 
     # @return [String] The formatted request message to send.
@@ -90,7 +96,8 @@ module RTSP
       options[:sequence] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
       message =  "TEARDOWN #{stream} #{RTSP_VER}\r\n"
       message << "CSeq: #{options[:sequence]}\r\n"
-      message << "Session: #{session}\r\n\r\n"
+      message << "Session: #{session}\r\n"
+      message << "\r\n"
     end
 
     # @return [String] The formatted request message to send.
@@ -99,7 +106,8 @@ module RTSP
       message << "CSeq: #{options[:sequence]}\r\n"
       message << "Content-Type: #{options[:content_type]}\r\n"
       message << "Content-Length: #{options[:content_length]}\r\n"
-      message << "Session: #{session}\r\n\r\n"
+      message << "Session: #{session}\r\n"
+      message << "\r\n"
     end
 
     # @return [String] The formatted request message to send.
@@ -108,6 +116,7 @@ module RTSP
       message << "CSeq: #{options[:sequence]}\r\n"
       message << "Content-Type: #{options[:content_type]}\r\n"
       message << "Content-Length: #{options[:content_length]}\r\n"
+      message << "\r\n"
     end
 
     # @return [String] The formatted request message to send.
@@ -115,7 +124,8 @@ module RTSP
       message =  "RECORD #{stream} #{RTSP_VER}\r\n"
       message << "CSeq: #{options[:sequence]}\r\n"
       message << "Session: #{session}\r\n\r\n"
-      message << "Conference: #{options[:conference]}\r\n\r\n"
+      message << "Conference: #{options[:conference]}\r\n"
+      message << "\r\n"
     end
   end
 end
