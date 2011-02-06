@@ -1,3 +1,9 @@
+PATH
+  remote: .
+  specs:
+    rtsp (0.0.1.alpha)
+      sdp (~> 0.2.0)
+
 GEM
   remote: http://rubygems.org/
   specs:
@@ -27,17 +33,20 @@ GEM
     flog (2.5.0)
       ruby_parser (~> 2.0)
       sexp_processor (~> 3.0)
+    git (1.2.5)
     haml (3.0.25)
     hirb (0.3.6)
-    hoe (2.8.0)
+    hoe (2.9.1)
       rake (>= 0.8.7)
-    hoe-yard (0.1.2)
-      yard (>= 0.2.3.1)
     i18n (0.5.0)
     infinity_test (1.0.2)
       notifiers (>= 1.1.0)
       watchr (>= 0.7)
-    json_pure (1.4.6)
+    jeweler (1.5.2)
+      bundler (~> 1.0.0)
+      git (>= 1.2.5)
+      rake
+    json_pure (1.5.1)
     main (4.4.0)
       arrayfields (>= 4.7.4)
       fattr (>= 2.1.0)
@@ -53,9 +62,12 @@ GEM
       reek (>= 1.2.6)
       roodi (>= 2.1.0)
     notifiers (1.1.0)
+    ore-core (0.1.1)
+    ore-tasks (0.3.0)
+      ore-core (~> 0.1.0)
     parslet (1.0.1)
       blankslate (~> 2.1.2.3)
-    rails_best_practices (0.6.5)
+    rails_best_practices (0.6.6)
       activesupport
       colored (~> 1.2)
       erubis (~> 2.6.6)
@@ -95,10 +107,15 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  bundler (~> 1.0.0)
   code_statistics (~> 0.2.13)
-  hoe-yard
   infinity_test
+  jeweler (~> 1.5.0)
   metric_fu
+  ore-core (~> 0.1.0)
+  ore-tasks (~> 0.3.0)
+  rake (~> 0.8.7)
   rspec (~> 2.4.0)
+  rtsp!
   sdp (~> 0.2.0)
   yard (~> 0.6.0)
