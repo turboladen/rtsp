@@ -22,7 +22,7 @@ describe RTSP::RequestMessages do
   end
 
   context "should build a DESCRIBE message" do
-    it "with default sequence and accept value" do
+    it "with default sequence and accept values" do
       message = RTSP::RequestMessages.describe @stream
       message.should == "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Accept: application/sdp\r\n\r\n"
     end
@@ -31,6 +31,13 @@ describe RTSP::RequestMessages do
       @options[:accept] = ['application/sdp', 'application/rtsl']
       message = RTSP::RequestMessages.describe(@stream, @options)
       message.should == "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Accept: application/sdp, application/rtsl\r\n\r\n"
+    end
+
+    it "with passed-in sequence and accept values" do
+      @options[:accept] = ['application/sdp', 'application/rtsl']
+      @options[:sequence] = 2345
+      message = RTSP::RequestMessages.describe(@stream, @options)
+      message.should == "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\Accept: application/sdp, application/rtsl\r\n\r\n"
     end
   end
 end
