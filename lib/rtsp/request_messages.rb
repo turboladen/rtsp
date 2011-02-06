@@ -37,6 +37,7 @@ module RTSP
       options[:sequence] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
       options[:accept]   ||= [RTSP_ACCEPT_TYPE]
 
+      # Comma-separate these
       accepts = options[:accept] * ", "
 
       message =  "DESCRIBE #{stream} #{RTSP_VER}\r\n"
