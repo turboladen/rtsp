@@ -46,6 +46,8 @@ module RTSP
       message << "\r\n"
     end
 
+    # ANNOUNCE request message as defined in section 10.3 of the RFC doc.
+    #
     # @param [String] stream
     # @param [Number] session
     # @param [Hash] options
@@ -69,17 +71,34 @@ module RTSP
       message << sdp.to_s
     end
 
+    # SETUP request message as defined in section 10.4 of the RFC doc.
+    #
+    # @param [String] track Track to prep to stream.
+    # @param [Hash] options
+    # @option options [Fixnum] :sequence Defaults to 1.
+    # @option options [String] :transport Defaults to RTP/AVP.
+    # @option options [String] :routing Defaults to unicast.
+    # @option options [Fixnum] :client_port Defaults to 9000.
+    # @option options [Fixnum] :server_port
     # @return [String] The formatted request message to send.
     def self.setup(track, options={})
-      options[:sequence]    ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      options[:transport]   ||= RTP_DEFAULT_PACKET_TYPE
-      options[:port]        ||= RTP_DEFAULT_PORT
-      options[:routing] ||= RTP_DEFAULT_ROUTING
+      sequence =        options[:sequence]    || RTSP_DEFAULT_SEQUENCE_NUMBER
+      transport_spec =  options[:transport_spec]   || RTP_DEFAULT_PACKET_TYPE
+      routing =         options[:routing]     || RTP_DEFAULT_ROUTING
+      destination =     options[:destination] || nil
+      client_port =     options[:client_port] || RTP_DEFAULT_PORT
+      server_port =     options[:server_port] || nil
+      port =            options[:port]        || nil
+
       message =  "SETUP #{track} #{RTSP_VER}\r\n"
-      message << "CSeq: #{options[:sequence]}\r\n"
-      message << "Transport: #{options[:transport]};"
-      message <<            "#{options[:destination]};"
-      message <<            "client_port=#{options[:port]}-#{options[:port]+1}\r\n"
+      message << "CSeq: #{sequence}\r\n"
+      message << "Transport: #{transport_spec};"
+      message << "#{destination};"          if destination
+      message << "#{routing};"
+      message << "port=#{port}-#{port + 1}" if port
+      message << "client_port=#{client_port}-#{client_port + 1}"
+      message << ";server_port=#{server_port}-#{server_port + 1}" if server_port
+      message << "\r\n"
       message << "\r\n"
     end
 
