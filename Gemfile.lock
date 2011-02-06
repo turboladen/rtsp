@@ -97,7 +97,7 @@ GEM
       sexp_processor (~> 3.0)
     ruby_parser (2.0.5)
       sexp_processor (~> 3.0)
-    sdp (0.2.0)
+    sdp (0.2.1)
       parslet (~> 1.0.0)
     sexp_processor (3.0.5)
     watchr (0.7)
@@ -117,5 +117,5 @@ DEPENDENCIES
   rake (~> 0.8.7)
   rspec (~> 2.4.0)
   rtsp!
-  sdp (~> 0.2.0)
+  sdp (~> 0.2.1)
   yard (~> 0.6.0)

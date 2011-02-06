@@ -1,3 +1,5 @@
+require 'sdp'
+
 module RTSP
 
   # This module defines the template strings that make up RTSP methods.  Other
@@ -28,8 +30,8 @@ module RTSP
     # @param [String] stream
     # @param [Hash] options
     # @option options [Number] sequence
-    # @option options [Array] accept The list of description formats the client
-    # understands.
+    # @option options [Array<String>] accept The list of description formats the
+    # client understands.
     # @return [String] The formatted request message to send.
     def self.describe(stream, options={})
       options[:sequence] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
@@ -45,17 +47,25 @@ module RTSP
 
     # @param [String] stream
     # @param [Number] session
-    # @param [Hash] 
+    # @param [Hash] options
+    # @option options [Fixnum] :sequence The sequence number to use.
+    # @option options [String] :content_type Defaults to 'application/sdp'.
+    # @option options [SDP::Description] The SDP description to announce.
     # @return [String] The formatted request message to send.
     def self.announce(stream, session, options={})
-      options[:content_type] ||= RTSP_ACCEPT_TYPE
+      sequence =        options[:sequence]      || RTSP_DEFAULT_SEQUENCE_NUMBER
+      content_type =    options[:content_type]  || RTSP_ACCEPT_TYPE
+      sdp =             options[:sdp]           || SDP::Description.new
+      content_length =  sdp.to_s.length         || 0
+
       message =  "ANNOUNCE #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{options[:sequence]}\r\n"
-      message << "Date: "
-      message << "Session: #{session}"
-      message << "Content-Type: #{options[:content_type]}\r\n"
-      message << "Content-Length: #{options[:content_length]}\r\n"
+      message << "CSeq: #{sequence}\r\n"
+      message << "Date: \r\n"
+      message << "Session: #{session}\r\n"
+      message << "Content-Type: #{content_type}\r\n"
+      message << "Content-Length: #{content_length}\r\n"
       message << "\r\n"
+      message << sdp.to_s
     end
 
     # @return [String] The formatted request message to send.
