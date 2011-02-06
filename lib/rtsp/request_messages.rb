@@ -27,14 +27,18 @@ module RTSP
     # @param [String] stream
     # @param [Hash] options
     # @option options [Number] sequence
-    # @option options [Array]
+    # @option options [Array] accept The list of description formats the client
+    # understands.
     # @return [String] The formatted request message to send.
     def self.describe(stream, options={})
       options[:sequence] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      options[:accept]   ||= RTSP_ACCEPT_TYPE
+      options[:accept]   ||= [RTSP_ACCEPT_TYPE]
+
+      accepts = options[:accept] * ", "
+
       message =  "DESCRIBE #{stream} #{RTSP_VER}\r\n"
       message << "CSeq: #{options[:sequence]}\r\n"
-      message << "Accept: #{options[:accept]}\r\n\r\n"
+      message << "Accept: #{accepts}\r\n\r\n"
     end
 
     # @param [String] stream
