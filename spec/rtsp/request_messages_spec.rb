@@ -133,13 +133,35 @@ describe RTSP::RequestMessages do
     end
   end
 
-  it "turns a Hash of headers in to strings" do
-    header = { :range => { :npt => "0.000-" } }
-    RTSP::RequestMessages.module_eval do
-      module_function(:stringify_headers)
-      public(:stringify_headers)
+  context "#stringify_headers turns a Hash into an Array of header strings" do
+    before do
+      @requester = Object.new
+      @requester.extend RTSP::RequestMessages
     end
-    strings = RTSP::RequestMessages.stringify_headers(header)
-    strings.first.should == "Range: npt=0.000-"
+
+    it "single header, non-hyphenated name, hash value" do
+      header = { :range => { :npt => "0.000-" } }
+
+      strings = @requester.stringify_headers(header)
+      strings.first.should == "Range: npt=0.000-"
+    end
+
+    it "single header, hyphenated, non-hash value" do
+      header = { :if_modified_since => "Sat, 29 Oct 1994 19:43:31 GMT" }
+
+      strings = @requester.stringify_headers(header)
+      strings.first.should == "If-Modified-Since: Sat, 29 Oct 1994 19:43:31 GMT"
+    end
+
+    it "two headers, mixed hyphenated, array & hash values" do
+      headers = {
+        :cache_control => ["no-cache", { :max_age => 12345 }],
+        :content_type => ['application/sdp', 'application/x-rtsp-mh']
+      }
+
+      strings = @requester.stringify_headers(headers)
+      strings.first.should == "Cache-Control: no-cache;max_age=12345"
+      strings.last.should == "Content-Type: application/sdp, application/x-rtsp-mh"
+    end
   end
 end

@@ -172,20 +172,52 @@ module RTSP
       message << "Conference: #{options[:conference]}\r\n"
       message << "\r\n"
     end
-  end
 
-  def stringify_headers headers
-    headers.inject([]) do |result, (key, value)|
-      key = key.to_s.split(/_/).map { |header| header.capitalize }.join('-')
+    # Turns headers from Hash(es) into an Array of Strings, where each element
+    # is a String in the form: [Header Type]: value(s).
+    #
+    # @param [Hash] headers The headers to stringify.
+    # @return [Array<String>]
+    def stringify_headers headers
+      headers.inject([]) do |result, (key, value)|
+        header_name = key.to_s.split(/_/).map { |header| header.capitalize }.join('-')
 
-      if value.is_a? Hash
-        values = value.inject("") { |values, (k, v)| values << "#{k}=#{v}"; values }
-        result << "#{key}: #{values}"
-      else
-        result << "#{key}: #{value}"
+        if value.is_a?(Hash) || value.is_a?(Array)
+          if header_name == "Content-Type"
+            values = stringify_values(value, ", ")
+          else
+            values = stringify_values(value)
+          end
+
+          result << "#{header_name}: #{values}"
+        else
+          result << "#{header_name}: #{value}"
+        end
+
+        result
+      end
+    end
+
+    # Turns header values into a single string.
+    #
+    # @param [] values The header values to stringify.
+    # @param [String] separator The character to use to separate multiple values
+    # that define a header.
+    # @return [String] The header values as a single string.
+    def stringify_values(values, separator=";")
+      result = values.inject("") do |values_string, (header_field, header_field_value)|
+        if header_field.is_a? Symbol
+          values_string << "#{header_field}=#{header_field_value}"
+        elsif header_field.is_a? Hash
+          values_string << stringify_values(header_field)
+        else
+          values_string << header_field.to_s
+        end
+
+        values_string + separator
       end
 
-      result
+      result.sub!(/#{separator}$/, '') if result.end_with? separator
     end
   end
 end
