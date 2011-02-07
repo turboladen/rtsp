@@ -122,9 +122,24 @@ describe RTSP::RequestMessages do
   end
 
   context "should build a PLAY message" do
-    it "with default sequence, transport, client_port, and routing values" do
-      message = RTSP::RequestMessages.setup(@stream)
-      message.should == "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Transport: RTP/AVP;unicast;client_port=9000-9001\r\n\r\n"
+    it "with default sequence, session, and range values" do
+      message = RTSP::RequestMessages.play(@stream)
+      message.should == "PLAY rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Session: 12345\r\nRange: npt=0.000-\r\n\r\n"
     end
+
+    it "with default sequence and session values" do
+      message = RTSP::RequestMessages.play @stream, :range => { :npt => "0.000-1.234" }
+      message.should == "PLAY rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Session: 12345\r\nRange: npt=0.000-1.234\r\n\r\n"
+    end
+  end
+
+  it "turns a Hash of headers in to strings" do
+    header = { :range => { :npt => "0.000-" } }
+    RTSP::RequestMessages.module_eval do
+      module_function(:stringify_headers)
+      public(:stringify_headers)
+    end
+    strings = RTSP::RequestMessages.stringify_headers(header)
+    strings.first.should == "Range: npt=0.000-"
   end
 end

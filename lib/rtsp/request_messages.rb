@@ -102,14 +102,29 @@ module RTSP
       message << "\r\n"
     end
 
+    # PLAY request message as defined in section 10.5 of the RFC doc.
+    #
+    # @param [String] stream
+    # @param [Fixnum] session
+    # @param [Hash] options
+    # @option options [Fixnum] :sequence Defaults to 1.
+    # @option options [Fixnum] :npt ntp-range for the Range header.
     # @return [String] The formatted request message to send.
-    def self.play(stream, session, options={})
-      options[:sequence] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      options[:npt] ||= RTSP_DEFAULT_NPT
+    def self.play(stream, headers={})
+      session =   headers[:session]
+      sequence =  headers[:sequence]  || RTSP_DEFAULT_SEQUENCE_NUMBER
+      range = ""
+      npt =       headers[:npt]       || RTSP_DEFAULT_NPT
+      utc =       options[:utc]       || nil
+      smpte =     options[:smtpe]     || nil
+
       message =  "PLAY #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{options[:sequence]}\r\n"
+      message << "CSeq: #{sequence}\r\n"
       message << "Session: #{session}\r\n"
-      message << "Range: npt=#{options[:npt]}\r\n"
+      message << "Range: "
+      message << "npt=#{npt}\r\n" if npt
+      message << "utc=#{utc}\r\n" if utc
+      message << "smpte=#{smpte}\r\n" if smpte
       message << "\r\n"
     end
 
@@ -156,6 +171,21 @@ module RTSP
       message << "Session: #{session}\r\n\r\n"
       message << "Conference: #{options[:conference]}\r\n"
       message << "\r\n"
+    end
+  end
+
+  def stringify_headers headers
+    headers.inject([]) do |result, (key, value)|
+      key = key.to_s.split(/_/).map { |header| header.capitalize }.join('-')
+
+      if value.is_a? Hash
+        values = value.inject("") { |values, (k, v)| values << "#{k}=#{v}"; values }
+        result << "#{key}: #{values}"
+      else
+        result << "#{key}: #{value}"
+      end
+
+      result
     end
   end
 end
