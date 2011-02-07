@@ -122,34 +122,31 @@ describe RTSP::RequestMessages do
   end
 
   context "should build a PLAY message" do
-    it "with default sequence, session, and range values" do
-      message = RTSP::RequestMessages.play(@stream)
+    it "with default sequence and range values" do
+      message = RTSP::RequestMessages.play(@stream, { :session => 12345 })
       message.should == "PLAY rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Session: 12345\r\nRange: npt=0.000-\r\n\r\n"
     end
 
-    it "with default sequence and session values" do
-      message = RTSP::RequestMessages.play @stream, :range => { :npt => "0.000-1.234" }
+    it "with default sequence value" do
+      message = RTSP::RequestMessages.play @stream, { :session => 12345,
+        :range => { :npt => "0.000-1.234" }
+      }
       message.should == "PLAY rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Session: 12345\r\nRange: npt=0.000-1.234\r\n\r\n"
     end
   end
 
   context "#stringify_headers turns a Hash into an Array of header strings" do
-    before do
-      @requester = Object.new
-      @requester.extend RTSP::RequestMessages
-    end
-
     it "single header, non-hyphenated name, hash value" do
       header = { :range => { :npt => "0.000-" } }
 
-      strings = @requester.stringify_headers(header)
+      strings = RTSP::RequestMessages.stringify_headers(header)
       strings.first.should == "Range: npt=0.000-"
     end
 
     it "single header, hyphenated, non-hash value" do
       header = { :if_modified_since => "Sat, 29 Oct 1994 19:43:31 GMT" }
 
-      strings = @requester.stringify_headers(header)
+      strings = RTSP::RequestMessages.stringify_headers(header)
       strings.first.should == "If-Modified-Since: Sat, 29 Oct 1994 19:43:31 GMT"
     end
 
@@ -159,7 +156,7 @@ describe RTSP::RequestMessages do
         :content_type => ['application/sdp', 'application/x-rtsp-mh']
       }
 
-      strings = @requester.stringify_headers(headers)
+      strings = RTSP::RequestMessages.stringify_headers(headers)
       strings.first.should == "Cache-Control: no-cache;max_age=12345"
       strings.last.should == "Content-Type: application/sdp, application/x-rtsp-mh"
     end

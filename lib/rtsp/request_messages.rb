@@ -106,26 +106,19 @@ module RTSP
     #
     # @param [String] stream
     # @param [Fixnum] session
-    # @param [Hash] options
-    # @option options [Fixnum] :sequence Defaults to 1.
-    # @option options [Fixnum] :npt ntp-range for the Range header.
+    # @param [Hash] headers RTSP headers to send.
     # @return [String] The formatted request message to send.
     def self.play(stream, headers={})
-      session =   headers[:session]
-      sequence =  headers[:sequence]  || RTSP_DEFAULT_SEQUENCE_NUMBER
-      range = ""
-      npt =       headers[:npt]       || RTSP_DEFAULT_NPT
-      utc =       options[:utc]       || nil
-      smpte =     options[:smtpe]     || nil
+      headers[:sequence]  ||= RTSP_DEFAULT_SEQUENCE_NUMBER
+      headers[:range]     ||= { :npt => RTSP_DEFAULT_NPT }
 
       message =  "PLAY #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{sequence}\r\n"
-      message << "Session: #{session}\r\n"
-      message << "Range: "
-      message << "npt=#{npt}\r\n" if npt
-      message << "utc=#{utc}\r\n" if utc
-      message << "smpte=#{smpte}\r\n" if smpte
+
+      header_list = stringify_headers(headers)
+      header_list.each { |header| message << "#{header}\r\n" }
       message << "\r\n"
+
+      message
     end
 
     # @return [String] The formatted request message to send.
@@ -178,9 +171,11 @@ module RTSP
     #
     # @param [Hash] headers The headers to stringify.
     # @return [Array<String>]
-    def stringify_headers headers
+    def self.stringify_headers headers
       headers.inject([]) do |result, (key, value)|
         header_name = key.to_s.split(/_/).map { |header| header.capitalize }.join('-')
+
+        header_name = "CSeq" if header_name == "Sequence"
 
         if value.is_a?(Hash) || value.is_a?(Array)
           if header_name == "Content-Type"
@@ -204,7 +199,7 @@ module RTSP
     # @param [String] separator The character to use to separate multiple values
     # that define a header.
     # @return [String] The header values as a single string.
-    def stringify_values(values, separator=";")
+    def self.stringify_values(values, separator=";")
       result = values.inject("") do |values_string, (header_field, header_field_value)|
         if header_field.is_a? Symbol
           values_string << "#{header_field}=#{header_field_value}"
