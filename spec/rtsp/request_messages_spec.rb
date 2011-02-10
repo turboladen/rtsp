@@ -23,26 +23,34 @@ describe RTSP::RequestMessages do
 
   context "should build a DESCRIBE message" do
     it "with default sequence and accept values" do
-      message = RTSP::RequestMessages.describe @stream
-      message.should == "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Accept: application/sdp\r\n\r\n"
+      message = RTSP::RequestMessages.execute(:describe, @stream)
+      message.should include "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      message.should include "CSeq: 1\r\n"
+      message.should include "Accept: application/sdp\r\n"
+      message.should include "\r\n\r\n"
     end
 
     it "with default sequence value" do
-      message = RTSP::RequestMessages.describe(@stream, {
-          :accept => ['application/sdp', 'application/rtsl']
+      message = RTSP::RequestMessages.execute(:describe, @stream, {
+          :accept => 'application/sdp, application/rtsl'
       })
-      message.should == "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Accept: application/sdp, application/rtsl\r\n\r\n"
+      message.should include "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      message.should include "CSeq: 1\r\n"
+      message.should include "Accept: application/sdp, application/rtsl\r\n"
+      message.should include "\r\n\r\n"
     end
 
     it "with passed-in sequence and accept values" do
-      message = RTSP::RequestMessages.describe(@stream, {
-        :accept => ['application/sdp', 'application/rtsl'],
-        :cseq => 2345
+      message = RTSP::RequestMessages.execute(:describe, @stream, {
+          :accept => 'application/sdp, application/rtsl',
+          :cseq => 2345
       })
-      message.should == "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\Accept: application/sdp, application/rtsl\r\n\r\n"
+      message.should include "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      message.should include "CSeq: 2345\r\n"
+      message.should include "Accept: application/sdp, application/rtsl\r\n"
+      message.should include "\r\n\r\n"
     end
   end
-
   context "should build a ANNOUNCE message" do
     it "with default sequence, content type, sdp, and content length values" do
       message = RTSP::RequestMessages.announce(@stream, 123456789)

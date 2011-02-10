@@ -16,12 +16,24 @@ module RTSP
 
     def self.execute(method, resource_url, headers={})
       headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
+      all_headers = default_headers(method)
+      all_headers.merge! headers
 
       message = "#{method.upcase} #{resource_url} #{RTSP_VER}\r\n"
-      message << headers_to_s(headers)
+      message << headers_to_s(all_headers)
       message << "\r\n"
 
       message
+    end
+
+    # @return [Hash] The default headers for the given method.
+    def self.default_headers(method)
+      case method
+      when :describe
+        { :accept => RTSP_ACCEPT_TYPE }
+      else
+        {}
+      end
     end
 
     # See section 10.2
