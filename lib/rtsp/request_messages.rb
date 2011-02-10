@@ -114,8 +114,7 @@ module RTSP
 
       message =  "PLAY #{stream} #{RTSP_VER}\r\n"
 
-      header_list = headers_to_s(headers)
-      header_list.each { |header| message << "#{header}\r\n" }
+      message << headers_to_s(headers)
       message << "\r\n"
 
       message
@@ -166,13 +165,13 @@ module RTSP
       message << "\r\n"
     end
 
-    # Turns headers from Hash(es) into an Array of Strings, where each element
-    # is a String in the form: [Header Type]: value(s).
+    # Turns headers from Hash(es) into a String, where each element
+    # is a String in the form: [Header Type]: value(s)\r\n.
     #
     # @param [Hash] headers The headers to put to string.
-    # @return [Array<String>]
+    # @return [String]
     def self.headers_to_s headers
-      headers.inject([]) do |result, (key, value)|
+      headers.inject("") do |result, (key, value)|
         header_name = key.to_s.split(/_/).map { |header| header.capitalize }.join('-')
 
         header_name = "CSeq" if header_name == "Sequence"
@@ -184,9 +183,9 @@ module RTSP
             values = values_to_s(value)
           end
 
-          result << "#{header_name}: #{values}"
+          result << "#{header_name}: #{values}\r\n"
         else
-          result << "#{header_name}: #{value}"
+          result << "#{header_name}: #{value}\r\n"
         end
 
         result
