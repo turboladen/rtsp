@@ -13,15 +13,20 @@ module RTSP
     RTP_DEFAULT_ROUTING = "unicast"
     RTSP_DEFAULT_SEQUENCE_NUMBER = 1
     RTSP_DEFAULT_NPT = "0.000-"
+    RTSP_DEFAULT_LANGUAGE = "en-US"
 
-    def self.execute(method, resource_url, headers={})
-      headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
+    def self.execute(method, resource_url, new_headers={}, body=nil)
+      body = default_body(method) unless body
+      new_headers[:content_length] = body.length if body
+
+      new_headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
       all_headers = default_headers(method)
-      all_headers.merge! headers
+      all_headers.merge! new_headers
 
       message = "#{method.upcase} #{resource_url} #{RTSP_VER}\r\n"
       message << headers_to_s(all_headers)
       message << "\r\n"
+      message << "#{body}"
 
       message
     end
@@ -31,55 +36,20 @@ module RTSP
       case method
       when :describe
         { :accept => RTSP_ACCEPT_TYPE }
+      when :announce
+        { :content_type => RTSP_ACCEPT_TYPE }
       else
         {}
       end
     end
 
-    # See section 10.2
-    # 
-    # @param [String] stream
-    # @param [Hash] headers
-    # @option headers [Number] sequence
-    # @option headers [Array<String>] accept The list of description formats the
-    # client understands.
-    # @return [String] The formatted request message to send.
-    def self.describe(stream, headers={})
-      headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      headers[:accept]   ||= [RTSP_ACCEPT_TYPE]
-
-      # Comma-separate these
-      accepts = headers[:accept] * ", "
-
-      message =  "DESCRIBE #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{headers[:cseq]}\r\n"
-      message << "Accept: #{accepts}\r\n"
-      message << "\r\n"
-    end
-
-    # ANNOUNCE request message as defined in section 10.3 of the RFC doc.
-    #
-    # @param [String] stream
-    # @param [Number] session
-    # @param [Hash] headers
-    # @option headers [Fixnum] :cseq The sequence number to use.
-    # @option headers [String] :content_type Defaults to 'application/sdp'.
-    # @option headers [SDP::Description] The SDP description to announce.
-    # @return [String] The formatted request message to send.
-    def self.announce(stream, session, headers={})
-      sequence =        headers[:cseq]      || RTSP_DEFAULT_SEQUENCE_NUMBER
-      content_type =    headers[:content_type]  || RTSP_ACCEPT_TYPE
-      sdp =             headers[:sdp]           || SDP::Description.new
-      content_length =  sdp.to_s.length         || 0
-
-      message =  "ANNOUNCE #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{sequence}\r\n"
-      message << "Date: \r\n"
-      message << "Session: #{session}\r\n"
-      message << "Content-Type: #{content_type}\r\n"
-      message << "Content-Length: #{content_length}\r\n"
-      message << "\r\n"
-      message << sdp.to_s
+    def self.default_body(method)
+      case method
+      when :announce
+        SDP::Description.new.to_s
+      else
+        nil
+      end
     end
 
     # SETUP request message as defined in section 10.4 of the RFC doc.

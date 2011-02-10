@@ -51,37 +51,65 @@ describe RTSP::RequestMessages do
       message.should include "\r\n\r\n"
     end
   end
+
   context "should build a ANNOUNCE message" do
     it "with default sequence, content type, sdp, and content length values" do
-      message = RTSP::RequestMessages.announce(@stream, 123456789)
-      message.should == "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Date: \r\nSession: 123456789\r\nContent-Type: application/sdp\r\nContent-Length: 25\r\n\r\nv=0\r\no=     \r\ns=\r\nt= \r\n\r\n"
+      message = RTSP::RequestMessages.execute(:announce, @stream,
+        :session => 123456789)
+
+      message.should include "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      message.should include "CSeq: 1\r\n"
+      message.should include "Session: 123456789\r\n"
+      message.should include "Content-Type: application/sdp\r\n"
+      message.should include "Content-Length: 25\r\n"
+      message.should include "\r\n\r\nv=0\r\no=     \r\ns=\r\nt= \r\n\r\n"
     end
 
     it "with default sequence value" do
-      message = RTSP::RequestMessages.announce(@stream, 123456789,
-        :content_type => 'application/sdp')
-      message.should == "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Date: \r\nSession: 123456789\r\nContent-Type: application/sdp\r\nContent-Length: 25\r\n\r\nv=0\r\no=     \r\ns=\r\nt= \r\n\r\n"
+      message = RTSP::RequestMessages.execute(:announce, @stream,
+                                              :session => 123456789,
+                                              :content_type => 'application/sdp')
+
+      message.should include "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      message.should include "CSeq: 1\r\n"
+      message.should include "Session: 123456789\r\n"
+      message.should include "Content-Type: application/sdp\r\n"
+      message.should include "Content-Length: 25\r\n"
+      message.should include "\r\n\r\nv=0\r\no=     \r\ns=\r\nt= \r\n\r\n"
     end
 
     it "with passed-in sequence, content-type values" do
-      message = RTSP::RequestMessages.announce(@stream, 123456789, {
-          :content_type => 'application/sdp',
+      message = RTSP::RequestMessages.execute(:announce, @stream,
+        { :session => 123456789,
+          :content_type => 'application/sdp, application/rtsl',
           :cseq => 2345
       })
-      message.should == "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\Date: \r\nSession: 123456789\r\nContent-Type: application/sdp\r\nContent-Length: 25\r\n\r\nv=0\r\no=     \r\ns=\r\nt= \r\n\r\n"
+
+      message.should include "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      message.should include "CSeq: 2345\r\n"
+      message.should include "Session: 123456789\r\n"
+      message.should include "Content-Type: application/sdp, application/rtsl\r\n"
+      message.should include "Content-Length: 25\r\n"
+      message.should include "\r\n\r\nv=0\r\no=     \r\ns=\r\nt= \r\n\r\n"
     end
 
-    it "with passed-in sequence, content-type, sdp values" do
+    it "with passed-in sequence, content-type, sdp description" do
       sdp = SDP::Description.new
       sdp.protocol_version = 1
       sdp.username = 'bobo'
 
-      message = RTSP::RequestMessages.announce(@stream, 123456789, {
-        :content_type => 'application/sdp',
-        :cseq => 2345,
-        :sdp => sdp
-      })
-      message.should == "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\Date: \r\nSession: 123456789\r\nContent-Type: application/sdp\r\nContent-Length: 29\r\n\r\nv=1\r\no=bobo     \r\ns=\r\nt= \r\n\r\n"
+      message = RTSP::RequestMessages.execute(:announce, @stream,
+          { :session => 123456789,
+          :content_type => 'application/sdp',
+          :cseq => 2345
+      }, sdp.to_s)
+
+      message.should include "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      message.should include "CSeq: 2345\r\n"
+      message.should include "Session: 123456789\r\n"
+      message.should include "Content-Type: application/sdp\r\n"
+      message.should include "Content-Length: 29\r\n"
+      message.should include "\r\n\r\nv=1\r\no=bobo     \r\ns=\r\nt= \r\n\r\n"
     end
   end
 
