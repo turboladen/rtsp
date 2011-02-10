@@ -135,18 +135,18 @@ describe RTSP::RequestMessages do
     end
   end
 
-  context "#stringify_headers turns a Hash into an Array of header strings" do
+  context "#headers_to_s turns a Hash into an Array of header strings" do
     it "single header, non-hyphenated name, hash value" do
       header = { :range => { :npt => "0.000-" } }
 
-      strings = RTSP::RequestMessages.stringify_headers(header)
+      strings = RTSP::RequestMessages.headers_to_s(header)
       strings.first.should == "Range: npt=0.000-"
     end
 
     it "single header, hyphenated, non-hash value" do
       header = { :if_modified_since => "Sat, 29 Oct 1994 19:43:31 GMT" }
 
-      strings = RTSP::RequestMessages.stringify_headers(header)
+      strings = RTSP::RequestMessages.headers_to_s(header)
       strings.first.should == "If-Modified-Since: Sat, 29 Oct 1994 19:43:31 GMT"
     end
 
@@ -156,9 +156,9 @@ describe RTSP::RequestMessages do
         :content_type => ['application/sdp', 'application/x-rtsp-mh']
       }
 
-      strings = RTSP::RequestMessages.stringify_headers(headers)
-      strings.first.should == "Cache-Control: no-cache;max_age=12345"
-      strings.last.should == "Content-Type: application/sdp, application/x-rtsp-mh"
+      strings = RTSP::RequestMessages.headers_to_s(headers)
+      strings.should include "Cache-Control: no-cache;max_age=12345"
+      strings.should include "Content-Type: application/sdp, application/x-rtsp-mh"
     end
   end
 end

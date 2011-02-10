@@ -114,7 +114,7 @@ module RTSP
 
       message =  "PLAY #{stream} #{RTSP_VER}\r\n"
 
-      header_list = stringify_headers(headers)
+      header_list = headers_to_s(headers)
       header_list.each { |header| message << "#{header}\r\n" }
       message << "\r\n"
 
@@ -169,9 +169,9 @@ module RTSP
     # Turns headers from Hash(es) into an Array of Strings, where each element
     # is a String in the form: [Header Type]: value(s).
     #
-    # @param [Hash] headers The headers to stringify.
+    # @param [Hash] headers The headers to put to string.
     # @return [Array<String>]
-    def self.stringify_headers headers
+    def self.headers_to_s headers
       headers.inject([]) do |result, (key, value)|
         header_name = key.to_s.split(/_/).map { |header| header.capitalize }.join('-')
 
@@ -179,9 +179,9 @@ module RTSP
 
         if value.is_a?(Hash) || value.is_a?(Array)
           if header_name == "Content-Type"
-            values = stringify_values(value, ", ")
+            values = values_to_s(value, ", ")
           else
-            values = stringify_values(value)
+            values = values_to_s(value)
           end
 
           result << "#{header_name}: #{values}"
@@ -195,16 +195,16 @@ module RTSP
 
     # Turns header values into a single string.
     #
-    # @param [] values The header values to stringify.
+    # @param [] values The header values to put to string.
     # @param [String] separator The character to use to separate multiple values
     # that define a header.
     # @return [String] The header values as a single string.
-    def self.stringify_values(values, separator=";")
+    def self.values_to_s(values, separator=";")
       result = values.inject("") do |values_string, (header_field, header_field_value)|
         if header_field.is_a? Symbol
           values_string << "#{header_field}=#{header_field_value}"
         elsif header_field.is_a? Hash
-          values_string << stringify_values(header_field)
+          values_string << values_to_s(header_field)
         else
           values_string << header_field.to_s
         end
