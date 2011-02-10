@@ -11,12 +11,12 @@ describe RTSP::RequestMessages do
 
   context "should build an OPTIONS message" do
     it "with default sequence number" do
-      message = RTSP::RequestMessages.options @stream
+      message = RTSP::RequestMessages.execute(:options, @stream)
       message.should == "OPTIONS rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\r\n"
     end
 
     it "with passed-in sequence number" do
-      message = RTSP::RequestMessages.options(@stream, 2345)
+      message = RTSP::RequestMessages.execute(:options, @stream, :cseq => 2345)
       message.should == "OPTIONS rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\r\n"
     end
   end

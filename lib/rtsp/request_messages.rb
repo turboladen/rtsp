@@ -14,15 +14,14 @@ module RTSP
     RTSP_DEFAULT_SEQUENCE_NUMBER = 1
     RTSP_DEFAULT_NPT = "0.000-"
 
-    # OPTIONS request message as defined in section 10.1 of the RFC doc.
-    #
-    # @param [String] stream
-    # @param [Fixnum] sequence
-    # @return [String] The formatted request message to send.
-    def self.options(stream, sequence=RTSP_DEFAULT_SEQUENCE_NUMBER)
-      message =  "OPTIONS #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{sequence}\r\n"
+    def self.execute(method, resource_url, headers={})
+      headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
+
+      message = "#{method.upcase} #{resource_url} #{RTSP_VER}\r\n"
+      message << headers_to_s(headers)
       message << "\r\n"
+
+      message
     end
 
     # See section 10.2
