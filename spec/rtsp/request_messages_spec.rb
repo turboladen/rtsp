@@ -157,18 +157,19 @@ describe RTSP::RequestMessages do
 
   context "should build a PLAY message" do
     it "with default sequence and range values" do
-      message = RTSP::RequestMessages.play(@stream, { :session => 12345 })
+      message = RTSP::RequestMessages.execute(:play, @stream, { :session => 12345 })
+
       message.should include "PLAY rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
       message.should include "CSeq: 1\r\n"
       message.should include "Session: 12345\r\n"
       message.should include "Range: npt=0.000-\r\n"
       message.should include "\r\n\r\n"
     end
-
     it "with default sequence value" do
-      message = RTSP::RequestMessages.play @stream, { :session => 12345,
-        :range => { :npt => "0.000-1.234" }
-      }
+      message = RTSP::RequestMessages.execute(:play, @stream, { :session => 12345,
+          :range => { :npt => "0.000-1.234" }
+      })
+
       message.should include "PLAY rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
       message.should include "CSeq: 1\r\n"
       message.should include "Session: 12345\r\n"

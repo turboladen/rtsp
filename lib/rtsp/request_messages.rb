@@ -43,6 +43,8 @@ module RTSP
         transport << "#{RTP_DEFAULT_ROUTING};"
         transport << "client_port=#{RTP_DEFAULT_CLIENT_PORT}-#{RTP_DEFAULT_CLIENT_PORT + 1}"
         { :transport => transport }
+      when :play
+        { :range => "npt=#{RTSP_DEFAULT_NPT}" }
       else
         {}
       end
@@ -55,24 +57,6 @@ module RTSP
       else
         nil
       end
-    end
-
-    # PLAY request message as defined in section 10.5 of the RFC doc.
-    #
-    # @param [String] stream
-    # @param [Fixnum] session
-    # @param [Hash] headers RTSP headers to send.
-    # @return [String] The formatted request message to send.
-    def self.play(stream, headers={})
-      headers[:cseq]      ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      headers[:range]     ||= { :npt => RTSP_DEFAULT_NPT }
-
-      message =  "PLAY #{stream} #{RTSP_VER}\r\n"
-
-      message << headers_to_s(headers)
-      message << "\r\n"
-
-      message
     end
 
     # @return [String] The formatted request message to send.
