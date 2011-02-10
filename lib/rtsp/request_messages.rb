@@ -28,20 +28,20 @@ module RTSP
     # See section 10.2
     # 
     # @param [String] stream
-    # @param [Hash] options
-    # @option options [Number] sequence
-    # @option options [Array<String>] accept The list of description formats the
+    # @param [Hash] headers
+    # @option headers [Number] sequence
+    # @option headers [Array<String>] accept The list of description formats the
     # client understands.
     # @return [String] The formatted request message to send.
-    def self.describe(stream, options={})
-      options[:sequence] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      options[:accept]   ||= [RTSP_ACCEPT_TYPE]
+    def self.describe(stream, headers={})
+      headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
+      headers[:accept]   ||= [RTSP_ACCEPT_TYPE]
 
       # Comma-separate these
-      accepts = options[:accept] * ", "
+      accepts = headers[:accept] * ", "
 
       message =  "DESCRIBE #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{options[:sequence]}\r\n"
+      message << "CSeq: #{headers[:cseq]}\r\n"
       message << "Accept: #{accepts}\r\n"
       message << "\r\n"
     end
@@ -50,15 +50,15 @@ module RTSP
     #
     # @param [String] stream
     # @param [Number] session
-    # @param [Hash] options
-    # @option options [Fixnum] :sequence The sequence number to use.
-    # @option options [String] :content_type Defaults to 'application/sdp'.
-    # @option options [SDP::Description] The SDP description to announce.
+    # @param [Hash] headers
+    # @option headers [Fixnum] :cseq The sequence number to use.
+    # @option headers [String] :content_type Defaults to 'application/sdp'.
+    # @option headers [SDP::Description] The SDP description to announce.
     # @return [String] The formatted request message to send.
-    def self.announce(stream, session, options={})
-      sequence =        options[:sequence]      || RTSP_DEFAULT_SEQUENCE_NUMBER
-      content_type =    options[:content_type]  || RTSP_ACCEPT_TYPE
-      sdp =             options[:sdp]           || SDP::Description.new
+    def self.announce(stream, session, headers={})
+      sequence =        headers[:cseq]      || RTSP_DEFAULT_SEQUENCE_NUMBER
+      content_type =    headers[:content_type]  || RTSP_ACCEPT_TYPE
+      sdp =             headers[:sdp]           || SDP::Description.new
       content_length =  sdp.to_s.length         || 0
 
       message =  "ANNOUNCE #{stream} #{RTSP_VER}\r\n"
@@ -74,21 +74,21 @@ module RTSP
     # SETUP request message as defined in section 10.4 of the RFC doc.
     #
     # @param [String] track Track to prep to stream.
-    # @param [Hash] options
-    # @option options [Fixnum] :sequence Defaults to 1.
-    # @option options [String] :transport Defaults to RTP/AVP.
-    # @option options [String] :routing Defaults to unicast.
-    # @option options [Fixnum] :client_port Defaults to 9000.
-    # @option options [Fixnum] :server_port
+    # @param [Hash] headers
+    # @option headers [Fixnum] :cseq Defaults to 1.
+    # @option headers [String] :transport Defaults to RTP/AVP.
+    # @option headers [String] :routing Defaults to unicast.
+    # @option headers [Fixnum] :client_port Defaults to 9000.
+    # @option headers [Fixnum] :server_port
     # @return [String] The formatted request message to send.
-    def self.setup(track, options={})
-      sequence =        options[:sequence]    || RTSP_DEFAULT_SEQUENCE_NUMBER
-      transport_spec =  options[:transport_spec]   || RTP_DEFAULT_PACKET_TYPE
-      routing =         options[:routing]     || RTP_DEFAULT_ROUTING
-      destination =     options[:destination] || nil
-      client_port =     options[:client_port] || RTP_DEFAULT_PORT
-      server_port =     options[:server_port] || nil
-      port =            options[:port]        || nil
+    def self.setup(track, headers={})
+      sequence =        headers[:cseq]    || RTSP_DEFAULT_SEQUENCE_NUMBER
+      transport_spec =  headers[:transport_spec]   || RTP_DEFAULT_PACKET_TYPE
+      routing =         headers[:routing]     || RTP_DEFAULT_ROUTING
+      destination =     headers[:destination] || nil
+      client_port =     headers[:client_port] || RTP_DEFAULT_PORT
+      server_port =     headers[:server_port] || nil
+      port =            headers[:port]        || nil
 
       message =  "SETUP #{track} #{RTSP_VER}\r\n"
       message << "CSeq: #{sequence}\r\n"
@@ -109,7 +109,7 @@ module RTSP
     # @param [Hash] headers RTSP headers to send.
     # @return [String] The formatted request message to send.
     def self.play(stream, headers={})
-      headers[:sequence]  ||= RTSP_DEFAULT_SEQUENCE_NUMBER
+      headers[:cseq]      ||= RTSP_DEFAULT_SEQUENCE_NUMBER
       headers[:range]     ||= { :npt => RTSP_DEFAULT_NPT }
 
       message =  "PLAY #{stream} #{RTSP_VER}\r\n"
@@ -130,38 +130,38 @@ module RTSP
 
     # @return [String] The formatted request message to send.
     def self.teardown(stream, session, options={})
-      options[:sequence] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
+      options[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
       message =  "TEARDOWN #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{options[:sequence]}\r\n"
+      message << "CSeq: #{options[:cseq]}\r\n"
       message << "Session: #{session}\r\n"
       message << "\r\n"
     end
 
     # @return [String] The formatted request message to send.
-    def self.get_parameter(stream, session, options={})
+    def self.get_parameter(stream, session, headers={})
       message =  "GET_PARAMETER #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{options[:sequence]}\r\n"
-      message << "Content-Type: #{options[:content_type]}\r\n"
-      message << "Content-Length: #{options[:content_length]}\r\n"
+      message << "CSeq: #{headers[:cseq]}\r\n"
+      message << "Content-Type: #{headers[:content_type]}\r\n"
+      message << "Content-Length: #{headers[:content_length]}\r\n"
       message << "Session: #{session}\r\n"
       message << "\r\n"
     end
 
     # @return [String] The formatted request message to send.
-    def self.set_parameter(stream, options={})
+    def self.set_parameter(stream, headers={})
       message =  "SET_PARAMETER #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{options[:sequence]}\r\n"
-      message << "Content-Type: #{options[:content_type]}\r\n"
-      message << "Content-Length: #{options[:content_length]}\r\n"
+      message << "CSeq: #{headers[:cseq]}\r\n"
+      message << "Content-Type: #{headers[:content_type]}\r\n"
+      message << "Content-Length: #{headers[:content_length]}\r\n"
       message << "\r\n"
     end
 
     # @return [String] The formatted request message to send.
-    def self.record(stream, session, options={})
+    def self.record(stream, session, headers={})
       message =  "RECORD #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{options[:sequence]}\r\n"
+      message << "CSeq: #{headers[:cseq]}\r\n"
       message << "Session: #{session}\r\n\r\n"
-      message << "Conference: #{options[:conference]}\r\n"
+      message << "Conference: #{headers[:conference]}\r\n"
       message << "\r\n"
     end
 
@@ -174,7 +174,7 @@ module RTSP
       headers.inject("") do |result, (key, value)|
         header_name = key.to_s.split(/_/).map { |header| header.capitalize }.join('-')
 
-        header_name = "CSeq" if header_name == "Sequence"
+        header_name = "CSeq" if header_name == "Cseq"
 
         if value.is_a?(Hash) || value.is_a?(Array)
           if header_name == "Content-Type"

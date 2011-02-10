@@ -37,7 +37,7 @@ describe RTSP::RequestMessages do
     it "with passed-in sequence and accept values" do
       message = RTSP::RequestMessages.describe(@stream, {
         :accept => ['application/sdp', 'application/rtsl'],
-        :sequence => 2345
+        :cseq => 2345
       })
       message.should == "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\Accept: application/sdp, application/rtsl\r\n\r\n"
     end
@@ -58,7 +58,7 @@ describe RTSP::RequestMessages do
     it "with passed-in sequence, content-type values" do
       message = RTSP::RequestMessages.announce(@stream, 123456789, {
           :content_type => 'application/sdp',
-          :sequence => 2345
+          :cseq => 2345
       })
       message.should == "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\Date: \r\nSession: 123456789\r\nContent-Type: application/sdp\r\nContent-Length: 25\r\n\r\nv=0\r\no=     \r\ns=\r\nt= \r\n\r\n"
     end
@@ -70,7 +70,7 @@ describe RTSP::RequestMessages do
 
       message = RTSP::RequestMessages.announce(@stream, 123456789, {
         :content_type => 'application/sdp',
-        :sequence => 2345,
+        :cseq => 2345,
         :sdp => sdp
       })
       message.should == "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\Date: \r\nSession: 123456789\r\nContent-Type: application/sdp\r\nContent-Length: 29\r\n\r\nv=1\r\no=bobo     \r\ns=\r\nt= \r\n\r\n"
@@ -117,7 +117,7 @@ describe RTSP::RequestMessages do
 
     it "with default transport, client_port, and routing values" do
       pending "Convert to use new style"
-      message = RTSP::RequestMessages.setup(@stream, :sequence => 2345)
+      message = RTSP::RequestMessages.setup(@stream, :cseq=> 2345)
       message.should include "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
       message.should include "CSeq: 2345\r\n"
       message.should include "Transport: RTP/AVP;unicast;client_port=9000-9001\r\n\r\n"
