@@ -8,7 +8,7 @@ module RTSP
   module RequestMessages
     RTSP_VER = "RTSP/1.0"
     RTSP_ACCEPT_TYPE = "application/sdp"
-    RTP_DEFAULT_PORT = 9000
+    RTP_DEFAULT_CLIENT_PORT = 9000
     RTP_DEFAULT_PACKET_TYPE = "RTP/AVP"
     RTP_DEFAULT_ROUTING = "unicast"
     RTSP_DEFAULT_SEQUENCE_NUMBER = 1
@@ -38,6 +38,11 @@ module RTSP
         { :accept => RTSP_ACCEPT_TYPE }
       when :announce
         { :content_type => RTSP_ACCEPT_TYPE }
+      when :setup
+        transport = "#{RTP_DEFAULT_PACKET_TYPE};"
+        transport << "#{RTP_DEFAULT_ROUTING};"
+        transport << "client_port=#{RTP_DEFAULT_CLIENT_PORT}-#{RTP_DEFAULT_CLIENT_PORT + 1}"
+        { :transport => transport }
       else
         {}
       end
@@ -50,37 +55,6 @@ module RTSP
       else
         nil
       end
-    end
-
-    # SETUP request message as defined in section 10.4 of the RFC doc.
-    #
-    # @param [String] track Track to prep to stream.
-    # @param [Hash] headers
-    # @option headers [Fixnum] :cseq Defaults to 1.
-    # @option headers [String] :transport Defaults to RTP/AVP.
-    # @option headers [String] :routing Defaults to unicast.
-    # @option headers [Fixnum] :client_port Defaults to 9000.
-    # @option headers [Fixnum] :server_port
-    # @return [String] The formatted request message to send.
-    def self.setup(track, headers={})
-      sequence =        headers[:cseq]    || RTSP_DEFAULT_SEQUENCE_NUMBER
-      transport_spec =  headers[:transport_spec]   || RTP_DEFAULT_PACKET_TYPE
-      routing =         headers[:routing]     || RTP_DEFAULT_ROUTING
-      destination =     headers[:destination] || nil
-      client_port =     headers[:client_port] || RTP_DEFAULT_PORT
-      server_port =     headers[:server_port] || nil
-      port =            headers[:port]        || nil
-
-      message =  "SETUP #{track} #{RTSP_VER}\r\n"
-      message << "CSeq: #{sequence}\r\n"
-      message << "Transport: #{transport_spec};"
-      message << "#{destination};"          if destination
-      message << "#{routing};"
-      message << "port=#{port}-#{port + 1}" if port
-      message << "client_port=#{client_port}-#{client_port + 1}"
-      message << ";server_port=#{server_port}-#{server_port + 1}" if server_port
-      message << "\r\n"
-      message << "\r\n"
     end
 
     # PLAY request message as defined in section 10.5 of the RFC doc.

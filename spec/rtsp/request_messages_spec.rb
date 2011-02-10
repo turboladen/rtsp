@@ -104,62 +104,54 @@ describe RTSP::RequestMessages do
           :cseq => 2345
       }, sdp.to_s)
 
+      message.should match /^ANNOUNCE rtsp/
       message.should include "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
       message.should include "CSeq: 2345\r\n"
       message.should include "Session: 123456789\r\n"
       message.should include "Content-Type: application/sdp\r\n"
       message.should include "Content-Length: 29\r\n"
-      message.should include "\r\n\r\nv=1\r\no=bobo     \r\ns=\r\nt= \r\n\r\n"
+      message.should match /\r\n\r\nv=1\r\no=bobo     \r\ns=\r\nt= \r\n\r\n$/
     end
   end
 
   context "should build a SETUP message" do
     it "with default sequence, transport, client_port, and routing values" do
-      message = RTSP::RequestMessages.setup @stream
-      message.should == "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Transport: RTP/AVP;unicast;client_port=9000-9001\r\n\r\n"
+      message = RTSP::RequestMessages.execute(:setup, @stream)
+
+      message.should match /^SETUP rtsp/
+      message.should include "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      message.should include "CSeq: 1\r\n"
+      message.should include "Transport: RTP/AVP;unicast;client_port=9000-9001\r\n"
+      message.should match /\r\n\r\n$/
     end
 
     it "with default sequence, transport, and client_port values" do
-      message = RTSP::RequestMessages.setup(@stream, :routing => 'multicast')
-      message.should == "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Transport: RTP/AVP;multicast;client_port=9000-9001\r\n\r\n"
-    end
+      message = RTSP::RequestMessages.execute(:setup, @stream,
+          :transport => [ "RTP/AVP",
+                          "multicast",
+                          :client_port => "9000-9001"
+                        ]
+      )
 
-    it "with default sequence and transport values" do
-      message = RTSP::RequestMessages.setup @stream, {
-          :routing => 'multicast',
-          :client_port => 8000
-      }
-      message.should == "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Transport: RTP/AVP;multicast;client_port=8000-8001\r\n\r\n"
-    end
-
-    it "with default sequence value" do
-      message = RTSP::RequestMessages.setup @stream, {
-        :routing => 'multicast',
-        :client_port => 8000,
-        :transport_spec => 'RTP/AVP/UDP'
-      }
-      message.should == "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Transport: RTP/AVP/UDP;multicast;client_port=8000-8001\r\n\r\n"
-    end
-
-    it "with default sequence value and passed in server_port value" do
-      message = RTSP::RequestMessages.setup @stream, {
-        :routing => 'multicast',
-        :client_port => 8000,
-        :transport_spec => 'RTP/AVP/UDP',
-        :server_port => 6000
-      }
-      message.should == "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\Transport: RTP/AVP/UDP;multicast;client_port=8000-8001;server_port=6000-6001\r\n\r\n"
+      message.should match /^SETUP rtsp/
+      message.should include "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      message.should include "CSeq: 1\r\n"
+      message.should include "Transport: RTP/AVP;multicast;client_port=9000-9001\r\n"
+      message.should match /\r\n\r\n$/
     end
 
     it "with default transport, client_port, and routing values" do
       pending "Convert to use new style"
-      message = RTSP::RequestMessages.setup(@stream, :cseq=> 2345)
+      message = RTSP::RequestMessages.execute(:setup, @stream, :cseq=> 2345)
+
+      message.should match /^SETUP rtsp/
       message.should include "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
       message.should include "CSeq: 2345\r\n"
       message.should include "Transport: RTP/AVP;unicast;client_port=9000-9001\r\n\r\n"
       message.should include "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\Transport: RTP/AVP;unicast;client_port=9000-9001\r\n\r\n"
       message.should include "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\Transport: RTP/AVP;unicast;client_port=9000-9001\r\n\r\n"
       message.should include "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\Transport: RTP/AVP;unicast;client_port=9000-9001\r\n\r\n"
+      message.should match /\r\n\r\n$/
     end
   end
 
