@@ -5,15 +5,13 @@ require 'tempfile'
 require 'timeout'
 require 'uri'
 
-require 'rtsp/request_messages'
+require 'rtsp/request'
 require 'rtsp/response'
 
 module RTSP
 
   # Allows for pulling streams from an RTSP server.
   class Client
-    include RTSP::RequestMessages
-
     MAX_BYTES_TO_RECEIVE = 1500
 
     attr_reader   :server_uri
@@ -49,7 +47,7 @@ module RTSP
     # @return [Hash] The response formatted as a Hash.
     def options
       @logger.debug "Sending OPTIONS to #{@server_uri.host}#{@stream_path}"
-      response = send_rtsp RequestMessages.options(@server_uri.to_s)
+      response = send_rtsp Request.options(@server_uri.to_s)
       @logger.debug "Recieved response:"
       @logger.debug response
 
@@ -63,7 +61,7 @@ module RTSP
     # @return [Hash] The response formatted as a Hash.
     def describe
       @logger.debug "Sending DESCRIBE to #{@server_uri.host}#{@stream_path}"
-      response = send_rtsp(RequestMessages.describe("#{@server_uri.to_s}#{@stream_path}"))
+      response = send_rtsp(Request.describe("#{@server_uri.to_s}#{@stream_path}"))
 
       @logger.debug "Recieved response:"
       @logger.debug response.inspect
@@ -82,7 +80,7 @@ module RTSP
     def setup(options={})
       @logger.debug "Sending SETUP to #{@server_uri.host}#{@stream_path}"
       setup_url = @content_base || "#{@server_uri.to_s}#{@stream_path}"
-      response = send_rtsp RequestMessages.setup(setup_url, options)
+      response = send_rtsp Request.setup(setup_url, options)
 
       @logger.debug "Recieved response:"
       @logger.debug response
@@ -98,7 +96,7 @@ module RTSP
     def play(options={})
       @logger.debug "Sending PLAY to #{@server_uri.host}#{@stream_path}"
       session = options[:session] || @session
-      response = send_rtsp RequestMessages.play(@server_uri.to_s,
+      response = send_rtsp Request.play(@server_uri.to_s,
                                                 options[:session])
 
       @logger.debug "Recieved response:"
@@ -125,7 +123,7 @@ module RTSP
 
     def pause(options={})
       @logger.debug "Sending PAUSE to #{@server_uri.host}#{@stream_path}"
-      response = send_rtsp RequestMessages.pause(@stream_tracks.first,
+      response = send_rtsp Request.pause(@stream_tracks.first,
                                                  options[:session],
                                                   options[:sequence])
 
@@ -139,7 +137,7 @@ module RTSP
     # @return [Hash] The response formatted as a Hash.
     def teardown
       @logger.debug "Sending TEARDOWN to #{@server_uri.host}#{@stream_path}"
-      response = send_rtsp RequestMessages.teardown(@server_uri.to_s, @session)
+      response = send_rtsp Request.teardown(@server_uri.to_s, @session)
       @logger.debug "Recieved response:"
       @logger.debug response
       #@socket.close if @socket.open?

@@ -2,10 +2,10 @@ require 'sdp'
 
 module RTSP
 
-  # This module defines the template strings that make up RTSP methods.  Other
+  # This class defines the template strings that make up RTSP methods.  Other
   # objects should use these for building request messages to communicate in
   # RTSP.
-  module RequestMessages
+  class Request
     RTSP_VER = "RTSP/1.0"
     RTSP_ACCEPT_TYPE = "application/sdp"
     RTP_DEFAULT_CLIENT_PORT = 9000
@@ -16,6 +16,10 @@ module RTSP
     RTSP_DEFAULT_LANGUAGE = "en-US"
 
     def self.execute(method, resource_url, new_headers={}, body=nil)
+      new(method, resource_url, new_headers, body).execute
+    end
+
+    def initialize(method, resource_url, new_headers={}, body=nil)
       body = default_body(method) unless body
       new_headers[:content_length] = body.length if body
 
@@ -23,16 +27,27 @@ module RTSP
       all_headers = default_headers(method)
       all_headers.merge! new_headers
 
-      message = "#{method.upcase} #{resource_url} #{RTSP_VER}\r\n"
-      message << headers_to_s(all_headers)
+      @method = method
+      @resource_url = resource_url
+      @all_headers = all_headers
+      @body = body
+    end
+
+    def execute
+      message
+    end
+
+    def message
+      message = "#{@method.to_s.upcase} #{@resource_url} #{RTSP_VER}\r\n"
+      message << headers_to_s(@all_headers)
       message << "\r\n"
-      message << "#{body}"
+      message << "#{@body}"
 
       message
     end
 
     # @return [Hash] The default headers for the given method.
-    def self.default_headers(method)
+    def default_headers(method)
       case method
       when :describe
         { :accept => RTSP_ACCEPT_TYPE }
@@ -50,7 +65,7 @@ module RTSP
       end
     end
 
-    def self.default_body(method)
+    def default_body(method)
       case method
       when :announce
         SDP::Description.new.to_s
@@ -109,7 +124,7 @@ module RTSP
     #
     # @param [Hash] headers The headers to put to string.
     # @return [String]
-    def self.headers_to_s headers
+    def headers_to_s headers
       headers.inject("") do |result, (key, value)|
         header_name = key.to_s.split(/_/).map { |header| header.capitalize }.join('-')
 
@@ -137,7 +152,7 @@ module RTSP
     # @param [String] separator The character to use to separate multiple values
     # that define a header.
     # @return [String] The header values as a single string.
-    def self.values_to_s(values, separator=";")
+    def values_to_s(values, separator=";")
       result = values.inject("") do |values_string, (header_field, header_field_value)|
         if header_field.is_a? Symbol
           values_string << "#{header_field}=#{header_field_value}"
