@@ -104,43 +104,6 @@ module RTSP
       end
     end
 
-    # @return [String] The formatted request message to send.
-    def self.teardown(stream, session, options={})
-      options[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      message =  "TEARDOWN #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{options[:cseq]}\r\n"
-      message << "Session: #{session}\r\n"
-      message << "\r\n"
-    end
-
-    # @return [String] The formatted request message to send.
-    def self.get_parameter(stream, session, headers={})
-      message =  "GET_PARAMETER #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{headers[:cseq]}\r\n"
-      message << "Content-Type: #{headers[:content_type]}\r\n"
-      message << "Content-Length: #{headers[:content_length]}\r\n"
-      message << "Session: #{session}\r\n"
-      message << "\r\n"
-    end
-
-    # @return [String] The formatted request message to send.
-    def self.set_parameter(stream, headers={})
-      message =  "SET_PARAMETER #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{headers[:cseq]}\r\n"
-      message << "Content-Type: #{headers[:content_type]}\r\n"
-      message << "Content-Length: #{headers[:content_length]}\r\n"
-      message << "\r\n"
-    end
-
-    # @return [String] The formatted request message to send.
-    def self.record(stream, session, headers={})
-      message =  "RECORD #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{headers[:cseq]}\r\n"
-      message << "Session: #{session}\r\n\r\n"
-      message << "Conference: #{headers[:conference]}\r\n"
-      message << "\r\n"
-    end
-
     # Turns headers from Hash(es) into a String, where each element
     # is a String in the form: [Header Type]: value(s)\r\n.
     #
