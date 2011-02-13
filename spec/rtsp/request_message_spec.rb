@@ -241,4 +241,30 @@ describe "RTSP::Request messages" do
       request.message.should match /\r\n\r\n/
     end
   end
+
+  context "should build a TEARDOWN message" do
+    it "with required Request values" do
+      request = RTSP::Request.new({ :method => :teardown,
+          :resource_url => @stream,
+          :socket => @mock_socket })
+
+      request.message.should match /^TEARDOWN rtsp/
+      request.message.should include "TEARDOWN rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "CSeq: 1\r\n"
+      request.message.should match /\r\n\r\n/
+    end
+
+    it "with session and range headers" do
+      request = RTSP::Request.new({ :method => :teardown,
+          :resource_url => @stream,
+          :headers => { :session => 123456789 },
+          :socket => @mock_socket })
+
+      request.message.should match /^TEARDOWN rtsp/
+      request.message.should include "TEARDOWN rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "CSeq: 1\r\n"
+      request.message.should include "Session: 123456789\r\n"
+      request.message.should match /\r\n\r\n/
+    end
+  end
 end
