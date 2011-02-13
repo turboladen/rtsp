@@ -13,4 +13,8 @@ Feature: Client request messages
     When I make a "describe" request
     Then I should receive an RTSP response to that DESCRIBE request
 
+  Scenario: ANNOUNCE
+    Given a known RTSP server
+    When I make a "announce" request
+    Then I should receive an RTSP response to that ANNOUNCE request
 
