@@ -5,8 +5,8 @@ require 'tempfile'
 require 'timeout'
 require 'uri'
 
-require 'rtsp/request'
-require 'rtsp/response'
+require File.expand_path(File.dirname(__FILE__) + '/request')
+require File.expand_path(File.dirname(__FILE__) + '/response')
 
 module RTSP
 

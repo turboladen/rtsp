@@ -1,4 +1,7 @@
-require 'sdp'
+require 'rubygems'
+require 'socket'
+require 'timeout'
+require 'uri'
 
 module RTSP
 
@@ -14,36 +17,72 @@ module RTSP
     RTSP_DEFAULT_SEQUENCE_NUMBER = 1
     RTSP_DEFAULT_NPT = "0.000-"
     RTSP_DEFAULT_LANGUAGE = "en-US"
+    RTSP_DEFAULT_PORT = 554
 
-    def self.execute(method, resource_url, new_headers={}, body=nil)
-      new(method, resource_url, new_headers, body).execute
+    def self.execute args
+      new(args).execute
     end
 
-    def initialize(method, resource_url, new_headers={}, body=nil)
-      body = default_body(method) unless body
-      new_headers[:content_length] = body.length if body
+    # Required arguments:
+    # * :method
+    # * :resource_url
+    # Optional arguments:
+    # * :body
+    # * :timeout
+    # * :socket
+    # * :headers
+    def initialize args
+      @method =       args[:method] or raise ArgumentError, "must pass :method"
+      @body =         args[:body] || nil
+      @timeout =      args[:timeout] || 2
+
+      if args[:resource_url]
+        @resource_uri = build_resource_uri_from args[:resource_url]
+      else
+        raise ArgumentError, "must pass :resource_url"
+      end
+
+      @socket =       args[:socket]  || TCPSocket.new(@resource_uri.host,
+          @resource_uri.port)
+
+      new_headers =   args[:headers] || {}
+
+      if @body
+        new_headers[:content_length] = @body.length
+      end
 
       new_headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      all_headers = default_headers(method)
-      all_headers.merge! new_headers
+      @headers = default_headers(@method)
+      @headers.merge! new_headers
+    end
 
-      @method = method
-      @resource_url = resource_url
-      @all_headers = all_headers
-      @body = body
+    # @param [String] The URL to turn in to a URI.
+    # @return [URI]
+    def build_resource_uri_from url
+      url = "rtsp://#{url}" unless url =~ /^rtsp/
+
+      resource_uri = URI.parse url
+      #resource_uri.port ||= RTSP_DEFAULT_PORT
+
+      resource_uri
     end
 
     def execute
-      message
+      response = send_message message
     end
 
     def message
-      message = "#{@method.to_s.upcase} #{@resource_url} #{RTSP_VER}\r\n"
-      message << headers_to_s(@all_headers)
+      message = "#{@method.to_s.upcase} #{@resource_uri} #{RTSP_VER}\r\n"
+      message << headers_to_s(@headers)
       message << "\r\n"
       message << "#{@body}"
 
       message
+    end
+
+    def send_message(message)
+      #message.each_line { |line| @logger.debug line }
+      recv if timeout(@timeout) { @socket.send(message, 0) }
     end
 
     # @return [Hash] The default headers for the given method.
@@ -62,15 +101,6 @@ module RTSP
         { :range => "npt=#{RTSP_DEFAULT_NPT}" }
       else
         {}
-      end
-    end
-
-    def default_body(method)
-      case method
-      when :announce
-        SDP::Description.new.to_s
-      else
-        nil
       end
     end
 
