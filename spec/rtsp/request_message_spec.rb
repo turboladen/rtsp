@@ -8,7 +8,7 @@ describe "RTSP::Request messages" do
     @mock_socket = double 'MockSocket'
   end
 
-  context "should build an OPTIONS message" do
+  context "builds an OPTIONS message" do
     it "with default sequence number" do
       request = RTSP::Request.new({ :method => :options,
           :resource_url => @stream,
@@ -25,7 +25,7 @@ describe "RTSP::Request messages" do
     end
   end
 
-  context "should build a DESCRIBE message" do
+  context "builds a DESCRIBE message" do
     it "with default sequence and accept values" do
       request = RTSP::Request.new({ :method => :describe,
           :resource_url => @stream,
@@ -65,7 +65,7 @@ describe "RTSP::Request messages" do
     end
   end
 
-  context "should build a ANNOUNCE message" do
+  context "builds a ANNOUNCE message" do
     it "with default sequence, content type, but no body" do
       request = RTSP::Request.new({ :method => :announce,
           :resource_url => @stream,
@@ -142,7 +142,7 @@ describe "RTSP::Request messages" do
     end
   end
 
-  context "should build a SETUP message" do
+  context "builds a SETUP message" do
     it "with default sequence, transport, client_port, and routing values" do
       request = RTSP::Request.new({ :method => :setup,
           :resource_url => @stream,
@@ -185,7 +185,7 @@ describe "RTSP::Request messages" do
     end
   end
 
-  context "should build a PLAY message" do
+  context "builds a PLAY message" do
     it "with default sequence and range values" do
       request = RTSP::Request.new({ :method => :play,
           :resource_url => @stream,
@@ -215,7 +215,7 @@ describe "RTSP::Request messages" do
     end
   end
 
-  context "should build a PAUSE message" do
+  context "builds a PAUSE message" do
     it "with required Request values" do
       request = RTSP::Request.new({ :method => :pause,
           :resource_url => @stream,
@@ -242,7 +242,7 @@ describe "RTSP::Request messages" do
     end
   end
 
-  context "should build a TEARDOWN message" do
+  context "builds a TEARDOWN message" do
     it "with required Request values" do
       request = RTSP::Request.new({ :method => :teardown,
           :resource_url => @stream,
@@ -268,7 +268,7 @@ describe "RTSP::Request messages" do
     end
   end
 
-  context "should build a GET_PARAMTER message" do
+  context "builds a GET_PARAMETER message" do
     it "with required Request values" do
       request = RTSP::Request.new({ :method => :get_parameter,
           :resource_url => @stream,
@@ -280,13 +280,15 @@ describe "RTSP::Request messages" do
       request.message.should match /\r\n\r\n/
     end
 
-    it "with session and range headers" do
+    it "with cseq, content type, session headers, and text body" do
+      body = "packets_received\r\njitter\r\n"
+
       request = RTSP::Request.new({ :method => :get_parameter,
           :resource_url => @stream,
           :headers => { :cseq => 431,
               :content_type => 'text/parameters',
               :session => 123456789 },
-          :body => "packets_received\r\njitter\r\n",
+          :body => body,
           :socket => @mock_socket })
 
       request.message.should match /^GET_PARAMETER rtsp/
@@ -294,7 +296,72 @@ describe "RTSP::Request messages" do
       request.message.should include "CSeq: 431\r\n"
       request.message.should include "Session: 123456789\r\n"
       request.message.should include "Content-Type: text/parameters\r\n"
-      request.message.should include "packets_received\r\njitter\r\n"
+      request.message.should include "Content-Length: #{body.length}\r\n"
+      request.message.should include body
+      request.message.should match /\r\n\r\n/
+    end
+  end
+
+  context "builds a SET_PARAMETER message" do
+    it "with required Request values" do
+      request = RTSP::Request.new({ :method => :set_parameter,
+          :resource_url => @stream,
+          :socket => @mock_socket })
+
+      request.message.should match /^SET_PARAMETER rtsp/
+      request.message.should include "SET_PARAMETER rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "CSeq: 1\r\n"
+      request.message.should match /\r\n\r\n/
+    end
+
+    it "with cseq, content type, session headers, and text body" do
+      body = "barparam: barstuff\r\n"
+
+      request = RTSP::Request.new({ :method => :set_parameter,
+          :resource_url => @stream,
+          :headers => { :cseq => 431,
+              :content_type => 'text/parameters',
+              :session => 123456789 },
+          :body => body,
+          :socket => @mock_socket })
+
+      request.message.should match /^SET_PARAMETER rtsp/
+      request.message.should include "SET_PARAMETER rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "CSeq: 431\r\n"
+      request.message.should include "Session: 123456789\r\n"
+      request.message.should include "Content-Type: text/parameters\r\n"
+      request.message.should include "Content-Length: #{body.length}\r\n"
+      request.message.should include body
+      request.message.should match /\r\n\r\n/
+    end
+  end
+
+  context "builds a REDIRECT message" do
+    it "with required Request values" do
+      request = RTSP::Request.new({ :method => :redirect,
+          :resource_url => @stream,
+          :socket => @mock_socket })
+
+      request.message.should match /^REDIRECT rtsp/
+      request.message.should include "REDIRECT rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "CSeq: 1\r\n"
+      request.message.should match /\r\n\r\n/
+    end
+
+    it "with cseq, location, and range headers" do
+      request = RTSP::Request.new({ :method => :redirect,
+          :resource_url => @stream,
+          :headers => { :cseq => 732,
+              :location => "rtsp://bigserver.com:8001",
+              :range => { :clock => "19960213T143205Z-" }
+          },
+          :socket => @mock_socket })
+
+      request.message.should match /^REDIRECT rtsp/
+      request.message.should include "REDIRECT rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "CSeq: 732\r\n"
+      request.message.should include "Location: rtsp://bigserver.com:8001\r\n"
+      request.message.should include "Range: clock=19960213T143205Z-\r\n"
       request.message.should match /\r\n\r\n/
     end
   end
