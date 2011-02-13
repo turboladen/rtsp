@@ -69,6 +69,8 @@ module RTSP
     private
 
     def create_reader(name, value)
+      value = value =~ /^[0-9]*$/ ? value.to_i : value
+
       instance_variable_set("@#{name}", value)
       self.instance_eval "def #{name}; @#{name}; end"
     end

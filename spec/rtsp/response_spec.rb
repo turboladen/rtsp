@@ -94,14 +94,14 @@ describe RTSP::Response do
 
     it "returns all header fields" do
       @response.server.should == "DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )"
-      @response.cseq.should == "1"
+      @response.cseq.should == 1
       @response.cache_control.should == "no-cache"
-      @response.content_length.should == "406"
+      @response.content_length.should == 406
       @response.date.should == "Sun, 23 Jan 2011 00:36:45 GMT"
       @response.expires.should == "Sun, 23 Jan 2011 00:36:45 GMT"
       @response.content_type.should == "application/sdp"
       @response.x_accept_retransmit.should == "our-retransmit"
-      @response.x_accept_dynamic_rate.should == "1"
+      @response.x_accept_dynamic_rate.should == 1
       @response.content_base.should == "rtsp://64.202.98.91:554/gs.sdp/"
     end
 
@@ -135,7 +135,7 @@ describe RTSP::Response do
     end
 
     it "returns the session" do
-      @response.session.should == '118'
+      @response.session.should == 118
     end
   end
 
@@ -161,7 +161,7 @@ describe RTSP::Response do
     end
 
     it "returns the session" do
-      @response.session.should == '118'
+      @response.session.should == 118
     end
 
     it "returns the rtp_info" do
