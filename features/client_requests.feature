@@ -7,3 +7,10 @@ Feature: Client request messages
     Given a known RTSP server
     When I make a "options" request
     Then I should receive an RTSP response to that OPTIONS request
+
+  Scenario: DESCRIBE
+    Given a known RTSP server
+    When I make a "describe" request
+    Then I should receive an RTSP response to that DESCRIBE request
+
+

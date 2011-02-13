@@ -18,3 +18,14 @@ Then /^I should receive an RTSP response to that OPTIONS request$/ do
   @response.public.should == "DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, OPTIONS, ANNOUNCE, RECORD"
   @response.body.should be_nil
 end
+
+Then /^I should receive an RTSP response to that DESCRIBE request$/ do
+  @response.is_a?(RTSP::Response).should be_true
+  @response.code.should == 200
+  @response.message.should == "OK"
+  @response.server.should == "DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )"
+  @response.cseq.should == 1
+  @response.body.is_a?(SDP::Description).should be_true
+  @response.body.protocol_version.should == "0"
+  @response.body.username.should == "-"
+end
