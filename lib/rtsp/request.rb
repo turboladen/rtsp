@@ -3,6 +3,8 @@ require 'socket'
 require 'timeout'
 require 'uri'
 
+require File.expand_path(File.dirname(__FILE__) + '/response')
+
 module RTSP
 
   # This class defines the template strings that make up RTSP methods.  Other
@@ -18,6 +20,7 @@ module RTSP
     RTSP_DEFAULT_NPT = "0.000-"
     RTSP_DEFAULT_LANGUAGE = "en-US"
     RTSP_DEFAULT_PORT = 554
+    MAX_BYTES_TO_RECEIVE = 1500
 
     attr_reader :resource_uri
 
@@ -118,6 +121,24 @@ module RTSP
     def send_message(message)
       #message.each_line { |line| @logger.debug line }
       recv if timeout(@timeout) { @socket.send(message, 0) }
+    end
+
+    # @return [Hash]
+    def recv
+      size = 0
+      socket_data, sender_sockaddr = @socket.recvfrom MAX_BYTES_TO_RECEIVE
+      response = RTSP::Response.new socket_data
+
+=begin
+      size = response["content-length"].to_i if response.has_key?("content-length")
+      response[:body] = read_nonblock(size).split("\r\n") unless size == 0
+
+      response
+=end
+      size = response.content_length.to_i if response.respond_to? 'content_length'
+      #response[:body] = read_nonblock(size).split("\r\n") unless size == 0
+
+      response
     end
 
     # Turns headers from Hash(es) into a String, where each element

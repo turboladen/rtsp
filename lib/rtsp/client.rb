@@ -12,8 +12,6 @@ module RTSP
 
   # Allows for pulling streams from an RTSP server.
   class Client
-    MAX_BYTES_TO_RECEIVE = 1500
-
     attr_reader   :server_uri
     attr_accessor :stream_tracks
 
@@ -160,12 +158,6 @@ module RTSP
     end
 =end
 
-    # @param []
-    def send_rtsp(message)
-      message.each_line { |line| @logger.debug line }
-      recv if timeout(@timeout) { @socket.send(message, 0) }
-    end
-
     def aggregate_control_track
       aggregate_control = @sdp_info.attributes.find_all do |a|
         a[:attribute] == "control"
@@ -185,47 +177,6 @@ module RTSP
       tracks
     end
 
-    # @return [Hash]
-    def recv
-      size = 0
-      socket_data, sender_sockaddr = @socket.recvfrom MAX_BYTES_TO_RECEIVE
-      response = RTSP::Response.new socket_data
-
-      #unless response.message == "OK"
-      #  message = "Did not recieve RTSP/1.0 200 OK.  Instead got '#{response.status}'"
-      #  message = message + "Full response:\n#{response.inspect}"
-      #  raise message
-      #
-      # end
-=begin
-      response = parse_header
-      unless response[:status].include? "RTSP/1.0 200 OK"
-        message = "Did not recieve RTSP/1.0 200 OK.  Instead got '#{response[:status]}'"
-        message = message + "Full response:\n#{response}"
-        raise message
-      end
-
-      response[:status] = readline
-      while line = readline
-        break if line == "\r\n"
-
-        if line.include? ": "
-          a = line.strip().split(": ")
-          response.merge!({a[0].downcase => a[1]})
-        end
-      end
-
-      size = response["content-length"].to_i if response.has_key?("content-length")
-      response[:body] = read_nonblock(size).split("\r\n") unless size == 0
-
-      response
-=end
-      size = response.content_length.to_i if response.respond_to? 'content_length'
-      #response[:body] = read_nonblock(size).split("\r\n") unless size == 0
-
-      response
-    end
-
     # @param [Number] size
     # @param [Hash] options
     # @option options [Number] time Duration to read on the non-blocking socket.
@@ -237,66 +188,41 @@ module RTSP
 
       buffer
     end
-
-    # @return [String]
-    def readline(options={})
-      options[:time] ||= 1
-      line = nil
-      timeout(options[:time]) { line = @socket.readline }
-
-      line
-    end
 =end
+
     #--------------------------------------------------------------------------
     # Privates!
     private
 
-    def build_server_uri(url)
-      unless url =~ /^rtsp/
-        url = "rtsp://#{url}"
+    # Override Ruby's logger message format to provide our own.  Also, output
+    # to STDOUT if not already outputting there.  Also, log to syslog server
+    # if configured.
+    #
+    # @param [String] severity Describes the log level (ERROR, INFO, ...)
+    # @param [DateTime] datetime The timestamp of the message to be logged
+    # @param [String] progname The name of the program that is logging
+    # @param [String] message The actual log message
+    # @return [String] The formatted message with ANSI codes stripped.
+    def format_message(severity, datetime, progname, message)
+      prog_name = " <#{progname}>" if progname
+
+      # Use the constant's setting unless we decide to redefine datetime_format.
+      datetime_format = DATETIME_FORMAT unless datetime_format
+      datetime = datetime.strftime(datetime_format).to_s
+
+      outstr = "[#{datetime}]:#{COLOR_MAP[severity]}:#{prog_name} #{message}\n"
+      puts outstr unless @log_file_location == STDOUT
+
+      if @log_server_status
+        server_log(severity, datetime, progname, message)
       end
 
-      server_uri = URI.parse url
-      server_uri.port ||= 554
-
-      #if @server_uri.path == @server_uri.host
-      #  @server_uri.path = "/stream1"
-      #else
-      #  @server_uri.path
-      #end
-
-      server_uri
-    end
-  end
-
-  # Override Ruby's logger message format to provide our own.  Also, output
-  # to STDOUT if not already outputting there.  Also, log to syslog server
-  # if configured.
-  #
-  # @param [String] severity Describes the log level (ERROR, INFO, ...)
-  # @param [DateTime] datetime The timestamp of the message to be logged
-  # @param [String] progname The name of the program that is logging
-  # @param [String] message The actual log message
-  # @return [String] The formatted message with ANSI codes stripped.
-  def format_message(severity, datetime, progname, message)
-    prog_name = " <#{progname}>" if progname
-
-    # Use the constant's setting unless we decide to redefine datetime_format.
-    datetime_format = DATETIME_FORMAT unless datetime_format
-    datetime = datetime.strftime(datetime_format).to_s
-
-    outstr = "[#{datetime}]:#{COLOR_MAP[severity]}:#{prog_name} #{message}\n"
-    puts outstr unless @log_file_location == STDOUT
-
-    if @log_server_status
-      server_log(severity, datetime, progname, message)
-    end
-
-    # Delete all ANSI codes in returned String.
-    if @log_file_location == STDOUT
-      outstr
-    else
-      outstr.gsub(/\x1B\[[0-9;]*[mK]/, '')
+      # Delete all ANSI codes in returned String.
+      if @log_file_location == STDOUT
+        outstr
+      else
+        outstr.gsub(/\x1B\[[0-9;]*[mK]/, '')
+      end
     end
   end
 end

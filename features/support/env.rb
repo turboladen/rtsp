@@ -1,9 +1,11 @@
 require 'rubygems'
 require 'socket'
 require 'timeout'
+require 'cucumber/rspec/doubles'
 
 $:.unshift(File.dirname(__FILE__) + '/../../lib')
 require 'rtsp/client'
+require 'rtsp/request'
 
 
 DESCRIBE_RESPONSE = <<-RESP
@@ -34,4 +36,10 @@ b=AS:48
 a=rtpmap:96 MP4A-LATM/44100/2
 a=fmtp:96 cpresent=0;config=400027200000
 a=control:trackID=1
+RESP
+
+OPTIONS_RESPONSE = <<-RESP
+RTSP/1.0 200 OK
+CSeq: 1
+Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE
 RESP
