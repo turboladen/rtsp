@@ -14,6 +14,20 @@ describe RTSP::Request do
         :headers => headers })
   end
 
+  context "#initialize" do
+    it "raises when no :method is passed in" do
+      lambda {
+        RTSP::Request.new({ :resource_url => @stream })
+        }.should raise_error ArgumentError
+    end
+
+    it "raises when no :resource_url is passed in" do
+      lambda {
+        RTSP::Request.new({ :method => :options })
+      }.should raise_error ArgumentError
+    end
+  end
+
   context "#headers_to_s turns a Hash into an String of header strings" do
     it "single header, non-hyphenated name, hash value" do
       header = { :range => { :npt => "0.000-" } }
