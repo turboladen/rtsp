@@ -105,14 +105,6 @@ module RTSP
     end
 
     # @return [String] The formatted request message to send.
-    def self.pause(stream, session, sequence)
-      message =  "PAUSE #{stream} #{RTSP_VER}\r\n"
-      message << "CSeq: #{sequence}\r\n"
-      message << "Session: #{session}\r\n"
-      message << "\r\n"
-    end
-
-    # @return [String] The formatted request message to send.
     def self.teardown(stream, session, options={})
       options[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
       message =  "TEARDOWN #{stream} #{RTSP_VER}\r\n"
