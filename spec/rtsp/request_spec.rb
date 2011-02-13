@@ -26,6 +26,53 @@ describe RTSP::Request do
         RTSP::Request.new({ :method => :options })
       }.should raise_error ArgumentError
     end
+
+    context "parses the resource URL to a URI" do
+      it "with scheme, IP, port, and path" do
+        request = RTSP::Request.new( { :method => :options,
+            :resource_url => "rtsp://64.202.98.91:554/sa.sdp",
+            :socket => @mock_socket
+        })
+        request.resource_uri.scheme.should == "rtsp"
+        request.resource_uri.host.should == "64.202.98.91"
+        request.resource_uri.port.should == 554
+        request.resource_uri.path.should == "/sa.sdp"
+      end
+
+      it "with scheme, IP, path; port defaults to 554" do
+        pending "decision on whether to add 554 in to the URL or not"
+        request = RTSP::Request.new( { :method => :options,
+            :resource_url => "rtsp://64.202.98.91/sa.sdp",
+            :socket => @mock_socket
+        })
+        request.resource_uri.scheme.should == "rtsp"
+        request.resource_uri.host.should == "64.202.98.91"
+        request.resource_uri.port.should == 554
+        request.resource_uri.path.should == "/sa.sdp"
+      end
+
+      it "with IP, path; port defaults to 554; scheme defaults to 'rtsp'" do
+        request = RTSP::Request.new( { :method => :options,
+            :resource_url => "rtsp://64.202.98.91/sa.sdp",
+            :socket => @mock_socket
+        })
+        request.resource_uri.scheme.should == "rtsp"
+        request.resource_uri.host.should == "64.202.98.91"
+        #request.resource_uri.port.should == 554
+        request.resource_uri.path.should == "/sa.sdp"
+      end
+
+      it "with scheme, IP, port" do
+        request = RTSP::Request.new( { :method => :options,
+            :resource_url => "rtsp://64.202.98.91:554",
+            :socket => @mock_socket
+        })
+        request.resource_uri.scheme.should == "rtsp"
+        request.resource_uri.host.should == "64.202.98.91"
+        #request.resource_uri.port.should == 554
+        request.resource_uri.path.should == ""
+      end
+    end
   end
 
   context "#headers_to_s turns a Hash into an String of header strings" do

@@ -19,6 +19,8 @@ module RTSP
     RTSP_DEFAULT_LANGUAGE = "en-US"
     RTSP_DEFAULT_PORT = 554
 
+    attr_reader :resource_uri
+
     def self.execute args
       new(args).execute
     end
@@ -62,6 +64,7 @@ module RTSP
       url = "rtsp://#{url}" unless url =~ /^rtsp/
 
       resource_uri = URI.parse url
+      # Not sure if this should be enforced; commenting out for now.
       #resource_uri.port ||= RTSP_DEFAULT_PORT
 
       resource_uri
