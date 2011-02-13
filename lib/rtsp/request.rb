@@ -44,20 +44,32 @@ module RTSP
         raise ArgumentError, "must pass :resource_url"
       end
 
-      @socket =       args[:socket]  || TCPSocket.new(@resource_uri.host,
-          @resource_uri.port)
+      @socket = args[:socket] || TCPSocket.new(@resource_uri.host, @resource_uri.port)
 
-      new_headers =   args[:headers] || {}
+      @headers = build_headers_from args[:headers]
+    end
+
+    # Takes headers passed in on init and combines them with default headers for
+    # the method type that the request is being made for.  If @body was set on
+    # init, this adds the Content-Length header based on the size of the body.
+    #
+    # @param [Hash] user_headers
+    # @return [Hash] All of the headers to be used for the request.
+    def build_headers_from user_headers
+      new_headers = user_headers || {}
 
       if @body
         new_headers[:content_length] = @body.length
       end
 
       new_headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      @headers = default_headers(@method)
-      @headers.merge! new_headers
+      headers = default_headers_for @method
+      headers.merge! new_headers
     end
 
+    # Takes the URL given and turns it into a URI.  This allows for enforcing
+    # values for each part of the URI.
+    #
     # @param [String] The URL to turn in to a URI.
     # @return [URI]
     def build_resource_uri_from url
@@ -68,6 +80,32 @@ module RTSP
       #resource_uri.port ||= RTSP_DEFAULT_PORT
 
       resource_uri
+    end
+
+    # Returns the required/default headers for the provided method.
+    #
+    # @param [Symbol] method The method type to get headers for.
+    # @return [Hash] The default headers for the given method.
+    def default_headers_for(method)
+      unless method.is_a? Symbol
+        raise ArgumentError, ":method value must be a Symbol."
+      end
+
+      case method
+      when :describe
+        { :accept => RTSP_ACCEPT_TYPE }
+      when :announce
+        { :content_type => RTSP_ACCEPT_TYPE }
+      when :setup
+        transport = "#{RTP_DEFAULT_PACKET_TYPE};"
+        transport << "#{RTP_DEFAULT_ROUTING};"
+        transport << "client_port=#{RTP_DEFAULT_CLIENT_PORT}-#{RTP_DEFAULT_CLIENT_PORT + 1}"
+        { :transport => transport }
+      when :play
+        { :range => "npt=#{RTSP_DEFAULT_NPT}" }
+      else
+        {}
+      end
     end
 
     def execute
@@ -86,25 +124,6 @@ module RTSP
     def send_message(message)
       #message.each_line { |line| @logger.debug line }
       recv if timeout(@timeout) { @socket.send(message, 0) }
-    end
-
-    # @return [Hash] The default headers for the given method.
-    def default_headers(method)
-      case method
-      when :describe
-        { :accept => RTSP_ACCEPT_TYPE }
-      when :announce
-        { :content_type => RTSP_ACCEPT_TYPE }
-      when :setup
-        transport = "#{RTP_DEFAULT_PACKET_TYPE};"
-        transport << "#{RTP_DEFAULT_ROUTING};"
-        transport << "client_port=#{RTP_DEFAULT_CLIENT_PORT}-#{RTP_DEFAULT_CLIENT_PORT + 1}"
-        { :transport => transport }
-      when :play
-        { :range => "npt=#{RTSP_DEFAULT_NPT}" }
-      else
-        {}
-      end
     end
 
     # Turns headers from Hash(es) into a String, where each element
