@@ -27,6 +27,16 @@ describe RTSP::Request do
       }.should raise_error ArgumentError
     end
 
+    context "builds headers" do
+      before :each do
+        @request = RTSP::Request.new({ :method => :options,
+          :resource_url => @stream,
+          :socket => @mock_socket
+        })
+      end
+
+      it 
+    end
     context "parses the resource URL to a URI" do
       it "with scheme, IP, port, and path" do
         request = RTSP::Request.new( { :method => :options,

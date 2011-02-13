@@ -45,7 +45,6 @@ module RTSP
       end
 
       @socket = args[:socket] || TCPSocket.new(@resource_uri.host, @resource_uri.port)
-
       @headers = build_headers_from args[:headers]
     end
 
@@ -63,7 +62,7 @@ module RTSP
       end
 
       new_headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      headers = default_headers_for @method
+      headers = default_headers
       headers.merge! new_headers
     end
 
@@ -84,14 +83,9 @@ module RTSP
 
     # Returns the required/default headers for the provided method.
     #
-    # @param [Symbol] method The method type to get headers for.
     # @return [Hash] The default headers for the given method.
-    def default_headers_for(method)
-      unless method.is_a? Symbol
-        raise ArgumentError, ":method value must be a Symbol."
-      end
-
-      case method
+    def default_headers
+      case @method
       when :describe
         { :accept => RTSP_ACCEPT_TYPE }
       when :announce
