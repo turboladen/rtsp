@@ -267,4 +267,35 @@ describe "RTSP::Request messages" do
       request.message.should match /\r\n\r\n/
     end
   end
+
+  context "should build a GET_PARAMTER message" do
+    it "with required Request values" do
+      request = RTSP::Request.new({ :method => :get_parameter,
+          :resource_url => @stream,
+          :socket => @mock_socket })
+
+      request.message.should match /^GET_PARAMETER rtsp/
+      request.message.should include "GET_PARAMETER rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "CSeq: 1\r\n"
+      request.message.should match /\r\n\r\n/
+    end
+
+    it "with session and range headers" do
+      request = RTSP::Request.new({ :method => :get_parameter,
+          :resource_url => @stream,
+          :headers => { :cseq => 431,
+              :content_type => 'text/parameters',
+              :session => 123456789 },
+          :body => "packets_received\r\njitter\r\n",
+          :socket => @mock_socket })
+
+      request.message.should match /^GET_PARAMETER rtsp/
+      request.message.should include "GET_PARAMETER rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "CSeq: 431\r\n"
+      request.message.should include "Session: 123456789\r\n"
+      request.message.should include "Content-Type: text/parameters\r\n"
+      request.message.should include "packets_received\r\njitter\r\n"
+      request.message.should match /\r\n\r\n/
+    end
+  end
 end
