@@ -7,9 +7,9 @@ require File.expand_path(File.dirname(__FILE__) + '/response')
 
 module RTSP
 
-  # This class defines the template strings that make up RTSP methods.  Other
-  # objects should use these for building request messages to communicate in
-  # RTSP.
+  # This class allows for building and sending the request message strings that
+  # make up RTSP methods.  Clients and Servers use these for building and sending
+  # the request messages to communicate in RTSP.
   class Request
     RTSP_VER = "RTSP/1.0"
     RTSP_ACCEPT_TYPE = "application/sdp"
@@ -24,6 +24,11 @@ module RTSP
 
     attr_reader :resource_uri
 
+    # Creates an instance of an RTSP::Request object and sends the message
+    # over the socket.
+    #
+    # @param [Hash] args
+    # @return [RTSP::Response]
     def self.execute args
       new(args).execute
     end
@@ -36,6 +41,17 @@ module RTSP
     # * :timeout
     # * :socket
     # * :headers
+    #
+    # @param [Hash] args
+    # @option args [Symbol] :method The RTSP method to build and send.
+    # @option args [String] :resource_url The URL to communicate to.
+    # @option args [String] :body Content to send as the body of the message.
+    # Generally this will be a String of some sort, but could be binary data as
+    # well.  Default is nil.
+    # @option args [Fixnum] :timeout Number of seconds to timeout after trying
+    # to send the message of the socket.  Defaults to 2.
+    # @option args [Socket] :socket Optional; socket to use to communicate over.
+    # @option args [Hash] :headers RTSP headers to add to the request.
     def initialize args
       @method =       args[:method] or raise ArgumentError, "must pass :method"
       @body =         args[:body] || nil
@@ -105,10 +121,12 @@ module RTSP
       end
     end
 
+    # @return [RTSP::Response]
     def execute
-      response = send_message message
+      send_message
     end
 
+    # @return [String] The request message to send.
     def message
       message = "#{@method.to_s.upcase} #{@resource_uri} #{RTSP_VER}\r\n"
       message << headers_to_s(@headers)
@@ -118,12 +136,15 @@ module RTSP
       message
     end
 
-    def send_message(message)
+    # Sends the message over the socket.
+    #
+    # @return [RTSP::Response]
+    def send_message
       #message.each_line { |line| @logger.debug line }
       recv if timeout(@timeout) { @socket.send(message, 0) }
     end
 
-    # @return [Hash]
+    # @return [RTSP::Response]
     def recv
       size = 0
       socket_data, sender_sockaddr = @socket.recvfrom MAX_BYTES_TO_RECEIVE
