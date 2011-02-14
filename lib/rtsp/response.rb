@@ -3,16 +3,21 @@ require 'socket'
 require 'sdp'
 
 module RTSP
+
+  # Parses raw response data from the server/client and turns it into
+  # attr_readers.
   class Response
     attr_reader :code
     attr_reader :message
     attr_reader :body
-    
-    def initialize(response)
-      response_array = response.split "\r\n\r\n"
+
+    # @param [String] raw_response The raw response string returned from the
+    # server/client.
+    def initialize(raw_response)
+      response_array = raw_response.split "\r\n\r\n"
 
       if response_array.empty?
-        response_array = response.split "\n\n"
+        response_array = raw_response.split "\n\n"
       end
 
       head = response_array.first
@@ -44,6 +49,10 @@ module RTSP
       end
     end
 
+    # Reads through each line of the RTSP response body and parses it if
+    # needed.
+    #
+    # @param [String] body
     def parse_body body
       #response[:body] = read_nonblock(size).split("\r\n") unless @content_length == 0
       if body =~ /^(\r\n|\n)/
@@ -68,6 +77,11 @@ module RTSP
 
     private
 
+    # Creates an attr_reader with the name given and sets it to the value that's
+    # given.
+    #
+    # @param [String] name
+    # @param [String] value
     def create_reader(name, value)
       value = value =~ /^[0-9]*$/ ? value.to_i : value
 
