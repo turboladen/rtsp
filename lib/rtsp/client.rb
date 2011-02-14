@@ -17,22 +17,44 @@ module RTSP
 
     # @param [String] rtsp_url URL to the resource to stream.  If no scheme is given,
     # "rtsp" is assumed.  If no port is given, 554 is assumed.  If no path is
-    # given, "/stream1"is assumed.
+    # given, "/stream1" is assumed.
     def initialize(rtsp_url, options={})
-      @server_uri = build_server_uri(rtsp_url)
-      @socket = options[:socket]               || TCPSocket.new(@server_uri.host,
-                                                                @server_uri.port)
-      @stream_tracks = options[:stream_tracks] || ["/track1"]
-      @timeout = options[:timeout]             || 2
-      @session
+      #@server_uri = build_server_uri(rtsp_url)
+      #@socket = options[:socket]               || TCPSocket.new(@server_uri.host,
+      #                                                          @server_uri.port)
+      #@stream_tracks = options[:stream_tracks] || ["/track1"]
+      #@timeout = options[:timeout]             || 2
+      #@session
       @logger = Logger.new(STDOUT)
       @logger.datetime_format = "%b %d %T"
-      
+
+=begin
       if options[:capture_file_path] && options[:capture_duration]
         @capture_file_path = options[:capture_file_path]
         @capture_duration = options[:capture_duration]
         setup_capture
       end
+=end
+      begin
+        options = RTSP::Request.execute({ :method => :options,
+            :resource_url => rtsp_url })
+
+        @rtsp_methods = supported_methods options.public
+      rescue => e
+        puts e.message
+        puts e.backtrace
+      end
+      #binding.pry
+    end
+
+    # Takes the methods returned from the Public header from an OPTIONS response
+    # and puts them to an Array.
+    #
+    # @param [String] method_list The string returned from the server containing
+    # the list of methods it supports.
+    # @return [Array<Symbol>] The list of methods as symbols.
+    def supported_methods method_list
+      method_list.downcase.split(', ').map { |m| m.to_sym }
     end
 
     def setup_capture

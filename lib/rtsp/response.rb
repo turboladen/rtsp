@@ -24,6 +24,10 @@ module RTSP
       body = response_array.last == head ? "" : response_array.last
       parse_head(head)
       @body = parse_body(body)
+
+      unless @code == 200
+        raise "#{@code}: #{@message}"
+      end
     end
 
     # Reads through each line of the RTSP response and creates a
