@@ -18,3 +18,10 @@ Feature: Client request messages
     When I make a "announce" request
     Then I should receive an RTSP response to that ANNOUNCE request
 
+  Scenario: SETUP
+    Given a known RTSP server
+    When I make a "setup" request with headers:
+      | header | value |
+      | transport | RTP/AVP |
+    Then I should receive an RTSP response to that SETUP request
+
