@@ -4,6 +4,7 @@ require 'timeout'
 require 'uri'
 
 require File.expand_path(File.dirname(__FILE__) + '/response')
+require File.expand_path(File.dirname(__FILE__) + '/helpers')
 
 module RTSP
 
@@ -11,6 +12,8 @@ module RTSP
   # make up RTSP methods.  Clients and Servers use these for building and sending
   # the request messages to communicate in RTSP.
   class Request
+    include RTSP::Helpers
+
     RTSP_VER = "RTSP/1.0"
     RTSP_ACCEPT_TYPE = "application/sdp"
     RTP_DEFAULT_CLIENT_PORT = 9000
@@ -85,25 +88,7 @@ module RTSP
       headers.merge! new_headers
     end
 
-    # Takes the URL given and turns it into a URI.  This allows for enforcing
-    # values for each part of the URI.
-    #
-    # @param [String] The URL to turn in to a URI.
-    # @return [URI]
-    def build_resource_uri_from url
-      url = "rtsp://#{url}" unless url =~ /^rtsp/
-
-      resource_uri = URI.parse url
-      # Not sure if this should be enforced; commenting out for now.
-      #resource_uri.port ||= RTSP_DEFAULT_PORT
-
-      resource_uri
-    end
-
-    # Returns the required/default headers for the provided method.
-    #
-    # @return [Hash] The default headers for the given method.
-    def default_headers
+    # Returns the required/default headers for the provided method.## @return [Hash] The default headers for the given method.def default_headers
       case @method
       when :describe
         { :accept => RTSP_ACCEPT_TYPE }
