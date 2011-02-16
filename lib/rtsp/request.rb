@@ -60,12 +60,15 @@ module RTSP
       @body =         args[:body] || nil
       @timeout =      args[:timeout] || 2
 
-      if args[:resource_url]
+      if args[:resource_url].is_a?(String)
         @resource_uri = build_resource_uri_from args[:resource_url]
+      elsif args[:resource_url].is_a?(URI)
+        @resource_uri = args[:resource_url]
       else
         raise ArgumentError, "must pass :resource_url"
       end
 
+      # TODO: if URI scheme = rtspu, use UDPSocket
       @socket = args[:socket] || TCPSocket.new(@resource_uri.host, @resource_uri.port)
       @headers = build_headers_from args[:headers]
     end
@@ -88,7 +91,10 @@ module RTSP
       headers.merge! new_headers
     end
 
-    # Returns the required/default headers for the provided method.## @return [Hash] The default headers for the given method.def default_headers
+    # Returns the required/default headers for the provided method.
+    #
+    # @return [Hash] The default headers for the given method.
+    def default_headers
       case @method
       when :describe
         { :accept => RTSP_ACCEPT_TYPE }
