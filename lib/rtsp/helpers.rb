@@ -1,5 +1,6 @@
 module RTSP
   module Helpers
+    RTSP_DEFAULT_PORT = 554
 
     # Takes the URL given and turns it into a URI.  This allows for enforcing
     # values for each part of the URI.
@@ -11,7 +12,7 @@ module RTSP
 
       resource_uri = URI.parse url
       # Not sure if this should be enforced; commenting out for now.
-      #resource_uri.port ||= RTSP_DEFAULT_PORT
+      resource_uri.port ||= RTSP_DEFAULT_PORT
 
       resource_uri
     end

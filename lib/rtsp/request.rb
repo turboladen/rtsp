@@ -22,7 +22,6 @@ module RTSP
     RTSP_DEFAULT_SEQUENCE_NUMBER = 1
     RTSP_DEFAULT_NPT = "0.000-"
     RTSP_DEFAULT_LANGUAGE = "en-US"
-    RTSP_DEFAULT_PORT = 554
     MAX_BYTES_TO_RECEIVE = 1500
 
     attr_reader :resource_uri
