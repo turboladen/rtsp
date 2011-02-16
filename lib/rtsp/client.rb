@@ -223,7 +223,7 @@ module RTSP
         a[:attribute] == "control"
       end
 
-      aggregate_control.first[:value]
+      "#{@content_base}#{aggregate_control.first[:value]}"
     end
 
     # Extracts the value of the "control" attribute from all media sections of
