@@ -1,0 +1,1 @@
+class RTSPException < StandardError; end
