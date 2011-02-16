@@ -88,7 +88,7 @@ module RTSP
     # @return [RTSP::Response]
     def describe additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-      @logger.debug "Sending DESCRIBE to #{@server_uri.host}#{@stream_path}"
+      @logger.debug "Sending DESCRIBE to #{@server_uri.to_s}"
 
       begin
         response = RTSP::Request.execute(@args.merge(
@@ -103,8 +103,8 @@ module RTSP
         compare_sequence_number response.cseq
         @cseq += 1
         @session_description = response.body
-        @content_base = response.content_base
-        @session_id = response.id
+        @content_base = build_resource_uri_from response.content_base
+        @session_id = response.body.id
 
         @media_control_tracks = media_control_tracks
         @aggregate_control_track = aggregate_control_track
@@ -116,48 +116,30 @@ module RTSP
       response
     end
 
-    # Compares the sequence number passed in to the current client sequence
-    # number (@cseq) and raises if they're not equal.  If that's the case, the
-    # server responded to a different request.
-    #
-    # @param [Fixnum] server_cseq Sequence number returned by the server.
-    # @raise
-    def compare_sequence_number server_cseq
-      if @cseq != server_cseq
-        message = "Sequence number mismatch.  Client: #{@cseq}, Server: #{server_cseq}"
-        raise message
-      end
-    end
-
-    # Takes the methods returned from the Public header from an OPTIONS response
-    # and puts them to an Array.
-    #
-    # @param [String] method_list The string returned from the server containing
-    # the list of methods it supports.
-    # @return [Array<Symbol>] The list of methods as symbols.
-    def extract_supported_methods_from method_list
-      method_list.downcase.split(', ').map { |m| m.to_sym }
-    end
-
-    def setup_capture
-      @capture_file = File.open(@capture_file_path, File::WRONLY|File::EXCL|File::CREAT)
-      @capture_socket = UDPSocket.new
-      @capture_socket.bind "0.0.0.0", @server_uri.port
-    end
-
-    # TODO: update sequence
     # TODO: get session
     # TODO: parse Transport header (http://tools.ietf.org/html/rfc2326#section-12.39)
-    # @return [Hash] The response formatted as a Hash.
-    def setup(options={})
-      @logger.debug "Sending SETUP to #{@server_uri.host}#{@stream_path}"
-      setup_url = @content_base || "#{@server_uri.to_s}#{@stream_path}"
-      response = send_rtsp Request.setup(setup_url, options)
+    # @return [RTSP::Response] The response formatted as a Hash.
+    def setup track, additional_headers={}
+      headers = ( { :cseq => @cseq }).merge(additional_headers)
+      @logger.debug "Sending SETUP to #{track}"
 
-      @logger.debug "Recieved response:"
-      @logger.debug response
+      begin
+        response = RTSP::Request.execute(@args.merge(
+            :method => :setup,
+            :resource_url => track,
+            :headers => headers
+        ))
 
-      @session = response.cseq
+        @logger.debug "Received response:"
+        @logger.debug response
+
+        compare_sequence_number response.cseq
+        @session = response.session
+        @cseq += 1
+      rescue => ex
+        puts "Got #{ex.message}"
+        puts ex.backtrace
+      end
 
       response
     end
@@ -241,6 +223,35 @@ module RTSP
       end
 
       tracks
+    end
+
+    # Compares the sequence number passed in to the current client sequence
+    # number (@cseq) and raises if they're not equal.  If that's the case, the
+    # server responded to a different request.
+    #
+    # @param [Fixnum] server_cseq Sequence number returned by the server.
+    # @raise
+    def compare_sequence_number server_cseq
+      if @cseq != server_cseq
+        message = "Sequence number mismatch.  Client: #{@cseq}, Server: #{server_cseq}"
+        raise message
+      end
+    end
+
+    # Takes the methods returned from the Public header from an OPTIONS response
+    # and puts them to an Array.
+    #
+    # @param [String] method_list The string returned from the server containing
+    # the list of methods it supports.
+    # @return [Array<Symbol>] The list of methods as symbols.
+    def extract_supported_methods_from method_list
+      method_list.downcase.split(', ').map { |m| m.to_sym }
+    end
+
+    def setup_capture
+      @capture_file = File.open(@capture_file_path, File::WRONLY|File::EXCL|File::CREAT)
+      @capture_socket = UDPSocket.new
+      @capture_socket.bind "0.0.0.0", @server_uri.port
     end
 
     #--------------------------------------------------------------------------
