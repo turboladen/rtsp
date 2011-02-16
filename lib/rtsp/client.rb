@@ -15,9 +15,9 @@ module RTSP
   class Client
     include RTSP::Helpers
 
-    attr_reader   :options
-    attr_reader   :server_uri
-    attr_reader   :cseq
+    attr_reader :options
+    attr_reader :server_uri
+    attr_reader :cseq
     attr_accessor :tracks
 
     # @param [String] rtsp_url URL to the resource to stream.  If no scheme is given,
@@ -84,8 +84,8 @@ module RTSP
       begin
         response = RTSP::Request.execute(@args.merge(
             :method => :describe,
-                :resource_url => @server_uri,
-                :headers => headers
+            :resource_url => @server_uri,
+            :headers => headers
         ))
 
         @logger.debug "Received response:"
@@ -160,7 +160,7 @@ module RTSP
       @logger.debug "Sending PLAY to #{@server_uri.host}#{@stream_path}"
       session = options[:session] || @session
       response = send_rtsp Request.play(@server_uri.to_s,
-                                                options[:session])
+          options[:session])
 
       @logger.debug "Recieved response:"
       @logger.debug response
@@ -187,8 +187,8 @@ module RTSP
     def pause(options={})
       @logger.debug "Sending PAUSE to #{@server_uri.host}#{@stream_path}"
       response = send_rtsp Request.pause(@tracks.first,
-                                                 options[:session],
-                                                  options[:sequence])
+          options[:session],
+          options[:sequence])
 
       @logger.debug "Recieved response:"
       @logger.debug response
