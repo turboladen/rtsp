@@ -42,6 +42,15 @@ module RTSP
       #binding.pry
     end
 
+    # The URL for the RTSP server to talk to can change if multiple servers are
+    # involved in delivering content.  This method can be used to change the
+    # server to talk to on the fly.
+    #
+    # @param [String] new_url The new server URL to use to communicate over.
+    def server_url=(new_url)
+      @server_uri = build_resource_uri_from new_url
+    end
+
     # Sends an OPTIONS message to the server specified by @server_uri.  Sets
     # @supported_methods based on the list of supported methods returned in the
     # Public headers.  Lastly, if the response was an OK, it increases the @cseq
