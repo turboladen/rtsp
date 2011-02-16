@@ -152,6 +152,30 @@ module RTSP
 
       response
     end
+=begin
+    def connect
+      timeout(@timeout) { @socket = TCPSocket.new(@host, @port) } #rescue @socket = nil
+    end
+
+    def connected?
+      @socket == nil ? true : false
+    end
+
+    def disconnect
+      timeout(@timeout) { @socket.close } rescue @socket = nil
+    end
+
+    # @param [Number] size
+    # @param [Hash] options
+    # @option options [Number] time Duration to read on the non-blocking socket.
+    def read_nonblock(size, options={})
+      options[:time] ||= 1
+      buffer = nil
+      timeout(options[:time]) { buffer = @socket.read_nonblock(size) }
+
+      buffer
+    end
+=end
 
     # Turns headers from Hash(es) into a String, where each element
     # is a String in the form: [Header Type]: value(s)\r\n.
