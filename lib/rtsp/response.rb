@@ -7,6 +7,7 @@ module RTSP
   # Parses raw response data from the server/client and turns it into
   # attr_readers.
   class Response
+    attr_reader :rtsp_version
     attr_reader :code
     attr_reader :message
     attr_reader :body
@@ -16,21 +17,20 @@ module RTSP
     def initialize(raw_response)
       puts raw_response
 
-      head_and_body = split_head_and_body raw_response
+      head_and_body = split_head_and_body_from raw_response
       head = head_and_body.first
       body = head_and_body.last == head ? "" : head_and_body.last
       parse_head(head)
       @body = parse_body(body)
     end
 
-    # Takes the raw response text and splits it into a 2-element Array,
-    # where 0 is the text containing the headers and 1 is the text containing
-    # the body.
+    # Takes the raw response text and splits it into a 2-element Array, where 0
+    # is the text containing the headers and 1 is the text containing the body.
     #
     # @param [String] raw_response
     # @return [Array<String>] 2-element Array containing the head and body of
     # the response.
-    def split_head_and_body raw_response
+    def split_head_and_body_from raw_response
       response_array = raw_response.split "\r\n\r\n"
 
       if response_array.empty?
@@ -40,8 +40,9 @@ module RTSP
       response_array
     end
 
-    # Reads through each line of the RTSP response and creates a
-    # snake-case accessor with that value set.
+    # Reads through each header line of the RTSP response, extracts the response
+    # code, response message, response version, and creates a snake-case
+    # accessor with that value set.
     #
     # @param [String] head
     def parse_head head
@@ -49,9 +50,10 @@ module RTSP
 
       lines.each_with_index do |line, i|
         if i == 0
-          line =~ /RTSP\/1.0 (\d\d\d) ([^\r\n]+)/
-          @code = $1.to_i
-          @message = $2
+          line =~ /RTSP\/(\d\.\d) (\d\d\d) ([^\r\n]+)/
+          @rtsp_version = $1
+          @code = $2.to_i
+          @message = $3
           next
         end
         
