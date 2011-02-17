@@ -11,7 +11,6 @@ module RTSP
       url = "rtsp://#{url}" unless url =~ /^rtsp/
 
       resource_uri = URI.parse url
-      # Not sure if this should be enforced; commenting out for now.
       resource_uri.port ||= RTSP_DEFAULT_PORT
 
       resource_uri
