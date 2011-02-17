@@ -15,7 +15,7 @@ module RTSP
     # @param [String] raw_response The raw response string returned from the
     # server/client.
     def initialize(raw_response)
-      puts raw_response
+      #puts raw_response
 
       head_and_body = split_head_and_body_from raw_response
       head = head_and_body.first
@@ -58,9 +58,9 @@ module RTSP
         end
         
         if line.include? ": "
-          header_field = line.strip.split(": ")
-          header_name = header_field.first.downcase.gsub(/-/, "_")
-          create_reader(header_name, header_field.last)
+          header_and_value = line.strip.split(":", 2)
+          header_name = header_and_value.first.downcase.gsub(/-/, "_")
+          create_reader(header_name, header_and_value[1].strip)
         end
       end
     end
@@ -99,7 +99,9 @@ module RTSP
     # @param [String] name
     # @param [String] value
     def create_reader(name, value)
-      value = value =~ /^[0-9]*$/ ? value.to_i : value
+      unless value.empty?
+        value = value =~ /^[0-9]*$/ ? value.to_i : value
+      end
 
       instance_variable_set("@#{name}", value)
       self.instance_eval "def #{name}; @#{name}; end"

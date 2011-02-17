@@ -133,10 +133,27 @@ describe RTSP::Response do
   end
 
   context "#parse_head" do
+    before do
+      @response = RTSP::Response.new OPTIONS_RESPONSE
+    end
+
+    it "extracts the RTSP version from the header" do
+      @response.rtsp_version.should == "1.0"
+    end
+
+    it "extracts the response code from the header as a Fixnum" do
+      @response.code.is_a?(Fixnum).should be_true
+      @response.code.should == 200
+    end
+
+    it "extracts the response message from the header" do
+      @response.message.should == "OK"
+    end
+
     it "returns empty value string when header has no value" do
-      pending
-      response = RTSP::Response.new OPTIONS_RESPONSE
-      response.parse_head
+      response = RTSP::Response.new NO_CSEQ_VALUE_RESPONSE
+      response.parse_head NO_CSEQ_VALUE_RESPONSE
+      response.instance_variable_get(:@cseq).should == ""
     end
   end
 
