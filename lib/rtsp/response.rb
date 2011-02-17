@@ -14,20 +14,30 @@ module RTSP
     # @param [String] raw_response The raw response string returned from the
     # server/client.
     def initialize(raw_response)
+      puts raw_response
+
+      head_and_body = split_head_and_body raw_response
+      head = head_and_body.first
+      body = head_and_body.last == head ? "" : head_and_body.last
+      parse_head(head)
+      @body = parse_body(body)
+    end
+
+    # Takes the raw response text and splits it into a 2-element Array,
+    # where 0 is the text containing the headers and 1 is the text containing
+    # the body.
+    #
+    # @param [String] raw_response
+    # @return [Array<String>] 2-element Array containing the head and body of
+    # the response.
+    def split_head_and_body raw_response
       response_array = raw_response.split "\r\n\r\n"
 
       if response_array.empty?
         response_array = raw_response.split "\n\n"
       end
 
-      head = response_array.first
-      body = response_array.last == head ? "" : response_array.last
-      parse_head(head)
-      @body = parse_body(body)
-
-      unless @code == 200
-        raise "#{@code}: #{@message}"
-      end
+      response_array
     end
 
     # Reads through each line of the RTSP response and creates a
