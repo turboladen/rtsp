@@ -8,6 +8,7 @@ require 'uri'
 require File.expand_path(File.dirname(__FILE__) + '/request')
 require File.expand_path(File.dirname(__FILE__) + '/response')
 require File.expand_path(File.dirname(__FILE__) + '/helpers')
+require File.expand_path(File.dirname(__FILE__) + '/exception')
 
 module RTSP
 
@@ -18,6 +19,7 @@ module RTSP
     attr_reader :options
     attr_reader :server_uri
     attr_reader :cseq
+    attr_reader :session
     attr_accessor :tracks
 
     # @param [String] rtsp_url URL to the resource to stream.  If no scheme is given,
@@ -75,7 +77,7 @@ module RTSP
         @supported_methods = extract_supported_methods_from response.public
         compare_sequence_number response.cseq
         @cseq += 1
-      rescue => ex
+      rescue RTSPException => ex
         puts "Got #{ex.message}"
         puts ex.backtrace
       end
@@ -108,7 +110,7 @@ module RTSP
 
         @media_control_tracks = media_control_tracks
         @aggregate_control_track = aggregate_control_track
-      rescue => ex
+      rescue RTSPException => ex
         puts "Got #{ex.message}"
         puts ex.backtrace
       end
@@ -116,8 +118,11 @@ module RTSP
       response
     end
 
-    # TODO: get session
     # TODO: parse Transport header (http://tools.ietf.org/html/rfc2326#section-12.39)
+    # TODO: @session numbers are relevant to tracks, and a client can play multiple tracks at the same time.
+    #
+    # @param [String] track
+    # @param [Hash] additional_headers
     # @return [RTSP::Response] The response formatted as a Hash.
     def setup track, additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
@@ -136,7 +141,7 @@ module RTSP
         compare_sequence_number response.cseq
         @session = response.session
         @cseq += 1
-      rescue => ex
+      rescue RTSPException => ex
         puts "Got #{ex.message}"
         puts ex.backtrace
       end
@@ -144,19 +149,37 @@ module RTSP
       response
     end
 
-    # TODO: update sequence
-    # TODO: get session
-    # @return [Hash] The response formatted as a Hash.
-    def play(options={})
-      @logger.debug "Sending PLAY to #{@server_uri.host}#{@stream_path}"
-      session = options[:session] || @session
-      response = send_rtsp Request.play(@server_uri.to_s,
-          options[:session])
+    # @param [String] track
+    # @param [Hash] additional_headers
+    # @return [RTSP::Response]
+    # TODO: If Response !=200, that should be an exception.  Handle that exception then reset CSeq and session.
+    def play track, additional_headers={}
+      if @session
+        headers = ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
+      else
+        raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
+      end
 
-      @logger.debug "Recieved response:"
-      @logger.debug response
-      @session = response.cseq
+      @logger.debug "Sending PLAY to #{track}"
 
+      begin
+        response = RTSP::Request.execute(@args.merge(
+            :method => :play,
+            :resource_url => track,
+            :headers => headers
+        ))
+
+        @logger.debug "Received response:"
+        @logger.debug response
+        compare_sequence_number response.cseq
+        compare_session_number response.session
+        @cseq += 1
+      rescue RTSPException => ex
+        puts "Got #{ex.message}"
+        puts ex.backtrace
+      end
+
+=begin
       if @capture_file_path
         begin
           Timeout::timeout(@capture_duration) do
@@ -171,31 +194,77 @@ module RTSP
 
         @capture_socket.close
       end
+=end
 
       response
     end
 
-    def pause(options={})
-      @logger.debug "Sending PAUSE to #{@server_uri.host}#{@stream_path}"
-      response = send_rtsp Request.pause(@tracks.first,
-          options[:session],
-          options[:sequence])
+    # @param [String] url A track or presentation URL to pause.
+    # @param [Hash] additional_headers
+    # @return [RTSP::Response]
+    def pause(url, additional_headers={})
+      if @session
+        headers = ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
+      else
+        raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
+      end
 
-      @logger.debug "Recieved response:"
-      @logger.debug response
-      @session = response.cseq
+      @logger.debug "Sending PAUSE to #{url}"
+      begin
+        response = RTSP::Request.execute(@args.merge(
+            :method => :pause,
+            :resource_url => url,
+            :headers => headers
+        ))
+
+        @logger.debug "Received response:"
+        @logger.debug response
+        compare_sequence_number response.cseq
+        compare_session_number response.session
+        @cseq += 1
+      rescue RTSPException => ex
+        puts "Got #{ex.message}"
+        puts ex.backtrace
+      end
 
       response
     end
 
-    # @return [Hash] The response formatted as a Hash.
-    def teardown
-      @logger.debug "Sending TEARDOWN to #{@server_uri.host}#{@stream_path}"
-      response = send_rtsp Request.teardown(@server_uri.to_s, @session)
-      @logger.debug "Recieved response:"
-      @logger.debug response
+    # @return [RTSP::Response]
+    def teardown track, additional_headers={}
+      if @session
+        headers = ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
+      else
+        raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
+      end
+
+      @logger.debug "Sending TEARDOWN to #{track}"
+
+      begin
+        response = RTSP::Request.execute(@args.merge(
+            :method => :teardown,
+            :resource_url => track,
+            :headers => headers
+        ))
+
+        @logger.debug "Received response:"
+        @logger.debug response
+
+        if response.code != 200
+          message = "#{response.code}: #{response.message}\nAllowed methods: #{response.allow}"
+          raise RTSPException, message
+        end
+
+        compare_sequence_number response.cseq
+        compare_session_number response.session
+        @cseq = 1
+        @session = 0
+      rescue RTSPException => ex
+        puts "Got #{ex.message}"
+        puts ex.backtrace
+      end
       #@socket.close if @socket.open?
-      @socket = nil
+      #@socket = nil
 
       response
     end
@@ -230,11 +299,24 @@ module RTSP
     # server responded to a different request.
     #
     # @param [Fixnum] server_cseq Sequence number returned by the server.
-    # @raise
+    # @raise [RTSPException]
     def compare_sequence_number server_cseq
       if @cseq != server_cseq
         message = "Sequence number mismatch.  Client: #{@cseq}, Server: #{server_cseq}"
-        raise message
+        raise RTSPException, message
+      end
+    end
+
+    # Compares the session number passed in to the current client session
+    # number (@session) and raises if they're not equal.  If that's the case, the
+    # server responded to a different request.
+    #
+    # @param [Fixnum] server_session Session number returned by the server.
+    # @raise [RTSPException]
+    def compare_session_number server_session
+      if @session != server_session
+        message = "Session number mismatch.  Client: #{@session}, Server: #{server_session}"
+        raise RTSPException, message
       end
     end
 
