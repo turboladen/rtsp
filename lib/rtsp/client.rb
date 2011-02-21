@@ -95,7 +95,6 @@ module RTSP
         @cseq += 1
         @session_description = response.body
         @content_base = build_resource_uri_from response.content_base
-        @session_id = response.body.id
 
         @media_control_tracks = media_control_tracks
         @aggregate_control_track = aggregate_control_track
