@@ -11,17 +11,23 @@ module RTSP
     attr_reader :code
     attr_reader :message
     attr_reader :body
+    attr_reader :raw_response
 
     # @param [String] raw_response The raw response string returned from the
     # server/client.
     def initialize(raw_response)
       #puts raw_response
+      @raw_response = raw_response
 
       head_and_body = split_head_and_body_from raw_response
       head = head_and_body.first
       body = head_and_body.last == head ? "" : head_and_body.last
       parse_head(head)
       @body = parse_body(body)
+    end
+
+    def to_s
+      @raw_response
     end
 
     # Takes the raw response text and splits it into a 2-element Array, where 0
