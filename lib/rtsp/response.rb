@@ -1,5 +1,6 @@
-require 'rubygems'
 require 'socket'
+
+require 'rubygems'
 require 'sdp'
 
 module RTSP

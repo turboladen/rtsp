@@ -4,6 +4,7 @@ source :rubygems
 
 gemspec
 gem 'sdp', '~> 0.2.1'
+gem 'lumberjack'
 
 group :development do
   gem 'rake',       '~> 0.8.7'

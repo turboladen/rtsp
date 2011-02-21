@@ -1,6 +1,8 @@
+require File.expand_path(File.dirname(__FILE__) + '/global')
+
 module RTSP
   module Helpers
-    RTSP_DEFAULT_PORT = 554
+    include RTSP::Global
 
     # Takes the URL given and turns it into a URI.  This allows for enforcing
     # values for each part of the URI.
@@ -11,7 +13,7 @@ module RTSP
       url = "rtsp://#{url}" unless url =~ /^rtsp/
 
       resource_uri = URI.parse url
-      resource_uri.port ||= RTSP_DEFAULT_PORT
+      resource_uri.port ||= DEFAULT_PORT
 
       resource_uri
     end

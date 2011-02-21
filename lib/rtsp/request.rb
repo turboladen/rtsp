@@ -1,8 +1,8 @@
-require 'rubygems'
 require 'socket'
 require 'timeout'
 require 'uri'
 
+require File.expand_path(File.dirname(__FILE__) + '/global')
 require File.expand_path(File.dirname(__FILE__) + '/response')
 require File.expand_path(File.dirname(__FILE__) + '/helpers')
 
@@ -13,6 +13,7 @@ module RTSP
   # the request messages to communicate in RTSP.
   class Request
     include RTSP::Helpers
+    include RTSP::Global
 
     RTSP_VER = "RTSP/1.0"
     RTSP_ACCEPT_TYPE = "application/sdp"
@@ -113,7 +114,12 @@ module RTSP
 
     # @return [RTSP::Response]
     def execute
-      send_message
+      log "Sending #{@method.upcase} to #{@resource_uri}"
+      response = send_message
+      log "Received response:"
+      response.raw_response.each_line { |line| log line.strip }
+
+      response
     end
 
     # @return [String] The request message to send.
@@ -122,6 +128,8 @@ module RTSP
       message << headers_to_s(@headers)
       message << "\r\n"
       message << "#{@body}"
+
+      message.each_line { |line| log line.strip }
 
       message
     end

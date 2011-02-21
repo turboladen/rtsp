@@ -1,20 +1,19 @@
-require 'rubygems'
-require 'logger'
 require 'socket'
 require 'tempfile'
 require 'timeout'
 require 'uri'
 
 require File.expand_path(File.dirname(__FILE__) + '/request')
-require File.expand_path(File.dirname(__FILE__) + '/response')
 require File.expand_path(File.dirname(__FILE__) + '/helpers')
 require File.expand_path(File.dirname(__FILE__) + '/exception')
+require File.expand_path(File.dirname(__FILE__) + '/global')
 
 module RTSP
 
   # Allows for pulling streams from an RTSP server.
   class Client
     include RTSP::Helpers
+    include RTSP::Global
 
     attr_reader :options
     attr_reader :server_uri
@@ -31,8 +30,6 @@ module RTSP
 
       @cseq = 1
       #@tracks = options[:tracks] || ["/track1"]
-      @logger = Logger.new(STDOUT)
-      @logger.datetime_format = "%b %d %T"
 
 =begin
       if options[:capture_file_path] && options[:capture_duration]
@@ -62,7 +59,6 @@ module RTSP
     # @return [RTSP::Response]
     def options additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-      @logger.debug "Sending OPTIONS to #{@server_uri.to_s}"
 
       begin
         response = RTSP::Request.execute(@args.merge(
@@ -70,9 +66,6 @@ module RTSP
             :resource_url => @server_uri,
             :headers => headers
         ))
-
-        @logger.debug "Received response:"
-        @logger.debug response.inspect
 
         @supported_methods = extract_supported_methods_from response.public
         compare_sequence_number response.cseq
@@ -90,7 +83,6 @@ module RTSP
     # @return [RTSP::Response]
     def describe additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-      @logger.debug "Sending DESCRIBE to #{@server_uri.to_s}"
 
       begin
         response = RTSP::Request.execute(@args.merge(
@@ -98,9 +90,6 @@ module RTSP
             :resource_url => @server_uri,
             :headers => headers
         ))
-
-        @logger.debug "Received response:"
-        @logger.debug response.inspect
 
         compare_sequence_number response.cseq
         @cseq += 1
@@ -126,7 +115,6 @@ module RTSP
     # @return [RTSP::Response] The response formatted as a Hash.
     def setup track, additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-      @logger.debug "Sending SETUP to #{track}"
 
       begin
         response = RTSP::Request.execute(@args.merge(
@@ -134,9 +122,6 @@ module RTSP
             :resource_url => track,
             :headers => headers
         ))
-
-        @logger.debug "Received response:"
-        @logger.debug response
 
         compare_sequence_number response.cseq
         @session = response.session
@@ -160,8 +145,6 @@ module RTSP
         raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
       end
 
-      @logger.debug "Sending PLAY to #{track}"
-
       begin
         response = RTSP::Request.execute(@args.merge(
             :method => :play,
@@ -169,8 +152,6 @@ module RTSP
             :headers => headers
         ))
 
-        @logger.debug "Received response:"
-        @logger.debug response
         compare_sequence_number response.cseq
         compare_session_number response.session
         @cseq += 1
@@ -209,7 +190,6 @@ module RTSP
         raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
       end
 
-      @logger.debug "Sending PAUSE to #{url}"
       begin
         response = RTSP::Request.execute(@args.merge(
             :method => :pause,
@@ -217,8 +197,6 @@ module RTSP
             :headers => headers
         ))
 
-        @logger.debug "Received response:"
-        @logger.debug response
         compare_sequence_number response.cseq
         compare_session_number response.session
         @cseq += 1
@@ -238,17 +216,12 @@ module RTSP
         raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
       end
 
-      @logger.debug "Sending TEARDOWN to #{track}"
-
       begin
         response = RTSP::Request.execute(@args.merge(
             :method => :teardown,
             :resource_url => track,
             :headers => headers
         ))
-
-        @logger.debug "Received response:"
-        @logger.debug response
 
         if response.code != 200
           message = "#{response.code}: #{response.message}\nAllowed methods: #{response.allow}"
@@ -334,41 +307,6 @@ module RTSP
       @capture_file = File.open(@capture_file_path, File::WRONLY|File::EXCL|File::CREAT)
       @capture_socket = UDPSocket.new
       @capture_socket.bind "0.0.0.0", @server_uri.port
-    end
-
-    #--------------------------------------------------------------------------
-    # Privates!
-    private
-
-    # Override Ruby's logger message format to provide our own.  Also, output
-    # to STDOUT if not already outputting there.  Also, log to syslog server
-    # if configured.
-    #
-    # @param [String] severity Describes the log level (ERROR, INFO, ...)
-    # @param [DateTime] datetime The timestamp of the message to be logged
-    # @param [String] progname The name of the program that is logging
-    # @param [String] message The actual log message
-    # @return [String] The formatted message with ANSI codes stripped.
-    def format_message(severity, datetime, progname, message)
-      prog_name = " <#{progname}>" if progname
-
-      # Use the constant's setting unless we decide to redefine datetime_format.
-      datetime_format = DATETIME_FORMAT unless datetime_format
-      datetime = datetime.strftime(datetime_format).to_s
-
-      outstr = "[#{datetime}]:#{COLOR_MAP[severity]}:#{prog_name} #{message}\n"
-      puts outstr unless @log_file_location == STDOUT
-
-      if @log_server_status
-        server_log(severity, datetime, progname, message)
-      end
-
-      # Delete all ANSI codes in returned String.
-      if @log_file_location == STDOUT
-        outstr
-      else
-        outstr.gsub(/\x1B\[[0-9;]*[mK]/, '')
-      end
     end
   end
 end

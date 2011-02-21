@@ -6,6 +6,4 @@ module RTSP
   WWW = 'http://github.com/turboladen/rtsp'
   LIBRARY_ROOT = File.dirname(__FILE__)
   PROJECT_ROOT = Pathname.new(LIBRARY_ROOT).parent
-
-  RTSP_VERSION = '1.0'
 end
