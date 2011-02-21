@@ -137,7 +137,7 @@ module RTSP
     # @param [String] track
     # @param [Hash] additional_headers
     # @return [RTSP::Response] The response formatted as a Hash.
-    def setup track, additional_headers={}
+    def setup(track, additional_headers={})
       headers = ( { :cseq => @cseq }).merge(additional_headers)
 
       begin
@@ -162,11 +162,9 @@ module RTSP
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     # TODO: If Response !=200, that should be an exception.  Handle that exception then reset CSeq and session.
-    def play track, additional_headers={}
-      if @session
-        headers = ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
-      else
-        raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
+    def play(track, additional_headers={})
+      headers = ensure_session_and do
+        ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
       end
 
       begin
@@ -208,10 +206,8 @@ module RTSP
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def pause(url, additional_headers={})
-      if @session
-        headers = ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
-      else
-        raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
+      headers = ensure_session_and do
+        ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
       end
 
       begin
@@ -234,10 +230,8 @@ module RTSP
 
     # @return [RTSP::Response]
     def teardown track, additional_headers={}
-      if @session
-        headers = ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
-      else
-        raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
+      headers = ensure_session_and do
+        ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
       end
 
       begin
@@ -268,13 +262,11 @@ module RTSP
 
     # @return [RTSP::Response]
     def get_parameter(track, body, additional_headers={})
-      if @session
-        headers = ( { :cseq => @cseq,
+      headers = ensure_session_and do
+        ( { :cseq => @cseq,
             :session => @session,
             :content_length => body.size
         }).merge(additional_headers)
-      else
-        raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
       end
 
       begin
@@ -302,12 +294,26 @@ module RTSP
       response
     end
 
+    # Ensures that @session is set before continuing on.
+    #
+    # @raise [RTSPException] Raises if @session isn't set.
+    # @return Returns whatever the block returns.
+    def ensure_session_and &block
+      if @session
+        return_value = yield
+      else
+        raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
+      end
+
+      return_value
+    end
+
     def aggregate_control_track
       aggregate_control = @session_description.attributes.find_all do |a|
         a[:attribute] == "control"
       end
 
-      "#{@content_base}#{aggregate_control.first[:value]}"
+      "#{@content_base}#{aggregate_control.first[:value].gsub(/\*/, "")}"
     end
 
     # Extracts the value of the "control" attribute from all media sections of
