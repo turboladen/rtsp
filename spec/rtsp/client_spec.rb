@@ -13,13 +13,13 @@ describe RTSP::Client do
     end
 
     it "allows for changing the server URL on the fly" do
-      @client.server_uri.to_s.should == "rtsp://localhost"
+      @client.server_uri.to_s.should == "rtsp://localhost:554"
       @client.server_url = "rtsp://localhost:8080"
       @client.server_uri.to_s.should == "rtsp://localhost:8080"
     end
 
     it "raises when passing in something other than a String" do
-      @client.server_uri.to_s.should == "rtsp://localhost"
+      @client.server_uri.to_s.should == "rtsp://localhost:554"
       lambda { @client.server_url = [] }.should raise_error
     end
   end
