@@ -70,7 +70,7 @@ module RTSP
         @supported_methods = extract_supported_methods_from response.public
         compare_sequence_number response.cseq
         @cseq += 1
-      rescue RTSPException => ex
+      rescue RTSP::Exception => ex
         puts "Got #{ex.message}"
         puts ex.backtrace
       end
@@ -98,7 +98,7 @@ module RTSP
 
         @media_control_tracks = media_control_tracks
         @aggregate_control_track = aggregate_control_track
-      rescue RTSPException => ex
+      rescue RTSP::Exception => ex
         puts "Got #{ex.message}"
         puts ex.backtrace
       end
@@ -123,7 +123,7 @@ module RTSP
 
         compare_sequence_number response.cseq
         @cseq += 1
-      rescue RTSPException => ex
+      rescue RTSP::Exception => ex
         puts "Got #{ex.message}"
         puts ex.backtrace
       end
@@ -150,7 +150,7 @@ module RTSP
         compare_sequence_number response.cseq
         @session = response.session
         @cseq += 1
-      rescue RTSPException => ex
+      rescue RTSP::Exception => ex
         puts "Got #{ex.message}"
         puts ex.backtrace
       end
@@ -177,7 +177,7 @@ module RTSP
         compare_sequence_number response.cseq
         compare_session_number response.session
         @cseq += 1
-      rescue RTSPException => ex
+      rescue RTSP::Exception => ex
         puts "Got #{ex.message}"
         puts ex.backtrace
       end
@@ -220,7 +220,7 @@ module RTSP
         compare_sequence_number response.cseq
         compare_session_number response.session
         @cseq += 1
-      rescue RTSPException => ex
+      rescue RTSP::Exception => ex
         puts "Got #{ex.message}"
         puts ex.backtrace
       end
@@ -243,14 +243,14 @@ module RTSP
 
         if response.code != 200
           message = "#{response.code}: #{response.message}\nAllowed methods: #{response.allow}"
-          raise RTSPException, message
+          raise RTSP::Exception, message
         end
 
         compare_sequence_number response.cseq
         compare_session_number response.session
         @cseq = 1
         @session = 0
-      rescue RTSPException => ex
+      rescue RTSP::Exception => ex
         puts "Got #{ex.message}"
         puts ex.backtrace
       end
@@ -279,14 +279,14 @@ module RTSP
 
         if response.code != 200
           message = "#{response.code}: #{response.message}\nAllowed methods: #{response.allow}"
-          raise RTSPException, message
+          raise RTSP::Exception, message
         end
 
         compare_sequence_number response.cseq
         compare_session_number response.session
         @cseq = 1
         @session = 0
-      rescue RTSPException => ex
+      rescue RTSP::Exception => ex
         puts "Got #{ex.message}"
         puts ex.backtrace
       end
@@ -296,13 +296,13 @@ module RTSP
 
     # Ensures that @session is set before continuing on.
     #
-    # @raise [RTSPException] Raises if @session isn't set.
+    # @raise [RTSP::Exception] Raises if @session isn't set.
     # @return Returns whatever the block returns.
     def ensure_session_and &block
       if @session
         return_value = yield
       else
-        raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
+        raise RTSP::Exception, "Session number not retrieved from server yet.  Run SETUP first."
       end
 
       return_value
@@ -338,11 +338,11 @@ module RTSP
     # server responded to a different request.
     #
     # @param [Fixnum] server_cseq Sequence number returned by the server.
-    # @raise [RTSPException]
+    # @raise [RTSP::Exception]
     def compare_sequence_number server_cseq
       if @cseq != server_cseq
         message = "Sequence number mismatch.  Client: #{@cseq}, Server: #{server_cseq}"
-        raise RTSPException, message
+        raise RTSP::Exception, message
       end
     end
 
@@ -351,11 +351,11 @@ module RTSP
     # server responded to a different request.
     #
     # @param [Fixnum] server_session Session number returned by the server.
-    # @raise [RTSPException]
+    # @raise [RTSP::Exception]
     def compare_session_number server_session
       if @session != server_session
         message = "Session number mismatch.  Client: #{@session}, Server: #{server_session}"
-        raise RTSPException, message
+        raise RTSP::Exception, message
       end
     end
 

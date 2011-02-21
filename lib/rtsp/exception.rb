@@ -1,1 +1,1 @@
-class RTSPException < StandardError; end
+class RTSP::Exception < StandardError; end
