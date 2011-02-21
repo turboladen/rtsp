@@ -123,7 +123,7 @@ module RTSP
 
     # @return [String] The request message to send.
     def message
-      message = "#{@method.to_s.upcase} #{@resource_uri} #{DEFAULT_VERSION}\r\n"
+      message = "#{@method.to_s.upcase} #{@resource_uri} RTSP/#{DEFAULT_VERSION}\r\n"
       message << headers_to_s(@headers)
       message << "\r\n"
       message << "#{@body}"

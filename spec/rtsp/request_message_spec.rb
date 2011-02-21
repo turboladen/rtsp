@@ -13,7 +13,7 @@ describe "RTSP::Request messages" do
       request = RTSP::Request.new({ :method => :options,
           :resource_url => @stream,
           :socket => @mock_socket })
-      request.message.should == "OPTIONS rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 1\r\n\r\n"
+      request.message.should == "OPTIONS rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\nCSeq: 1\r\n\r\n"
     end
 
     it "with passed-in sequence number" do
@@ -21,7 +21,7 @@ describe "RTSP::Request messages" do
           :resource_url => @stream,
           :headers => { :cseq => 2345 },
           :socket => @mock_socket })
-      request.message.should == "OPTIONS rtsp://1.2.3.4/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\r\n"
+      request.message.should == "OPTIONS rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\r\n"
     end
   end
 
@@ -31,7 +31,7 @@ describe "RTSP::Request messages" do
           :resource_url => @stream,
           :socket => @mock_socket })
       request.message.should match /^DESCRIBE rtsp:/
-      request.message.should include "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should include "Accept: application/sdp\r\n"
       request.message.should match /\r\n\r\n$/
@@ -43,7 +43,7 @@ describe "RTSP::Request messages" do
           :headers => { :accept => 'application/sdp, application/rtsl' },
           :socket => @mock_socket })
       request.message.should match /^DESCRIBE rtsp:/
-      request.message.should include "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should include "Accept: application/sdp, application/rtsl\r\n"
       request.message.should match /\r\n\r\n$/
@@ -58,7 +58,7 @@ describe "RTSP::Request messages" do
           },
           :socket => @mock_socket })
       request.message.should match /^DESCRIBE rtsp:/
-      request.message.should include "DESCRIBE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 2345\r\n"
       request.message.should include "Accept: application/sdp, application/rtsl\r\n"
       request.message.should match /\r\n\r\n$/
@@ -75,7 +75,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^ANNOUNCE rtsp:/
-      request.message.should include "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should include "Session: 123456789\r\n"
       request.message.should include "Content-Type: application/sdp\r\n"
@@ -92,7 +92,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^ANNOUNCE rtsp:/
-      request.message.should include "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should include "Session: 123456789\r\n"
       request.message.should include "Content-Type: application/sdp, application/rtsl\r\n"
@@ -110,7 +110,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^ANNOUNCE rtsp:/
-      request.message.should include "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 2345\r\n"
       request.message.should include "Session: 123456789\r\n"
       request.message.should include "Content-Type: application/sdp, application/rtsl\r\n"
@@ -133,7 +133,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^ANNOUNCE rtsp/
-      request.message.should include "ANNOUNCE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 2345\r\n"
       request.message.should include "Session: 123456789\r\n"
       request.message.should include "Content-Type: application/sdp\r\n"
@@ -149,7 +149,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^SETUP rtsp/
-      request.message.should include "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should include "Transport: RTP/AVP;unicast;client_port=9000-9001\r\n"
       request.message.should match /\r\n\r\n$/
@@ -162,7 +162,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^SETUP rtsp/
-      request.message.should include "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should include "Transport: RTP/AVP;multicast;client_port=9000-9001\r\n"
       request.message.should match /\r\n\r\n$/
@@ -178,7 +178,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^SETUP rtsp/
-      request.message.should include "SETUP rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 2345\r\n"
       request.message.should include "Transport: RTP/AVP;multicast;client_port=9000-9001\r\n"
       request.message.should match /\r\n\r\n$/
@@ -193,7 +193,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^PLAY rtsp/
-      request.message.should include "PLAY rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "PLAY rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should include "Session: 123456789\r\n"
       request.message.should include "Range: npt=0.000-\r\n"
@@ -207,7 +207,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^PLAY rtsp/
-      request.message.should include "PLAY rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "PLAY rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should include "Session: 123456789\r\n"
       request.message.should include "Range: npt=0.000-1.234\r\n"
@@ -222,7 +222,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^PAUSE rtsp/
-      request.message.should include "PAUSE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "PAUSE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should match /\r\n\r\n/
     end
@@ -234,7 +234,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^PAUSE rtsp/
-      request.message.should include "PAUSE rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "PAUSE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should include "Session: 123456789\r\n"
       request.message.should include "Range: npt=0.000\r\n"
@@ -249,7 +249,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^TEARDOWN rtsp/
-      request.message.should include "TEARDOWN rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "TEARDOWN rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should match /\r\n\r\n/
     end
@@ -261,7 +261,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^TEARDOWN rtsp/
-      request.message.should include "TEARDOWN rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "TEARDOWN rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should include "Session: 123456789\r\n"
       request.message.should match /\r\n\r\n/
@@ -275,7 +275,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^GET_PARAMETER rtsp/
-      request.message.should include "GET_PARAMETER rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "GET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should match /\r\n\r\n/
     end
@@ -292,7 +292,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^GET_PARAMETER rtsp/
-      request.message.should include "GET_PARAMETER rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "GET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 431\r\n"
       request.message.should include "Session: 123456789\r\n"
       request.message.should include "Content-Type: text/parameters\r\n"
@@ -309,7 +309,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^SET_PARAMETER rtsp/
-      request.message.should include "SET_PARAMETER rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "SET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should match /\r\n\r\n/
     end
@@ -326,7 +326,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^SET_PARAMETER rtsp/
-      request.message.should include "SET_PARAMETER rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "SET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 431\r\n"
       request.message.should include "Session: 123456789\r\n"
       request.message.should include "Content-Type: text/parameters\r\n"
@@ -343,7 +343,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^REDIRECT rtsp/
-      request.message.should include "REDIRECT rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "REDIRECT rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should match /\r\n\r\n/
     end
@@ -358,7 +358,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^REDIRECT rtsp/
-      request.message.should include "REDIRECT rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "REDIRECT rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 732\r\n"
       request.message.should include "Location: rtsp://bigserver.com:8001\r\n"
       request.message.should include "Range: clock=19960213T143205Z-\r\n"
@@ -373,7 +373,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^RECORD rtsp/
-      request.message.should include "RECORD rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "RECORD rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 1\r\n"
       request.message.should match /\r\n\r\n/
     end
@@ -388,7 +388,7 @@ describe "RTSP::Request messages" do
           :socket => @mock_socket })
 
       request.message.should match /^RECORD rtsp/
-      request.message.should include "RECORD rtsp://1.2.3.4/stream1 RTSP/1.0\r\n"
+      request.message.should include "RECORD rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       request.message.should include "CSeq: 954\r\n"
       request.message.should include "Session: 12345678\r\n"
       request.message.should include "Conference: 128.16.64.19/32492374\r\n"
