@@ -15,7 +15,6 @@ module RTSP
     include RTSP::Helpers
     include RTSP::Global
 
-    RTSP_VER = "RTSP/1.0"
     RTSP_ACCEPT_TYPE = "application/sdp"
     RTP_DEFAULT_CLIENT_PORT = 9000
     RTP_DEFAULT_PACKET_TYPE = "RTP/AVP"
@@ -124,7 +123,7 @@ module RTSP
 
     # @return [String] The request message to send.
     def message
-      message = "#{@method.to_s.upcase} #{@resource_uri} #{RTSP_VER}\r\n"
+      message = "#{@method.to_s.upcase} #{@resource_uri} #{DEFAULT_VERSION}\r\n"
       message << headers_to_s(@headers)
       message << "\r\n"
       message << "#{@body}"
