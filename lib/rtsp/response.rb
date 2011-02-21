@@ -17,7 +17,6 @@ module RTSP
     # @param [String] raw_response The raw response string returned from the
     # server/client.
     def initialize(raw_response)
-      #puts raw_response
       @raw_response = raw_response
 
       head_and_body = split_head_and_body_from raw_response
