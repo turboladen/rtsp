@@ -267,6 +267,42 @@ module RTSP
       response
     end
 
+    # @return [RTSP::Response]
+    def get_parameter(track, body, additional_headers={})
+      if @session
+        headers = ( { :cseq => @cseq,
+            :session => @session,
+            :content_length => body.size
+        }).merge(additional_headers)
+      else
+        raise RTSPException, "Session number not retrieved from server yet.  Run SETUP first."
+      end
+
+      begin
+        response = RTSP::Request.execute(@args.merge(
+            :method => :get_parameter,
+            :resource_url => track,
+            :headers => headers,
+            :body => body
+        ))
+
+        if response.code != 200
+          message = "#{response.code}: #{response.message}\nAllowed methods: #{response.allow}"
+          raise RTSPException, message
+        end
+
+        compare_sequence_number response.cseq
+        compare_session_number response.session
+        @cseq = 1
+        @session = 0
+      rescue RTSPException => ex
+        puts "Got #{ex.message}"
+        puts ex.backtrace
+      end
+
+      response
+    end
+
     def aggregate_control_track
       aggregate_control = @session_description.attributes.find_all do |a|
         a[:attribute] == "control"
