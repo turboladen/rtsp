@@ -107,6 +107,31 @@ module RTSP
       response
     end
 
+    # @param [String] url A track or presentation URL to pause.
+    # @param [SDP::Description] description
+    # @param [Hash] additional_headers
+    # @return [RTSP::Response]
+    def announce(request_url, description, additional_headers={})
+      headers = ( { :cseq => @cseq }).merge(additional_headers)
+
+      begin
+        response = RTSP::Request.execute(@args.merge(
+            :method => :announce,
+                :resource_url => request_url,
+                :headers => headers,
+                :body => description.to_s
+        ))
+
+        compare_sequence_number response.cseq
+        @cseq += 1
+      rescue RTSPException => ex
+        puts "Got #{ex.message}"
+        puts ex.backtrace
+      end
+
+      response
+    end
+
     # TODO: parse Transport header (http://tools.ietf.org/html/rfc2326#section-12.39)
     # TODO: @session numbers are relevant to tracks, and a client can play multiple tracks at the same time.
     #
