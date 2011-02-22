@@ -156,6 +156,7 @@ module RTSP
 =end
     end
 
+    # TODO: Should the socket be closed?
     # @param [String] url A track or presentation URL to pause.
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
@@ -192,8 +193,6 @@ module RTSP
 
         @session = 0
       end
-      #@socket.close if @socket.open?
-      #@socket = nil
     end
 
     # @return [RTSP::Response]
