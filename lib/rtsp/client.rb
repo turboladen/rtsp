@@ -21,6 +21,10 @@ module RTSP
     attr_reader :session
     attr_accessor :tracks
 
+    # TODO: Break Stream out in to its own class.
+    # Applicable per stream.  :INACTIVE -> :READY -> :PLAYING/RECORDING -> :PAUSED -> :INACTIVE
+    attr_reader :streaming_state
+
     # @param [String] rtsp_url URL to the resource to stream.  If no scheme is given,
     # "rtsp" is assumed.  If no port is given, 554 is assumed.  If no path is
     # given, "/stream1" is assumed.
@@ -29,7 +33,7 @@ module RTSP
       @args = args
 
       @cseq = 1
-      #@tracks = options[:tracks] || ["/track1"]
+      @streaming_state = :inactive
 
 =begin
       if options[:capture_file_path] && options[:capture_duration]
@@ -52,14 +56,12 @@ module RTSP
 
     # Sends an OPTIONS message to the server specified by @server_uri.  Sets
     # @supported_methods based on the list of supported methods returned in the
-    # Public headers.  Lastly, if the response was an OK, it increases the @cseq
-    # value so that the next uses that.
+    # Public headers.
     #
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def options additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-
       args = {
           :method => :options,
           :resource_url => @server_uri,
@@ -72,11 +74,14 @@ module RTSP
     end
 
     # TODO: get tracks, IP's, ports, multicast/unicast
+    # Sends the DESCRIBE request, then extracts the SDP description into
+    # @session_description, extracts the session @start_time and @stop_time,
+    # @content_base, media_control_tracks, and aggregate_control_track.
+    #
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def describe additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-
       args = { :method => :describe,
           :resource_url => @server_uri,
           :headers => headers
@@ -84,6 +89,8 @@ module RTSP
 
       execute_request(args) do |response|
         @session_description = response.body
+        @session_start_time = response.body.start_time
+        @session_stop_time = response.body.stop_time
         @content_base = build_resource_uri_from response.content_base
 
         @media_control_tracks = media_control_tracks
@@ -91,8 +98,10 @@ module RTSP
       end
     end
 
-    # @param [String] url A track or presentation URL to pause.
-    # @param [SDP::Description] description
+    # @param [String] request_url The URL to post the presentation or media
+    # object to.
+    # @param [SDP::Description] description The SDP description to send to the
+    # server.
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def announce(request_url, description, additional_headers={})
@@ -107,6 +116,8 @@ module RTSP
 
     # TODO: parse Transport header (http://tools.ietf.org/html/rfc2326#section-12.39)
     # TODO: @session numbers are relevant to tracks, and a client can play multiple tracks at the same time.
+    # Sends the SETUP request, then sets @session to the value returned in the
+    # Session header from the server, then sets the @streaming_state to :ready.
     #
     # @param [String] track
     # @param [Hash] additional_headers
@@ -118,13 +129,18 @@ module RTSP
             :headers => headers
       }
 
-      execute_request(args) { |response| @session = response.session }
+      execute_request(args) do |response|
+        @session = response.session
+        @streaming_state = :ready
+      end
     end
 
+    # TODO: If Response !=200, that should be an exception.  Handle that exception then reset CSeq and session.
+    # Sends the PLAY request and sets @streaming_state to :playing.
+    #
     # @param [String] track
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
-    # TODO: If Response !=200, that should be an exception.  Handle that exception then reset CSeq and session.
     def play(track, additional_headers={})
       headers = ensure_session_and do
         ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
@@ -134,7 +150,8 @@ module RTSP
         :resource_url => track,
         :headers => headers
       }
-      execute_request(args)
+
+      execute_request(args) { @streaming_state = :playing }
 
 =begin
       if @capture_file_path
@@ -157,6 +174,8 @@ module RTSP
     end
 
     # TODO: Should the socket be closed?
+    # Sends the PAUSE request and sets @streaming_state to :paused.
+    #
     # @param [String] url A track or presentation URL to pause.
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
@@ -170,11 +189,16 @@ module RTSP
             :resource_url => url,
             :headers => headers
       }
-      execute_request(args)
+      execute_request(args) { @streaming_state = :paused }
     end
 
+    # Sends the TEARDOWN request, then resets all state-related instance
+    # variables.
+    #
+    # @param [String] track The presentation or media track to teardown.
+    # @param [Hash] additional_headers
     # @return [RTSP::Response]
-    def teardown track, additional_headers={}
+    def teardown(track, additional_headers={})
       headers = ensure_session_and do
         ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
       end
@@ -191,15 +215,19 @@ module RTSP
           raise RTSP::Exception, message
         end
 
-        @session = 0
+        reset_state
       end
     end
 
+    # Sends the GET_PARAMETERS request.
+    #
+    # @param [String] track The presentation or media track to ping.
+    # @param [String] body The string containing the parameters to send.
+    # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def get_parameter(track, body, additional_headers={})
       headers = ensure_session_and do
         ( { :cseq => @cseq,
-            :session => @session,
             :content_length => body.size
         }).merge(additional_headers)
       end
@@ -214,6 +242,52 @@ module RTSP
       execute_request(args)
     end
 
+    # Sends the SET_PARAMETERS request.
+    #
+    # @param [String] track The presentation or media track to teardown.
+    # @param [String] parameters The string containing the parameters to send.
+    # @param [Hash] additional_headers
+    # @return [RTSP::Response]
+    def set_parameter(track, parameters, additional_headers={})
+      headers = ensure_session_and do
+        ( { :cseq => @cseq,
+            :content_length => parameters.size
+        }).merge(additional_headers)
+      end
+
+      args = {
+          :method => :set_parameter,
+          :resource_url => track,
+          :headers => headers,
+          :body => parameters
+      }
+
+      execute_request(args)
+    end
+
+    # Sends the RECORD request and sets @streaming_state to :recording.
+    #
+    # @param [String] track
+    # @param [Hash] additional_headers
+    # @return [RTSP::Response]
+    def record(track, additional_headers={})
+      headers = ensure_session_and do
+        ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
+      end
+
+      args = { :method => :record,
+          :resource_url => track,
+          :headers => headers
+      }
+
+      execute_request(args) { @streaming_state = :recording }
+    end
+
+    # Executes the Request with the arguments passed in, yields the response to
+    # the calling block, checks the cseq response and the session response,
+    # then increments @cseq by 1.  Handles any exceptions raised during the
+    # Request.
+    #
     # @param [Hash] new_args
     # @yield [RTSP::Response]
     # @return [RTSP::Response]
@@ -250,6 +324,10 @@ module RTSP
       return_value
     end
 
+    # Extracts the URL associated with the "control" attribute from the main
+    # section of the session description.
+    #
+    # @return [String]
     def aggregate_control_track
       aggregate_control = @session_description.attributes.find_all do |a|
         a[:attribute] == "control"
@@ -262,8 +340,8 @@ module RTSP
     # the session description (SDP).  You have to call the #describe method in
     # order to get the session description info.
     #
-    # @return [Array] The tracks made up of the content base + control track
-    # value.
+    # @return [Array<String>] The tracks made up of the content base + control
+    # track value.
     def media_control_tracks
       tracks = []
       @session_description.media_sections.each do |media_section|
@@ -309,6 +387,12 @@ module RTSP
     # @return [Array<Symbol>] The list of methods as symbols.
     def extract_supported_methods_from method_list
       method_list.downcase.split(', ').map { |m| m.to_sym }
+    end
+
+    # Resets values that are tied to the client's state.
+    def reset_state
+      @session = 0
+      @streaming_state = :inactive
     end
 
     def setup_capture
