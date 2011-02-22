@@ -30,6 +30,15 @@ module RTSP
       @raw_response
     end
 
+    def inspect
+      me = "<##{self.class.name} "
+      self.instance_variables.each { |v| me << "#{v}=#{instance_variable_get(v).inspect}, " }
+      me.sub!(/, $/, "")
+      me << ">"
+
+      me
+    end
+
     # Takes the raw response text and splits it into a 2-element Array, where 0
     # is the text containing the headers and 1 is the text containing the body.
     #
