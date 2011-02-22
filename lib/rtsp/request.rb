@@ -5,6 +5,7 @@ require 'uri'
 require File.expand_path(File.dirname(__FILE__) + '/global')
 require File.expand_path(File.dirname(__FILE__) + '/response')
 require File.expand_path(File.dirname(__FILE__) + '/helpers')
+require File.expand_path(File.dirname(__FILE__) + '/version')
 
 module RTSP
 
@@ -23,6 +24,7 @@ module RTSP
     RTSP_DEFAULT_NPT = "0.000-"
     RTSP_DEFAULT_LANGUAGE = "en-US"
     MAX_BYTES_TO_RECEIVE = 1500
+    USER_AGENT = "RubyGemRTSP/#{RTSP::VERSION}"
 
     attr_reader :resource_uri
 
@@ -68,7 +70,8 @@ module RTSP
       end
 
       # TODO: if URI scheme = rtspu, use UDPSocket
-      @socket = args[:socket] || TCPSocket.new(@resource_uri.host, @resource_uri.port)
+      #@socket = args[:socket] || TCPSocket.new(@resource_uri.host, @resource_uri.port)
+      @socket = args[:socket] || TCPSocket.new(@resource_uri.host, 554)
       @headers = build_headers_from args[:headers]
     end
 
@@ -86,6 +89,7 @@ module RTSP
       end
 
       new_headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
+      new_headers[:user_agent] ||= USER_AGENT
       headers = default_headers
       headers.merge! new_headers
     end
