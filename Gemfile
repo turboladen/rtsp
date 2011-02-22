@@ -3,7 +3,7 @@ require 'ore/specification'
 source :rubygems
 
 gemspec
-gem 'sdp', '~> 0.2.1'
+gem 'sdp', '~> 0.2.2'
 
 group :development do
   gem 'rake',       '~> 0.8.7'
