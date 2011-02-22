@@ -60,22 +60,15 @@ module RTSP
     def options additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
 
-      begin
-        response = RTSP::Request.execute(@args.merge(
-            :method => :options,
-            :resource_url => @server_uri,
-            :headers => headers
-        ))
+      args = {
+          :method => :options,
+          :resource_url => @server_uri,
+          :headers => headers
+      }
 
+      execute_request(args) do |response|
         @supported_methods = extract_supported_methods_from response.public
-        compare_sequence_number response.cseq
-        @cseq += 1
-      rescue RTSP::Exception => ex
-        puts "Got #{ex.message}"
-        puts ex.backtrace
       end
-
-      response
     end
 
     # TODO: get tracks, IP's, ports, multicast/unicast
@@ -84,26 +77,18 @@ module RTSP
     def describe additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
 
-      begin
-        response = RTSP::Request.execute(@args.merge(
-            :method => :describe,
-            :resource_url => @server_uri,
-            :headers => headers
-        ))
+      args = { :method => :describe,
+          :resource_url => @server_uri,
+          :headers => headers
+      }
 
-        compare_sequence_number response.cseq
-        @cseq += 1
+      execute_request(args) do |response|
         @session_description = response.body
         @content_base = build_resource_uri_from response.content_base
 
         @media_control_tracks = media_control_tracks
         @aggregate_control_track = aggregate_control_track
-      rescue RTSP::Exception => ex
-        puts "Got #{ex.message}"
-        puts ex.backtrace
       end
-
-      response
     end
 
     # @param [String] url A track or presentation URL to pause.
@@ -112,23 +97,12 @@ module RTSP
     # @return [RTSP::Response]
     def announce(request_url, description, additional_headers={})
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-
-      begin
-        response = RTSP::Request.execute(@args.merge(
-            :method => :announce,
-                :resource_url => request_url,
-                :headers => headers,
-                :body => description.to_s
-        ))
-
-        compare_sequence_number response.cseq
-        @cseq += 1
-      rescue RTSP::Exception => ex
-        puts "Got #{ex.message}"
-        puts ex.backtrace
-      end
-
-      response
+      args = { :method => :announce,
+        :resource_url => request_url,
+        :headers => headers,
+        :body => description.to_s
+      }
+      execute_request(args)
     end
 
     # TODO: parse Transport header (http://tools.ietf.org/html/rfc2326#section-12.39)
@@ -139,23 +113,12 @@ module RTSP
     # @return [RTSP::Response] The response formatted as a Hash.
     def setup(track, additional_headers={})
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-
-      begin
-        response = RTSP::Request.execute(@args.merge(
-            :method => :setup,
+      args = { :method => :setup,
             :resource_url => track,
             :headers => headers
-        ))
+      }
 
-        compare_sequence_number response.cseq
-        @session = response.session
-        @cseq += 1
-      rescue RTSP::Exception => ex
-        puts "Got #{ex.message}"
-        puts ex.backtrace
-      end
-
-      response
+      execute_request(args) { |response| @session = response.session }
     end
 
     # @param [String] track
@@ -167,20 +130,11 @@ module RTSP
         ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
       end
 
-      begin
-        response = RTSP::Request.execute(@args.merge(
-            :method => :play,
-            :resource_url => track,
-            :headers => headers
-        ))
-
-        compare_sequence_number response.cseq
-        compare_session_number response.session
-        @cseq += 1
-      rescue RTSP::Exception => ex
-        puts "Got #{ex.message}"
-        puts ex.backtrace
-      end
+      args = { :method => :play,
+        :resource_url => track,
+        :headers => headers
+      }
+      execute_request(args)
 
 =begin
       if @capture_file_path
@@ -197,9 +151,9 @@ module RTSP
 
         @capture_socket.close
       end
-=end
 
       response
+=end
     end
 
     # @param [String] url A track or presentation URL to pause.
@@ -210,22 +164,12 @@ module RTSP
         ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
       end
 
-      begin
-        response = RTSP::Request.execute(@args.merge(
+      args = {
             :method => :pause,
             :resource_url => url,
             :headers => headers
-        ))
-
-        compare_sequence_number response.cseq
-        compare_session_number response.session
-        @cseq += 1
-      rescue RTSP::Exception => ex
-        puts "Got #{ex.message}"
-        puts ex.backtrace
-      end
-
-      response
+      }
+      execute_request(args)
     end
 
     # @return [RTSP::Response]
@@ -234,30 +178,22 @@ module RTSP
         ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
       end
 
-      begin
-        response = RTSP::Request.execute(@args.merge(
+      args = {
             :method => :teardown,
             :resource_url => track,
             :headers => headers
-        ))
+      }
 
+      execute_request(args) do |response|
         if response.code != 200
           message = "#{response.code}: #{response.message}\nAllowed methods: #{response.allow}"
           raise RTSP::Exception, message
         end
 
-        compare_sequence_number response.cseq
-        compare_session_number response.session
-        @cseq = 1
         @session = 0
-      rescue RTSP::Exception => ex
-        puts "Got #{ex.message}"
-        puts ex.backtrace
       end
       #@socket.close if @socket.open?
       #@socket = nil
-
-      response
     end
 
     # @return [RTSP::Response]
@@ -269,26 +205,33 @@ module RTSP
         }).merge(additional_headers)
       end
 
-      begin
-        response = RTSP::Request.execute(@args.merge(
+      args = {
             :method => :get_parameter,
             :resource_url => track,
             :headers => headers,
             :body => body
-        ))
+      }
 
-        if response.code != 200
-          message = "#{response.code}: #{response.message}\nAllowed methods: #{response.allow}"
-          raise RTSP::Exception, message
-        end
+      execute_request(args)
+    end
+
+    # @param [Hash] new_args
+    # @yield [RTSP::Response]
+    # @return [RTSP::Response]
+    def execute_request new_args
+      begin
+        response = RTSP::Request.execute(@args.merge(new_args))
+        yield response if block_given?
 
         compare_sequence_number response.cseq
-        compare_session_number response.session
-        @cseq = 1
-        @session = 0
+
+        if defined? response.session
+          compare_session_number response.session
+        end
+        @cseq += 1
       rescue RTSP::Exception => ex
-        puts "Got #{ex.message}"
-        puts ex.backtrace
+        log "Got exception: #{ex.message}"
+        log ex.backtrace
       end
 
       response
@@ -298,7 +241,7 @@ module RTSP
     #
     # @raise [RTSP::Exception] Raises if @session isn't set.
     # @return Returns whatever the block returns.
-    def ensure_session_and &block
+    def ensure_session_and
       if @session
         return_value = yield
       else
