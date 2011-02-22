@@ -294,6 +294,10 @@ module RTSP
     def execute_request new_args
       begin
         response = RTSP::Request.execute(@args.merge(new_args))
+        if response.code.to_s =~ /(4|5)../
+          reset_state
+          raise RTSP::Exception, "#{response.code}: #{response.message}"
+        end
         yield response if block_given?
 
         compare_sequence_number response.cseq
@@ -304,7 +308,7 @@ module RTSP
         @cseq += 1
       rescue RTSP::Exception => ex
         log "Got exception: #{ex.message}"
-        log ex.backtrace
+        ex.backtrace.each { |b| log b }
       end
 
       response
