@@ -151,7 +151,9 @@ module RTSP
         :headers => headers
       }
 
-      execute_request(args) { @streaming_state = :playing }
+      execute_request(args) do |response|
+        @streaming_state = :playing if response.code =~ /2../
+      end
 
 =begin
       if @capture_file_path
@@ -294,18 +296,22 @@ module RTSP
     def execute_request new_args
       begin
         response = RTSP::Request.execute(@args.merge(new_args))
-        if response.code.to_s =~ /(4|5)../
-          reset_state
-          raise RTSP::Exception, "#{response.code}: #{response.message}"
-        end
-        yield response if block_given?
 
+        yield response if block_given?
         compare_sequence_number response.cseq
+        @cseq += 1
 
         if defined? response.session
           compare_session_number response.session
         end
-        @cseq += 1
+
+        if response.code.to_s =~ /(4|5)../
+          if (defined? response.connection) && response.connection == 'Closed'
+            reset_state
+          end
+
+          raise RTSP::Exception, "#{response.code}: #{response.message}"
+        end
       rescue RTSP::Exception => ex
         log "Got exception: #{ex.message}"
         ex.backtrace.each { |b| log b }
