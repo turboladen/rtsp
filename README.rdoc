@@ -27,8 +27,8 @@ The uber-quick get started:
   rtsp_client.options
   rtsp_client.describe
 
-  rtsp_client.aggregate_control_track  # => "rtsp://192.168.1.10/stream1/"
-  rtsp_client.media_control_tracks     # => ["rtsp://192.168.1.10/stream1/track1"]
+  rtsp_client.aggregate_control_track  # => "rtsp://192.168.1.10:554/stream1/"
+  rtsp_client.media_control_tracks     # => ["rtsp://192.168.1.10:554/stream1/track1"]
 
   rtsp_client.setup(rtsp_client.media_control_tracks.first)
   rtsp_client.play(rtsp_client.aggregate_control_track)
