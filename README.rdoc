@@ -32,7 +32,7 @@ The uber-quick get started:
 
   rtsp_client.setup(rtsp_client.media_control_tracks.first)
   rtsp_client.play(rtsp_client.aggregate_control_track)
-  rtsp_client.teardown
+  rtsp_client.teardown(rtsp_client.aggregate_control_track)
 
 == REQUIREMENTS:
 
