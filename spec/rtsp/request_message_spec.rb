@@ -13,7 +13,7 @@ describe "RTSP::Request messages" do
       request = RTSP::Request.new({ :method => :options,
           :resource_url => @stream,
           :socket => @mock_socket })
-      request.message.should == "OPTIONS rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\nCSeq: 1\r\n\r\n"
+      request.message.should == "OPTIONS rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\nCSeq: 1\r\nUser-Agent: RubyGemRTSP/0.0.1.alpha\r\n\r\n"
     end
 
     it "with passed-in sequence number" do
@@ -21,7 +21,7 @@ describe "RTSP::Request messages" do
           :resource_url => @stream,
           :headers => { :cseq => 2345 },
           :socket => @mock_socket })
-      request.message.should == "OPTIONS rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\nCSeq: 2345\r\n\r\n"
+      request.message.should == "OPTIONS rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\nCSeq: 2345\r\nUser-Agent: RubyGemRTSP/0.0.1.alpha\r\n\r\n"
     end
   end
 

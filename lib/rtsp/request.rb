@@ -130,7 +130,7 @@ module RTSP
       message = "#{@method.to_s.upcase} #{@resource_uri} RTSP/#{DEFAULT_VERSION}\r\n"
       message << headers_to_s(@headers)
       message << "\r\n"
-      message << "#{@body}"
+      message << "#{@body}" unless @body.nil?
 
       message.each_line { |line| log line.strip }
 
@@ -193,7 +193,7 @@ module RTSP
     # @param [Hash] headers The headers to put to string.
     # @return [String]
     def headers_to_s headers
-      headers.inject("") do |result, (key, value)|
+      header_string = headers.inject("") do |result, (key, value)|
         header_name = key.to_s.split(/_/).map { |header| header.capitalize }.join('-')
 
         header_name = "CSeq" if header_name == "Cseq"
@@ -212,6 +212,23 @@ module RTSP
 
         result
       end
+
+      arr = header_string.split "\r\n"
+      # Move the Session header to the top
+      session_index = arr.index { |a| a =~ /Session/ }
+      unless session_index.nil?
+        session = arr.delete_at(session_index)
+        arr.unshift(session)
+      end
+
+      # Move the CSeq header to the top
+      cseq_index = arr.index { |a| a =~ /CSeq/ }
+      cseq = arr.delete_at(cseq_index)
+      arr.unshift(cseq)
+
+      # Put it all back to a String
+      header_string = arr.join("\r\n")
+      header_string << "\r\n"
     end
 
     # Turns header values into a single string.
