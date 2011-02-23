@@ -297,13 +297,17 @@ module RTSP
       begin
         response = RTSP::Request.execute(@args.merge(new_args))
 
-        yield response if block_given?
         compare_sequence_number response.cseq
-        @cseq += 1
 
+        yield response if block_given?
+
+=begin
         if defined? response.session
           compare_session_number response.session
         end
+=end
+
+        @cseq += 1
 
         if response.code.to_s =~ /(4|5)../
           if (defined? response.connection) && response.connection == 'Closed'
