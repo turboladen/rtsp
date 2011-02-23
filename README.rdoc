@@ -23,17 +23,33 @@ SDP: http://tools.ietf.org/html/rfc4566
 
 The uber-quick get started:
 
-  rtsp_client = RTSP::Client.new "192.168.1.10"
-  rtsp_client.setup :port => 8554
-  rtsp_client.play
+  rtsp_client = RTSP::Client.new "192.168.1.10/stream1"
+  rtsp_client.options
+  rtsp_client.describe
+
+  rtsp_client.aggregate_control_track  # => "rtsp://192.168.1.10/stream1/"
+  rtsp_client.media_control_tracks     # => ["rtsp://192.168.1.10/stream1/track1"]
+
+  rtsp_client.setup(rtsp_client.media_control_tracks.first)
+  rtsp_client.play(rtsp_client.aggregate_control_track)
   rtsp_client.teardown
 
 == REQUIREMENTS:
 
-* Ruby
+* Rubies
+  * JRuby 1.5.6
   * 1.8.7
   * 1.9.1
   * 1.9.2
+* RubyGems
+  * sdp, '~> 0.2.2'
+* RubyGems (development)
+  * ore-core, '~> 0.1.0'
+  * jeweler, '~> 1.5.0'
+  * ore-tasks, '~> 0.3.0'
+  * yard, '~> 0.6.0'
+  * metric_fu
+  * code_statistics, '~> 0.2.13'
 
 == INSTALL:
 
@@ -43,15 +59,14 @@ The uber-quick get started:
 
 After checking out the source, run:
 
-  $ rake newb
+  $ bundle install
 
-This task will install any missing dependencies, run the tests/specs,
-and generate the RDoc.
+This task will install any missing dependencies.
 
 == LICENSE:
 
 (The MIT License)
 
-Copyright (c) 2010 Steve Loveless, Mike Kirby
+Copyright (c) 2011 Steve Loveless, Mike Kirby
 
 See LICENSE.txt for details.
