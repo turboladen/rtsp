@@ -98,4 +98,4 @@ This task will install any missing dependencies.
 
 Copyright (c) 2011 Steve Loveless, Mike Kirby
 
-See LICENSE.txt for details.
+See LICENSE.rdoc for details.
