@@ -31,7 +31,7 @@ module RTSP
     end
 
     def inspect
-      me = "<##{self.class.name} "
+      me = "#<#{self.class.name} "
       self.instance_variables.each { |v| me << "#{v}=#{instance_variable_get(v).inspect}, " }
       me.sub!(/, $/, "")
       me << ">"
