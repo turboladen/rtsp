@@ -23,16 +23,45 @@ SDP: http://tools.ietf.org/html/rfc4566
 
 The uber-quick get started:
 
-  rtsp_client = RTSP::Client.new "192.168.1.10/stream1"
-  rtsp_client.options
-  rtsp_client.describe
+  client = RTSP::Client.new "64.202.98.91/sa.sdp"
+  client.log?                # => true
+  client.log = false
+  client.server_uri          # => #<URI::Generic:0x00000100ba4db0 URL:rtsp://64.202.98.91:554/sa.sdp>
+  client.streaming_state     # => :inactive
+  client.cseq                # => 1
+  
+  response = client.options
+  response.class             # => RTSP::Response
+  response.code              # => 200
+  response.messasge          # => "OK"
+  client.cseq                # => 2
 
-  rtsp_client.aggregate_control_track  # => "rtsp://192.168.1.10:554/stream1/"
-  rtsp_client.media_control_tracks     # => ["rtsp://192.168.1.10:554/stream1/track1"]
+  response = client.describe
+  response.body.class             # => SDP::Description
+  client.aggregate_control_track  # => "rtsp://64.202.98.91:554/sa.sdp/"
+  client.media_control_tracks     # => ["rtsp://64.202.98.91:554/sa.sdp/trackID=1"]
+  client.cseq                     # => 3
 
-  rtsp_client.setup(rtsp_client.media_control_tracks.first)
-  rtsp_client.play(rtsp_client.aggregate_control_track)
-  rtsp_client.teardown(rtsp_client.aggregate_control_track)
+  response = client.setup(client.media_control_tracks.first)
+  response.session          # => 7098486223178290313
+  client.session            # => 7098486223178290313
+  client.cseq               # => 4
+  client.streaming_state    # => :ready
+
+  response = client.play(client.media_control_tracks.first)
+  response.code             # => 460
+  response.message          # => "Only Aggregate Option Allowed"
+  response.connection       # => "Close"
+
+  client.setup(client.media_control_tracks.first)
+  client.session            # => 525653595989822251
+  response = client.play(client.aggregate_control_track)
+  response.range            # => "npt=now="
+  resposne.rtp_info         # => "url=rtsp://64.202.98.91:554/sa.sdp/trackID=1"
+
+  client.pause(client.aggregate_control_track)
+  client.teardown(client.aggregate_control_track)
+  client.session            # => 0
 
 == REQUIREMENTS:
 
