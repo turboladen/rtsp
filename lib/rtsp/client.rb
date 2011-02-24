@@ -217,6 +217,7 @@ module RTSP
           raise RTSP::Exception, message
         end
 
+        @streaming_state = :inactive
         reset_state
       end
     end
