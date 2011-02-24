@@ -58,10 +58,14 @@ The uber-quick get started:
   response = client.play(client.aggregate_control_track)
   response.range            # => "npt=now="
   resposne.rtp_info         # => "url=rtsp://64.202.98.91:554/sa.sdp/trackID=1"
+  client.streaming_state    # => :playing
 
   client.pause(client.aggregate_control_track)
+  client.streaming_state    # => :paused
+
   client.teardown(client.aggregate_control_track)
   client.session            # => 0
+  client.streaming_state    # => :inactive
 
 == REQUIREMENTS:
 
