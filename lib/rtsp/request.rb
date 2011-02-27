@@ -23,7 +23,7 @@ module RTSP
     RTSP_DEFAULT_SEQUENCE_NUMBER = 1
     RTSP_DEFAULT_NPT = "0.000-"
     RTSP_DEFAULT_LANGUAGE = "en-US"
-    MAX_BYTES_TO_RECEIVE = 1500
+    MAX_BYTES_TO_RECEIVE = 3000
     USER_AGENT = "RubyGemRTSP/#{RTSP::VERSION}"
 
     attr_reader :resource_uri
@@ -57,9 +57,9 @@ module RTSP
     # @option args [Socket] :socket Optional; socket to use to communicate over.
     # @option args [Hash] :headers RTSP headers to add to the request.
     def initialize args
-      @method =       args[:method] or raise ArgumentError, "must pass :method"
-      @body =         args[:body] || nil
-      @timeout =      args[:timeout] || 2
+      @method =  args[:method] or raise ArgumentError, "must pass :method"
+      @body =    args[:body]    || nil
+      @timeout = args[:timeout] || 2
 
       if args[:resource_url].is_a?(String)
         @resource_uri = build_resource_uri_from args[:resource_url]
@@ -220,6 +220,11 @@ module RTSP
         session = arr.delete_at(session_index)
         arr.unshift(session)
       end
+
+      # Move the User-Agent header to the top
+      user_agent_index = arr.index { |a| a =~ /User-Agent/ }
+      user_agent = arr.delete_at(user_agent_index)
+      arr.unshift(user_agent)
 
       # Move the CSeq header to the top
       cseq_index = arr.index { |a| a =~ /CSeq/ }
