@@ -7,6 +7,7 @@ require File.expand_path(File.dirname(__FILE__) + '/request')
 require File.expand_path(File.dirname(__FILE__) + '/helpers')
 require File.expand_path(File.dirname(__FILE__) + '/exception')
 require File.expand_path(File.dirname(__FILE__) + '/global')
+#require File.expand_path(File.dirname(__FILE__) + '/capturer')
 
 module RTSP
 
@@ -22,6 +23,8 @@ module RTSP
     attr_accessor :tracks
 
     # TODO: Break Stream out in to its own class.
+    # TODO: This should be called
+    # TODO: The spec uses Init, Ready, Playing, Recording.  See A.1.
     # Applicable per stream.  :INACTIVE -> :READY -> :PLAYING/RECORDING -> :PAUSED -> :INACTIVE
     attr_reader :streaming_state
 
@@ -132,7 +135,26 @@ module RTSP
       execute_request(args) do |response|
         @session = response.session
         @streaming_state = :ready
+        parse_transport_from response.transport
       end
+    end
+
+    def parse_transport_from field_string
+      fields = field_string.split ";"
+      @transport = {}
+      specifier = fields.shift
+      @transport[:protocol] = specifier.split("/")[0]
+      @transport[:profile] =  specifier.split("/")[1]
+      #@transport[:lower_transport] = specifier.split("/")[2].downcase.to_sym || :udp
+      @transport[:network_type] = fields.shift.to_sym || :multicast
+
+      extras = fields.inject({}) do |result, field_and_value_string|
+        field_and_value_array = field_and_value_string.split "="
+        result[field_and_value_array.first.to_sym] = field_and_value_array.last
+        result
+      end
+      @transport.merge! extras
+      puts @transport
     end
 
     # TODO: If Response !=200, that should be an exception.  Handle that exception then reset CSeq and session.
@@ -170,8 +192,6 @@ module RTSP
 
         @capture_socket.close
       end
-
-      response
 =end
     end
 
