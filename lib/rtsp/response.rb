@@ -46,7 +46,7 @@ module RTSP
     # @return [Array<String>] 2-element Array containing the head and body of
     # the response.
     def split_head_and_body_from raw_response
-      response_array = raw_response.split "\r\n\r\n"
+      response_array = raw_response.split("\r\n\r\n", 2)
 
       if response_array.empty?
         response_array = raw_response.split "\n\n"
