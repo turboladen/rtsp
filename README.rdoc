@@ -71,9 +71,9 @@ The uber-quick get started:
 
 * (Tested) Rubies
   * JRuby 1.5.6
-  * 1.8.7
-  * 1.9.1
-  * 1.9.2
+  * REE 1.8.7-2011.03
+  * 1.8.7-p334
+  * 1.9.2-p180
 * RubyGems
   * sdp, '~> 0.2.2'
 * RubyGems (development)
