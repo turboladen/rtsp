@@ -7,6 +7,47 @@ describe RTSP::Client do
 
   end
 
+  describe "#configure" do
+    before :each do
+      mock_socket = double 'MockSocket'
+      @client = RTSP::Client.new "rtsp://localhost", :socket => mock_socket
+    end
+
+    describe "log" do
+      it "should default to true" do
+        @client.log?.should be_true
+      end
+
+      it "should set whether to log RTSP requests/responses" do
+        @client.configure { |config| config.log = false }
+        @client.log?.should be_false
+      end
+    end
+
+    describe "logger" do
+      it "should set the logger to use" do
+        MyLogger = Class.new
+        @client.configure { |config| config.logger = MyLogger }
+        @client.logger.should == MyLogger
+      end
+
+      it "should default to Logger writing to STDOUT" do
+        @client.logger.should be_a(Logger)
+      end
+    end
+
+    describe "log_level" do
+      it "should default to :debug" do
+        @client.log_level.should == :debug
+      end
+
+      it "should set the log level to use" do
+        @client.configure { |config| config.log_level = :info }
+        @client.log_level.should == :info
+      end
+    end
+  end
+
   context "#server_url" do
     before :each do
       mock_socket = double 'MockSocket'

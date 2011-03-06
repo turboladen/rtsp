@@ -26,6 +26,11 @@ module RTSP
     # Applicable per stream.  :INACTIVE -> :READY -> :PLAYING/RECORDING -> :PAUSED -> :INACTIVE
     attr_reader :streaming_state
 
+    # Use to configure options.  See RTSP::Global for the options.
+    def configure
+      yield self if block_given?
+    end
+
     # @param [String] rtsp_url URL to the resource to stream.  If no scheme is given,
     # "rtsp" is assumed.  If no port is given, 554 is assumed.
     def initialize(rtsp_url, args={})
