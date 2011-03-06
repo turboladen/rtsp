@@ -70,8 +70,7 @@ module RTSP
       end
 
       # TODO: if URI scheme = rtspu, use UDPSocket
-      #@socket = args[:socket] || TCPSocket.new(@resource_uri.host, @resource_uri.port)
-      @socket = args[:socket] || TCPSocket.new(@resource_uri.host, 554)
+      @socket = args[:socket] || TCPSocket.new(@resource_uri.host, @resource_uri.port)
       @headers = build_headers_from args[:headers]
     end
 

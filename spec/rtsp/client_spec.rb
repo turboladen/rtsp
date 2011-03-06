@@ -9,7 +9,8 @@ describe RTSP::Client do
 
   context "#server_url" do
     before :each do
-      @client = RTSP::Client.new "rtsp://localhost"
+      mock_socket = double 'MockSocket'
+      @client = RTSP::Client.new "rtsp://localhost", :socket => mock_socket
     end
 
     it "allows for changing the server URL on the fly" do

@@ -37,6 +37,7 @@ module RTSP
 
       @cseq = 1
       @streaming_state = :inactive
+      @args[:socket] ||= TCPSocket.new(@server_uri.host, @server_uri.port)
 
 =begin
       if options[:capture_file_path] && options[:capture_duration]
@@ -428,12 +429,6 @@ module RTSP
     def reset_state
       @session = 0
       @streaming_state = :inactive
-    end
-
-    def setup_capture
-      @capture_file = File.open(@capture_file_path, File::WRONLY|File::EXCL|File::CREAT)
-      @capture_socket = UDPSocket.new
-      @capture_socket.bind "0.0.0.0", @server_uri.port
     end
   end
 end
