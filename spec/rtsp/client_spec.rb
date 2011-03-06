@@ -2,7 +2,26 @@ require File.dirname(__FILE__) + '/../spec_helper'
 require 'rtsp/client'
 
 describe RTSP::Client do
+  describe "#initialize" do
+    before :each do
+      mock_socket = double 'MockSocket'
+      @client = RTSP::Client.new "rtsp://localhost", :socket => mock_socket
+    end
 
+    it "sets @cseq to 1" do
+      @client.instance_variable_get(:@cseq).should == 1
+    end
+
+    it "sets @session_state to :inactive" do
+      @client.instance_variable_get(:@session_state).should == :inactive
+    end
+
+    it "sets @server_uri to be a URI containing the first init param + 554" do
+      @client.instance_variable_get(:@server_uri).should be_a(URI)
+      @client.instance_variable_get(:@server_uri).to_s.should ==
+          "rtsp://localhost:554"
+    end
+  end
   it "increments the sequence number after receiving an OK response" do
 
   end

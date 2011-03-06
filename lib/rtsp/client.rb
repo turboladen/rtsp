@@ -37,7 +37,7 @@ module RTSP
       @args = args
 
       @cseq = 1
-      @streaming_state = :inactive
+      @session_state = :inactive
       @args[:socket] ||= TCPSocket.new(@server_uri.host, @server_uri.port)
 
 =begin
@@ -136,7 +136,7 @@ module RTSP
 
       execute_request(args) do |response|
         @session = response.session
-        @streaming_state = :ready
+        @session_state = :ready
         parse_transport_from response.transport
       end
     end
@@ -176,7 +176,7 @@ module RTSP
       }
 
       execute_request(args) do |response|
-        @streaming_state = :playing if response.code =~ /2../
+        @session_state = :playing if response.code =~ /2../
       end
 
 =begin
@@ -213,7 +213,7 @@ module RTSP
             :resource_url => url,
             :headers => headers
       }
-      execute_request(args) { @streaming_state = :paused }
+      execute_request(args) { @session_state = :paused }
     end
 
     # Sends the TEARDOWN request, then resets all state-related instance
@@ -239,7 +239,7 @@ module RTSP
           raise RTSP::Exception, message
         end
 
-        @streaming_state = :inactive
+        @session_state = :inactive
         reset_state
       end
     end
@@ -305,7 +305,7 @@ module RTSP
           :headers => headers
       }
 
-      execute_request(args) { @streaming_state = :recording }
+      execute_request(args) { @session_state = :recording }
     end
 
     # Executes the Request with the arguments passed in, yields the response to
@@ -429,7 +429,7 @@ module RTSP
     # Resets values that are tied to the client's state.
     def reset_state
       @session = 0
-      @streaming_state = :inactive
+      @session_state = :inactive
     end
   end
 end
