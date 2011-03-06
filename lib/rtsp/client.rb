@@ -15,7 +15,6 @@ module RTSP
     include RTSP::Helpers
     include RTSP::Global
 
-    attr_reader :options
     attr_reader :server_uri
     attr_reader :cseq
     attr_reader :session
