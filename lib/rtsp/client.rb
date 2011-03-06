@@ -22,14 +22,12 @@ module RTSP
     attr_accessor :tracks
 
     # TODO: Break Stream out in to its own class.
-    # TODO: This should be called
     # TODO: The spec uses Init, Ready, Playing, Recording.  See A.1.
     # Applicable per stream.  :INACTIVE -> :READY -> :PLAYING/RECORDING -> :PAUSED -> :INACTIVE
     attr_reader :streaming_state
 
     # @param [String] rtsp_url URL to the resource to stream.  If no scheme is given,
-    # "rtsp" is assumed.  If no port is given, 554 is assumed.  If no path is
-    # given, "/stream1" is assumed.
+    # "rtsp" is assumed.  If no port is given, 554 is assumed.
     def initialize(rtsp_url, args={})
       @server_uri = build_resource_uri_from rtsp_url
       @args = args
