@@ -1,6 +1,5 @@
 require './lib/rtsp/client'
 
-#url = "rtsp://10.221.222.210/?deviceid=uuid:100330fe-5d3e-4a5e-98c7-0000a6504b8c-Camera-1"
 url = "rtsp://10.221.222.129/stream1"
 r = RTSP::Client.new url
 
