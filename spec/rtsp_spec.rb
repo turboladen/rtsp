@@ -21,6 +21,10 @@ describe RTSP do
     RTSP.const_defined?('VERSION').should be_true
   end
 
+  it "has version 0.0.1.alpha" do
+    RTSP::VERSION.should == '0.0.1.alpha'
+  end
+
   it "should have a WWW constant" do
     RTSP.const_defined?('WWW').should be_true
   end
