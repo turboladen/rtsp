@@ -26,8 +26,6 @@ module RTSP
     MAX_BYTES_TO_RECEIVE = 3000
     USER_AGENT = "RubyGemRTSP/#{RTSP::VERSION}"
 
-    attr_reader :resource_uri
-
     # Creates an instance of an RTSP::Request object and sends the message
     # over the socket.
     #

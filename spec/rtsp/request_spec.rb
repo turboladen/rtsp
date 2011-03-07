@@ -33,10 +33,10 @@ describe RTSP::Request do
             :resource_url => "rtsp://64.202.98.91:554/sa.sdp",
             :socket => @mock_socket
         })
-        request.resource_uri.scheme.should == "rtsp"
-        request.resource_uri.host.should == "64.202.98.91"
-        request.resource_uri.port.should == 554
-        request.resource_uri.path.should == "/sa.sdp"
+        request.instance_variable_get(:@resource_uri).scheme.should == "rtsp"
+        request.instance_variable_get(:@resource_uri).host.should == "64.202.98.91"
+        request.instance_variable_get(:@resource_uri).port.should == 554
+        request.instance_variable_get(:@resource_uri).path.should == "/sa.sdp"
       end
 
       it "with scheme, IP, path; port defaults to 554" do
@@ -45,10 +45,10 @@ describe RTSP::Request do
             :resource_url => "rtsp://64.202.98.91/sa.sdp",
             :socket => @mock_socket
         })
-        request.resource_uri.scheme.should == "rtsp"
-        request.resource_uri.host.should == "64.202.98.91"
-        request.resource_uri.port.should == 554
-        request.resource_uri.path.should == "/sa.sdp"
+        request.instance_variable_get(:@resource_uri).scheme.should == "rtsp"
+        request.instance_variable_get(:@resource_uri).host.should == "64.202.98.91"
+        request.instance_variable_get(:@resource_uri).port.should == 554
+        request.instance_variable_get(:@resource_uri).path.should == "/sa.sdp"
       end
 
       it "with IP, path; port defaults to 554; scheme defaults to 'rtsp'" do
@@ -56,10 +56,10 @@ describe RTSP::Request do
             :resource_url => "rtsp://64.202.98.91/sa.sdp",
             :socket => @mock_socket
         })
-        request.resource_uri.scheme.should == "rtsp"
-        request.resource_uri.host.should == "64.202.98.91"
-        #request.resource_uri.port.should == 554
-        request.resource_uri.path.should == "/sa.sdp"
+        request.instance_variable_get(:@resource_uri).scheme.should == "rtsp"
+        request.instance_variable_get(:@resource_uri).host.should == "64.202.98.91"
+        request.instance_variable_get(:@resource_uri).port.should == 554
+        request.instance_variable_get(:@resource_uri).path.should == "/sa.sdp"
       end
 
       it "with scheme, IP, port" do
@@ -67,10 +67,10 @@ describe RTSP::Request do
             :resource_url => "rtsp://64.202.98.91:554",
             :socket => @mock_socket
         })
-        request.resource_uri.scheme.should == "rtsp"
-        request.resource_uri.host.should == "64.202.98.91"
-        #request.resource_uri.port.should == 554
-        request.resource_uri.path.should == ""
+        request.instance_variable_get(:@resource_uri).scheme.should == "rtsp"
+        request.instance_variable_get(:@resource_uri).host.should == "64.202.98.91"
+        request.instance_variable_get(:@resource_uri).port.should == 554
+        request.instance_variable_get(:@resource_uri).path.should == ""
       end
     end
   end
