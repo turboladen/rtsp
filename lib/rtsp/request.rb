@@ -116,7 +116,7 @@ module RTSP
 
     # @return [RTSP::Response]
     def execute
-      log "Sending #{@method.upcase} to #{@resource_uri}"
+      log "Sending #{@method.to_s.upcase} to #{@resource_uri}"
       response = send_message
       log "Received response:"
       response.raw_response.each_line { |line| log line.strip }
