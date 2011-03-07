@@ -26,8 +26,9 @@ module RTSP
     attr_reader :streaming_state
 
     # Use to configure options.  See RTSP::Global for the options.
-    def configure
+    def configure &block
       yield self if block_given?
+      RTSP::Request.configure &block
     end
 
     # @param [String] rtsp_url URL to the resource to stream.  If no scheme is given,

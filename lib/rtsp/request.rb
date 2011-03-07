@@ -14,7 +14,7 @@ module RTSP
   # the request messages to communicate in RTSP.
   class Request
     include RTSP::Helpers
-    include RTSP::Global
+    extend RTSP::Global
 
     RTSP_ACCEPT_TYPE = "application/sdp"
     RTP_DEFAULT_CLIENT_PORT = 9000
@@ -33,6 +33,10 @@ module RTSP
     # @return [RTSP::Response]
     def self.execute args
       new(args).execute
+    end
+
+    def self.configure
+      yield self if block_given?
     end
 
     # Required arguments:
