@@ -126,6 +126,7 @@ module RTSP
 
     # @return [String] The request message to send.
     def message
+      # < 1.9.2 fix: use #to_s on a Symbol in order to call #upcase.
       message = "#{@method.to_s.upcase} #{@resource_uri} RTSP/#{DEFAULT_VERSION}\r\n"
       message << headers_to_s(@headers)
       message << "\r\n"
