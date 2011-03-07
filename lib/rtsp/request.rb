@@ -145,21 +145,12 @@ module RTSP
 
     # @return [RTSP::Response]
     def recv
-      size = 0
       socket_data = @socket.recvfrom MAX_BYTES_TO_RECEIVE
       response = RTSP::Response.new socket_data.first
 
-=begin
-      size = response["content-length"].to_i if response.has_key?("content-length")
-      response[:body] = read_nonblock(size).split("\r\n") unless size == 0
-
-      response
-=end
-      size = response.content_length.to_i if response.respond_to? 'content_length'
-      #response[:body] = read_nonblock(size).split("\r\n") unless size == 0
-
       response
     end
+
 =begin
     def connect
       timeout(@timeout) { @socket = TCPSocket.new(@host, @port) } #rescue @socket = nil
