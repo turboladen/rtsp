@@ -22,9 +22,6 @@ describe RTSP::Client do
           "rtsp://localhost:554"
     end
   end
-  it "increments the sequence number after receiving an OK response" do
-
-  end
 
   describe "#configure" do
     before :each do
@@ -83,5 +80,25 @@ describe RTSP::Client do
       @client.server_uri.to_s.should == "rtsp://localhost:554"
       lambda { @client.server_url = [] }.should raise_error
     end
+  end
+
+  describe "#options" do
+    before :each do
+      mock_socket = double 'MockSocket', :send => "", :recvfrom => [OPTIONS_RESPONSE]
+      @client = RTSP::Client.new "rtsp://localhost", :socket => mock_socket
+      @client.configure { |config| config.log = false }
+    end
+
+    it "extracts the server's supported methods" do
+      @client.options
+      @client.instance_variable_get(:@supported_methods).should ==
+          [:options, :describe, :setup, :teardown, :play, :pause]
+    end
+
+    it "returns a Response" do
+      response = @client.options
+      response.is_a?(RTSP::Response).should be_true
+    end
+
   end
 end

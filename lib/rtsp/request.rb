@@ -148,8 +148,8 @@ module RTSP
     # @return [RTSP::Response]
     def recv
       size = 0
-      socket_data, sender_sockaddr = @socket.recvfrom MAX_BYTES_TO_RECEIVE
-      response = RTSP::Response.new socket_data
+      socket_data = @socket.recvfrom MAX_BYTES_TO_RECEIVE
+      response = RTSP::Response.new socket_data.first
 
 =begin
       size = response["content-length"].to_i if response.has_key?("content-length")
