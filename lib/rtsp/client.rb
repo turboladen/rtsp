@@ -39,15 +39,6 @@ module RTSP
       @cseq = 1
       @session_state = :inactive
       @args[:socket] ||= TCPSocket.new(@server_uri.host, @server_uri.port)
-
-=begin
-      if options[:capture_file_path] && options[:capture_duration]
-        @capture_file_path = options[:capture_file_path]
-        @capture_duration = options[:capture_duration]
-        setup_capture
-      end
-=end
-      #binding.pry
     end
 
     # The URL for the RTSP server to talk to can change if multiple servers are
@@ -178,23 +169,6 @@ module RTSP
       execute_request(args) do |response|
         @session_state = :playing if response.code =~ /2../
       end
-
-=begin
-      if @capture_file_path
-        begin
-          Timeout::timeout(@capture_duration) do
-            while data = @capture_socket.recvfrom(102400).first
-              @logger.debug "data size = #{data.size}"
-              @capture_file_path.write data
-            end
-          end
-        rescue Timeout::Error
-          # Blind rescue
-        end
-
-        @capture_socket.close
-      end
-=end
     end
 
     # TODO: Should the socket be closed?
