@@ -1,5 +1,6 @@
 require 'logger'
 
+# TODO: Move to ext/logger.rb
 class Logger
   def format_message(level, time, progname, msg)
     "[#{time}] #{msg.to_s}\n"
