@@ -43,3 +43,10 @@ Date: Fri, Jan 28 2011 01:14:42 GMT\r\n
 Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r\n
 \r\n
 }
+
+SETUP_RESPONSE = %Q{RTSP/1.0 200 OK\r\n
+CSeq: 1\r\n
+Date: Fri, Jan 28 2011 01:14:42 GMT\r\n
+Transport: RTP/AVP;unicast;destination=10.221.222.186;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701\r\n
+Session: 118\r\n
+\r\n}

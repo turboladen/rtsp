@@ -5,9 +5,18 @@ Feature: Client changes state
 
   Scenario Outline: State doesn't change after certain requests
     Given I haven't made any RTSP requests
-    When I issue an "<request_type>" request
+    When I issue an "<request_type>" request with "<parameters>"
     Then the state stays the same
   Examples:
-    | request_type |
-    | options      |
-    | describe     |
+    | request_type | parameters |
+    | options      |            |
+    | describe     |            |
+
+  Scenario Outline: State changes according to RFC
+    Given I haven't made any RTSP requests
+    When I issue an "<request_type>" request with "<parameters>"
+    Then the state changes to "<state_result>"
+  Examples:
+    | request_type | parameters              | state_result |
+    | setup        | url| Ready        |
+
