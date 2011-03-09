@@ -28,5 +28,5 @@ Feature: Client changes state
   Examples:
     | request_type | parameters | state_result |
     | play         | url        | playing      |
-    #| record       | url        | recording    |
+    | record       | url        | recording    |
 

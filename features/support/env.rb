@@ -63,3 +63,7 @@ Range: npt=0.000-\r\n
 Session: 118\r\n
 RTP-Info: url=rtsp://10.221.222.235/stream1/track1;seq=17320;rtptime=400880602\r\n
 \r\n}
+
+RECORD_RESPONSE = %Q{RTSP/1.0 200 OK\r\n
+CSeq: 1\r\n
+\r\n}
