@@ -2,6 +2,15 @@ Given /^I haven't made any RTSP requests$/ do
   RTSP::Client.configure { |config| config.log = false }
 end
 
+Given /^I have set up a stream$/ do
+  mock_socket = double "MockSocket", :send => "", :recvfrom => [SETUP_RESPONSE]
+
+  url = "rtsp://fake-rtsp-server/some_path"
+  @client = RTSP::Client.new url, :socket => mock_socket
+
+  @client.setup url
+end
+
 When /^I issue an "([^"]*)" request with "([^"]*)"$/ do |request_type, params|
   raw_response = Kernel.const_get "#{request_type.upcase}_RESPONSE"
   mock_socket = double "MockSocket", :send => "", :recvfrom => [raw_response]

@@ -21,12 +21,12 @@ Feature: Client changes state
     | setup        | url        | ready        |
     | teardown     | url        | init         |
 
-  Scenario Outline: State changes from Init
-    Given I haven't made any RTSP requests
+  Scenario Outline: State changes from Ready
+    Given I have set up a stream
     When I issue an "<request_type>" request with "<parameters>"
     Then the state changes to "<state_result>"
   Examples:
     | request_type | parameters | state_result |
-    | setup        | url        | ready        |
-    | teardown     | url        | init         |
+    | play         | url        | playing      |
+    #| record       | url        | recording    |
 

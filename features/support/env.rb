@@ -18,7 +18,7 @@ Content-Type: application/sdp\r\n
 x-Accept-Retransmit: our-retransmit\r\n
 x-Accept-Dynamic-Rate: 1\r\n
 Content-Base: rtsp://64.202.98.91:554/gs.sdp/\r\n
-\r\n
+\r\n\r\n
 v=0\r\n
 o=- 545877020 467920391 IN IP4 127.0.0.1\r\n
 s=Groove Salad from SomaFM [aacPlus]\r\n
@@ -54,4 +54,12 @@ CSeq: 1\r\n
 Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )\r\n
 Session: 8705595695936445582\r\n
 Connection: Close\r\n
+\r\n}
+
+PLAY_RESPONSE = %Q{RTSP/1.0 200 OK\r\n
+CSeq: 1\r\n
+Date: Fri, Jan 28 2011 01:14:42 GMT\r\n
+Range: npt=0.000-\r\n
+Session: 118\r\n
+RTP-Info: url=rtsp://10.221.222.235/stream1/track1;seq=17320;rtptime=400880602\r\n
 \r\n}
