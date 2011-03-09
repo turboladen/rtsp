@@ -1,4 +1,5 @@
 require 'rubygems' if RUBY_VERSION < "1.9.0"
+require 'rake'
 
 begin
   require 'bundler'
@@ -16,7 +17,6 @@ rescue Bundler::BundlerError => e
   exit e.status_code
 end
 
-require 'rake'
 
 require 'ore/specification'
 require 'jeweler'
