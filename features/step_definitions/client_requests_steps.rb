@@ -55,7 +55,6 @@ Then /^I should receive an RTSP response to that ANNOUNCE request$/ do
 end
 
 Then /^I should receive an RTSP response to that SETUP request$/ do
-  puts @response.inspect
   @response.is_a?(RTSP::Response).should be_true
   @response.code.should == 200
   @response.message.should == "OK"
