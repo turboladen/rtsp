@@ -85,8 +85,10 @@ describe RTSP::Client do
   describe "#options" do
     before :each do
       mock_socket = double 'MockSocket', :send => "", :recvfrom => [OPTIONS_RESPONSE]
+      mock_logger = double 'MockLogger', :send => nil
       @client = RTSP::Client.new "rtsp://localhost", :socket => mock_socket
       @client.configure { |config| config.log = false }
+      @client.logger = mock_logger
     end
 
     it "extracts the server's supported methods" do
@@ -99,6 +101,35 @@ describe RTSP::Client do
       response = @client.options
       response.is_a?(RTSP::Response).should be_true
     end
+  end
 
+  describe "#describe" do
+    before do
+      mock_socket = double 'MockSocket', :send => "", :recvfrom => [DESCRIBE_RESPONSE]
+      mock_logger = double 'MockLogger', :send => nil
+      @client = RTSP::Client.new "rtsp://localhost", :socket => mock_socket
+      @client.logger = mock_logger
+    end
+
+    it "extracts the aggregate control track" do
+      @client.describe
+      @client.aggregate_control_track.should == "rtsp://64.202.98.91:554/gs.sdp/"
+    end
+
+    it "extracts the media control tracks" do
+      @client.describe
+      @client.media_control_tracks.should == ["rtsp://64.202.98.91:554/gs.sdp/trackID=1"]
+    end
+
+    it "increases @cseq by 1" do
+      cseq_before = @client.instance_variable_get :@cseq
+      @client.describe
+      @client.instance_variable_get(:@cseq).should == cseq_before + 1
+    end
+
+    it "returns a Response" do
+      response = @client.describe
+      response.is_a?(RTSP::Response).should be_true
+    end
   end
 end
