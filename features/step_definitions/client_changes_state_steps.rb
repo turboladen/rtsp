@@ -3,7 +3,8 @@ Given /^I haven't made any RTSP requests$/ do
 end
 
 When /^I issue an "([^"]*)" request$/ do |request_type|
-  mock_socket = double "MockSocket", :send => "", :recvfrom => [OPTIONS_RESPONSE]
+  raw_response = Kernel.const_get "#{request_type.upcase}_RESPONSE"
+  mock_socket = double "MockSocket", :send => "", :recvfrom => [raw_response]
 
   url = "rtsp://fake-rtsp-server/some_path"
   @client = RTSP::Client.new url, :socket => mock_socket
