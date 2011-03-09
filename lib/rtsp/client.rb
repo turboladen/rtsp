@@ -204,9 +204,7 @@ module RTSP
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def teardown(track, additional_headers={})
-      headers = ensure_session_and do
-        ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
-      end
+      headers = ({ :cseq => @cseq, :session => @session }).merge(additional_headers)
 
       args = {
             :method => :teardown,

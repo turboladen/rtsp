@@ -12,11 +12,21 @@ Feature: Client changes state
     | options      |            |
     | describe     |            |
 
-  Scenario Outline: State changes according to RFC
+  Scenario Outline: State changes from Init
     Given I haven't made any RTSP requests
     When I issue an "<request_type>" request with "<parameters>"
     Then the state changes to "<state_result>"
   Examples:
     | request_type | parameters | state_result |
-    | setup        | url        | ready       |
+    | setup        | url        | ready        |
+    | teardown     | url        | init         |
+
+  Scenario Outline: State changes from Init
+    Given I haven't made any RTSP requests
+    When I issue an "<request_type>" request with "<parameters>"
+    Then the state changes to "<state_result>"
+  Examples:
+    | request_type | parameters | state_result |
+    | setup        | url        | ready        |
+    | teardown     | url        | init         |
 
