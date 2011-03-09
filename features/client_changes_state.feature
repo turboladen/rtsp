@@ -17,6 +17,6 @@ Feature: Client changes state
     When I issue an "<request_type>" request with "<parameters>"
     Then the state changes to "<state_result>"
   Examples:
-    | request_type | parameters              | state_result |
-    | setup        | url| Ready        |
+    | request_type | parameters | state_result |
+    | setup        | url        | ready       |
 

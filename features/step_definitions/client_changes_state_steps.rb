@@ -17,3 +17,7 @@ end
 Then /^the state stays the same$/ do
   @client.session_state.should == @initial_state
 end
+
+Then /^the state changes to "([^"]*)"$/ do |new_state|
+  @client.session_state.should == new_state.to_sym
+end
