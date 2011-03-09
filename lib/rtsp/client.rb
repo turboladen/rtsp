@@ -18,15 +18,15 @@ module RTSP
     attr_reader :server_uri
     attr_reader :cseq
     attr_reader :session
+    attr_reader :session_state
     attr_accessor :tracks
 
     # TODO: Break Stream out in to its own class.
-    # TODO: The spec uses Init, Ready, Playing, Recording.  See A.1.
     # Applicable per stream.  :INACTIVE -> :READY -> :PLAYING/RECORDING -> :PAUSED -> :INACTIVE
     attr_reader :streaming_state
 
     # Use to configure options for all clients.  See RTSP::Global for the options.
-    def configure
+    def self.configure
       yield self if block_given?
     end
 
@@ -37,7 +37,7 @@ module RTSP
       @args = args
 
       @cseq = 1
-      @session_state = :inactive
+      @session_state = :init
       @args[:socket] ||= TCPSocket.new(@server_uri.host, @server_uri.port)
       @args[:logger] = RTSP::Client.log? ? RTSP::Client.logger : nil
     end
@@ -127,8 +127,11 @@ module RTSP
       }
 
       execute_request(args) do |response|
+        if @session_state == :init
+          @session_state = :ready if response.code.to_s =~ /2../
+        end
+
         @session = response.session
-        @session_state = :ready
         parse_transport_from response.transport
       end
     end
@@ -167,7 +170,7 @@ module RTSP
       }
 
       execute_request(args) do |response|
-        @session_state = :playing if response.code =~ /2../
+        @session_state = :playing if response.code.to_s =~ /2../
       end
     end
 
@@ -187,7 +190,11 @@ module RTSP
             :resource_url => url,
             :headers => headers
       }
-      execute_request(args) { @session_state = :paused }
+      execute_request(args) do |response|
+        if [:playing, :recording].include? @session_state
+          @session_state = :ready if response.code.to_s =~ /2../
+        end
+      end
     end
 
     # Sends the TEARDOWN request, then resets all state-related instance
@@ -208,13 +215,13 @@ module RTSP
       }
 
       execute_request(args) do |response|
-        if response.code != 200
+        if response.code.to_s =~ /2../
+          @session_state = :init
+          @session = 0
+        else
           message = "#{response.code}: #{response.message}\nAllowed methods: #{response.allow}"
           raise RTSP::Exception, message
         end
-
-        @session_state = :inactive
-        reset_state
       end
     end
 
@@ -279,7 +286,9 @@ module RTSP
           :headers => headers
       }
 
-      execute_request(args) { @session_state = :recording }
+      execute_request(args) do |response|
+        @session_state = :recording if response.code.to_s =~ /2../
+      end
     end
 
     # Executes the Request with the arguments passed in, yields the response to
@@ -292,6 +301,10 @@ module RTSP
     # @return [RTSP::Response]
     def execute_request new_args
       begin
+        if @args[:method] == :setup && @session_state == :inactive
+          @session_state = :init
+        end
+
         response = RTSP::Request.execute(@args.merge(new_args))
 
         compare_sequence_number response.cseq
@@ -398,12 +411,6 @@ module RTSP
     # @return [Array<Symbol>] The list of methods as symbols.
     def extract_supported_methods_from method_list
       method_list.downcase.split(', ').map { |m| m.to_sym }
-    end
-
-    # Resets values that are tied to the client's state.
-    def reset_state
-      @session = 0
-      @session_state = :inactive
     end
   end
 end

@@ -7,7 +7,6 @@ $:.unshift(File.dirname(__FILE__) + '/../../lib')
 require 'rtsp/client'
 require 'rtsp/request'
 
-
 DESCRIBE_RESPONSE = <<-RESP
 RTSP/1.0 200 OK
 Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )
