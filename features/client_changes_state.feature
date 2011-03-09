@@ -29,4 +29,6 @@ Feature: Client changes state
     | request_type | parameters | state_result |
     | play         | url        | playing      |
     | record       | url        | recording    |
+    | teardown     | url        | init         |
+    | setup        | url        | ready        |
 
