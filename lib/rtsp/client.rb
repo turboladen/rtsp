@@ -38,6 +38,7 @@ module RTSP
 
       @cseq = 1
       @session_state = :init
+      @session = 0
       @args[:socket] ||= TCPSocket.new(@server_uri.host, @server_uri.port)
       @args[:logger] = RTSP::Client.log? ? RTSP::Client.logger : nil
     end
@@ -337,7 +338,7 @@ module RTSP
     # @raise [RTSP::Exception] Raises if @session isn't set.
     # @return Returns whatever the block returns.
     def ensure_session_and
-      if @session
+      if @session == 0
         return_value = yield
       else
         raise RTSP::Exception, "Session number not retrieved from server yet.  Run SETUP first."
