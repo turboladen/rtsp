@@ -137,7 +137,6 @@ module RTSP
     #
     # @return [RTSP::Response]
     def send_message
-      #message.each_line { |line| @logger.debug line }
       recv if timeout(@timeout) { @socket.send(message, 0) }
     end
 
