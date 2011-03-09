@@ -13,7 +13,7 @@ module RTSP
   # Allows for pulling streams from an RTSP server.
   class Client
     include RTSP::Helpers
-    include RTSP::Global
+    extend RTSP::Global
 
     attr_reader :server_uri
     attr_reader :cseq
@@ -26,9 +26,8 @@ module RTSP
     attr_reader :streaming_state
 
     # Use to configure options.  See RTSP::Global for the options.
-    def configure &block
+    def configure
       yield self if block_given?
-      RTSP::Request.configure &block
     end
 
     # @param [String] rtsp_url URL to the resource to stream.  If no scheme is given,
@@ -40,6 +39,7 @@ module RTSP
       @cseq = 1
       @session_state = :inactive
       @args[:socket] ||= TCPSocket.new(@server_uri.host, @server_uri.port)
+      @args[:logger] = RTSP::Client.log? ? RTSP::Client.logger : nil
     end
 
     # The URL for the RTSP server to talk to can change if multiple servers are
@@ -148,7 +148,6 @@ module RTSP
         result
       end
       @transport.merge! extras
-      puts @transport
     end
 
     # TODO: If Response !=200, that should be an exception.  Handle that exception then reset CSeq and session.
@@ -315,8 +314,8 @@ module RTSP
           raise RTSP::Exception, "#{response.code}: #{response.message}"
         end
       rescue RTSP::Exception => ex
-        log "Got exception: #{ex.message}"
-        ex.backtrace.each { |b| log b }
+        RTSP::Client.log "Got exception: #{ex.message}"
+        ex.backtrace.each { |b| RTSP::Client.log b }
       end
 
       response

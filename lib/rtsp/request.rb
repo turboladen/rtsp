@@ -2,7 +2,6 @@ require 'socket'
 require 'timeout'
 require 'uri'
 
-require File.expand_path(File.dirname(__FILE__) + '/global')
 require File.expand_path(File.dirname(__FILE__) + '/response')
 require File.expand_path(File.dirname(__FILE__) + '/helpers')
 require File.expand_path(File.dirname(__FILE__) + '/version')
@@ -14,7 +13,6 @@ module RTSP
   # the request messages to communicate in RTSP.
   class Request
     include RTSP::Helpers
-    extend RTSP::Global
 
     RTSP_ACCEPT_TYPE = "application/sdp"
     RTP_DEFAULT_CLIENT_PORT = 9000
@@ -33,10 +31,6 @@ module RTSP
     # @return [RTSP::Response]
     def self.execute args
       new(args).execute
-    end
-
-    def self.configure
-      yield self if block_given?
     end
 
     # Required arguments:
@@ -118,10 +112,10 @@ module RTSP
 
     # @return [RTSP::Response]
     def execute
-      log "Sending #{@method.to_s.upcase} to #{@resource_uri}"
+      RTSP::Client.log "Sending #{@method.to_s.upcase} to #{@resource_uri}"
       response = send_message
-      log "Received response:"
-      response.raw_response.each_line { |line| log line.strip }
+      RTSP::Client.log "Received response:"
+      response.raw_response.each_line { |line| RTSP::Client.log line.strip }
 
       response
     end
@@ -134,7 +128,7 @@ module RTSP
       message << "\r\n"
       message << "#{@body}" unless @body.nil?
 
-      message.each_line { |line| log line.strip }
+      message.each_line { |line| RTSP::Client.log line.strip }
 
       message
     end

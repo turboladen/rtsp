@@ -1,5 +1,7 @@
 require './lib/rtsp/client'
 
+RTSP::Client.log = false
+
 url = "rtsp://64.202.98.91/sa.sdp"
 r = RTSP::Client.new url
 
