@@ -25,7 +25,7 @@ module RTSP
     # Applicable per stream.  :INACTIVE -> :READY -> :PLAYING/RECORDING -> :PAUSED -> :INACTIVE
     attr_reader :streaming_state
 
-    # Use to configure options.  See RTSP::Global for the options.
+    # Use to configure options for all clients.  See RTSP::Global for the options.
     def configure
       yield self if block_given?
     end
