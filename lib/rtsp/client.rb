@@ -86,13 +86,15 @@ module RTSP
       }
 
       execute_request(args) do |response|
-        @session_description = response.body
-        @session_start_time = response.body.start_time
-        @session_stop_time = response.body.stop_time
-        @content_base = build_resource_uri_from response.content_base
+        if response.code.to_s =~ /2../
+          @session_description = response.body
+          @session_start_time = response.body.start_time
+          @session_stop_time = response.body.stop_time
+          @content_base = build_resource_uri_from response.content_base
 
-        @media_control_tracks = media_control_tracks
-        @aggregate_control_track = aggregate_control_track
+          @media_control_tracks = media_control_tracks
+          @aggregate_control_track = aggregate_control_track
+        end
       end
     end
 
@@ -338,8 +340,8 @@ module RTSP
     # @raise [RTSP::Exception] Raises if @session isn't set.
     # @return Returns whatever the block returns.
     def ensure_session_and
-      if @session == 0
-        return_value = yield
+      if @session > 0
+        return_value = yield if block_given?
       else
         raise RTSP::Exception, "Session number not retrieved from server yet.  Run SETUP first."
       end
