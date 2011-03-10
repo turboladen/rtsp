@@ -6,6 +6,7 @@ gemspec
 gem 'sdp', '~> 0.2.2'
 
 group :development do
+  gem 'cucumber'
   gem 'rake',       '~> 0.8.7'
   gem 'ore-core',   '~> 0.1.0'
   gem 'jeweler',    '~> 1.5.0'
