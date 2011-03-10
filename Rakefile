@@ -17,13 +17,12 @@ rescue Bundler::BundlerError => e
   exit e.status_code
 end
 
-
-require 'ore/specification'
+#require 'ore/specification'
 require 'jeweler'
 Jeweler::Tasks.new(Ore::Specification.new)
 
-require 'ore/tasks'
-Ore::Tasks.new
+#require 'ore/tasks'
+#Ore::Tasks.new
 
 require 'rspec/core/rake_task'
 RSpec::Core::RakeTask.new(:spec) do |t|
