@@ -22,7 +22,7 @@ module RTSP
     RTSP_DEFAULT_NPT = "0.000-"
     RTSP_DEFAULT_LANGUAGE = "en-US"
     MAX_BYTES_TO_RECEIVE = 3000
-    USER_AGENT = "RubyGemRTSP/#{RTSP::VERSION}"
+    USER_AGENT = "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
 
     # Creates an instance of an RTSP::Request object and sends the message
     # over the socket.
