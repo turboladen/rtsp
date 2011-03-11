@@ -36,6 +36,8 @@ module RTSP
       logger.send(log_level, message) if log?
     end
 
+    attr_writer :raise_errors
+
     def raise_errors?
       @raise_errors != false
     end
@@ -44,6 +46,13 @@ module RTSP
 
     def rtsp_version
       @version ||= DEFAULT_VERSION
+    end
+
+    def reset_config!
+      self.log = true
+      self.logger = ::Logger.new STDOUT
+      self.log_level = :debug
+      self.raise_errors = true
     end
   end
 end
