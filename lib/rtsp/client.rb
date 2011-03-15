@@ -18,12 +18,11 @@ module RTSP
     attr_reader :server_uri
     attr_reader :cseq
     attr_reader :session
-    attr_reader :session_state
     attr_accessor :tracks
 
     # TODO: Break Stream out in to its own class.
-    # Applicable per stream.  :INACTIVE -> :READY -> :PLAYING/RECORDING -> :PAUSED -> :INACTIVE
-    attr_reader :streaming_state
+    # See RFC section A.1.
+    attr_reader :session_state
 
     # Use to configure options for all clients.  See RTSP::Global for the options.
     def self.configure
@@ -115,7 +114,7 @@ module RTSP
     # TODO: parse Transport header (http://tools.ietf.org/html/rfc2326#section-12.39)
     # TODO: @session numbers are relevant to tracks, and a client can play multiple tracks at the same time.
     # Sends the SETUP request, then sets @session to the value returned in the
-    # Session header from the server, then sets the @streaming_state to :ready.
+    # Session header from the server, then sets the @session_state to :ready.
     #
     # @param [String] track
     # @param [Hash] additional_headers
@@ -155,7 +154,7 @@ module RTSP
     end
 
     # TODO: If Response !=200, that should be an exception.  Handle that exception then reset CSeq and session.
-    # Sends the PLAY request and sets @streaming_state to :playing.
+    # Sends the PLAY request and sets @session_state to :playing.
     #
     # @param [String] track
     # @param [Hash] additional_headers
@@ -176,7 +175,7 @@ module RTSP
     end
 
     # TODO: Should the socket be closed?
-    # Sends the PAUSE request and sets @streaming_state to :paused.
+    # Sends the PAUSE request and sets @session_state to :paused.
     #
     # @param [String] url A track or presentation URL to pause.
     # @param [Hash] additional_headers
@@ -193,7 +192,7 @@ module RTSP
       }
       execute_request(args) do |response|
         if [:playing, :recording].include? @session_state
-          @session_state = :ready if response.code.to_s =~ /2../
+          @session_state = :ready
         end
       end
     end
@@ -270,7 +269,7 @@ module RTSP
       execute_request(args)
     end
 
-    # Sends the RECORD request and sets @streaming_state to :recording.
+    # Sends the RECORD request and sets @session_state to :recording.
     #
     # @param [String] track
     # @param [Hash] additional_headers
@@ -285,8 +284,8 @@ module RTSP
           :headers => headers
       }
 
-      execute_request(args) do |response|
-        @session_state = :recording if response.code.to_s =~ /2../
+      execute_request(args) do
+        @session_state = :recording
       end
     end
 

@@ -40,7 +40,19 @@ Feature: Client changes state
   Examples:
     | request_type | parameters | state_result |
     | pause        | url        | ready        |
-    #| teardown     | url        | init         |
-    #| play         | url        | playing      |
-    #| setup        | url        | ready        |
+    | teardown     | url        | init         |
+    | play         | url        | playing      |
+    | setup        | url        | playing      |
+
+  Scenario Outline: State changes from Recording
+    Given I have set up a stream
+    And I have started recording a stream
+    When I issue an "<request_type>" request with "<parameters>"
+    Then the state changes to "<state_result>"
+  Examples:
+    | request_type | parameters | state_result |
+    | pause        | url        | ready        |
+    | teardown     | url        | init         |
+    | record       | url        | recording    |
+    | setup        | url        | recording    |
 

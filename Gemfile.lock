@@ -2,6 +2,8 @@ PATH
   remote: .
   specs:
     rtsp (0.1.0)
+      rtsp
+      sdp (~> 0.2.2)
       sdp (~> 0.2.0)
 
 GEM

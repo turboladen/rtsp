@@ -9,9 +9,13 @@ Given /^I have set up a stream$/ do
   @client.session_state.should == :ready
 end
 
-Given /^I have started playing a stream$/ do
-  @client.play @url
-  @client.session_state.should == :playing
+Given /^I have started (playing|recording) a stream$/ do |method|
+  if method == "playing"
+    @client.play @url
+  elsif method == "recording"
+    @client.record @url
+  end
+  @client.session_state.should == method.to_sym
 end
 
 When /^I issue an "([^"]*)" request with "([^"]*)"$/ do |request_type, params|
