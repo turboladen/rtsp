@@ -115,7 +115,10 @@ module RTSP
       RTSP::Client.log "Sending #{@method.to_s.upcase} to #{@resource_uri}"
       response = send_message
       RTSP::Client.log "Received response:"
-      response.raw_response.each_line { |line| RTSP::Client.log line.strip }
+
+      if response.raw_response
+        response.raw_response.each_line { |line| RTSP::Client.log line.strip }
+      end
 
       response
     end
