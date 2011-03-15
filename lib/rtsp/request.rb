@@ -160,17 +160,6 @@ module RTSP
     def disconnect
       timeout(@timeout) { @socket.close } rescue @socket = nil
     end
-
-    # @param [Number] size
-    # @param [Hash] options
-    # @option options [Number] time Duration to read on the non-blocking socket.
-    def read_nonblock(size, options={})
-      options[:time] ||= 1
-      buffer = nil
-      timeout(options[:time]) { buffer = @socket.read_nonblock(size) }
-
-      buffer
-    end
 =end
 
     # Turns headers from Hash(es) into a String, where each element
