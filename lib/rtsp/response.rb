@@ -1,5 +1,3 @@
-require 'socket'
-
 require 'rubygems'
 require 'sdp'
 
@@ -93,17 +91,6 @@ module RTSP
       if @content_type == "application/sdp"
         SDP.parse body
       end
-    end
-
-    # @param [Number] size
-    # @param [Hash] options
-    # @option options [Number] time Duration to read on the non-blocking socket.
-    def read_nonblock(size, options={})
-      options[:time] ||= 1
-      buffer = nil
-      timeout(options[:time]) { buffer = @socket.read_nonblock(size) }
-
-      buffer
     end
 
     private
