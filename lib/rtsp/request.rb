@@ -116,7 +116,7 @@ module RTSP
       response = send_message
       RTSP::Client.log "Received response:"
 
-      if response.raw_response
+      if response
         response.raw_response.each_line { |line| RTSP::Client.log line.strip }
       end
 
