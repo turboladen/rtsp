@@ -71,6 +71,10 @@ describe RTSP::Client do
     end
   end
 
+  it "handles empty non-existant CSeq header" do
+    pending
+  end
+
   context "#server_url" do
     before :each do
       mock_socket = double 'MockSocket'

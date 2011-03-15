@@ -32,3 +32,15 @@ Feature: Client changes state
     | teardown     | url        | init         |
     | setup        | url        | ready        |
 
+  Scenario Outline: State changes from Playing
+    Given I have set up a stream
+    And I have started playing a stream
+    When I issue an "<request_type>" request with "<parameters>"
+    Then the state changes to "<state_result>"
+  Examples:
+    | request_type | parameters | state_result |
+    | pause        | url        | ready        |
+    #| teardown     | url        | init         |
+    #| play         | url        | playing      |
+    #| setup        | url        | ready        |
+

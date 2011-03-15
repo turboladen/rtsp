@@ -3,20 +3,23 @@ Given /^I haven't made any RTSP requests$/ do
 end
 
 Given /^I have set up a stream$/ do
-  mock_socket = double "MockSocket", :send => "", :recvfrom => [SETUP_RESPONSE]
+  @url = "rtsp://fake-rtsp-server/some_path"
+  @client = RTSP::Client.new @url, :socket => @fake_server
+  @client.setup @url
+  @client.session_state.should == :ready
+end
 
-  url = "rtsp://fake-rtsp-server/some_path"
-  @client = RTSP::Client.new url, :socket => mock_socket
-
-  @client.setup url
+Given /^I have started playing a stream$/ do
+  @client.play @url
+  @client.session_state.should == :playing
 end
 
 When /^I issue an "([^"]*)" request with "([^"]*)"$/ do |request_type, params|
-  raw_response = Kernel.const_get "#{request_type.upcase}_RESPONSE"
-  mock_socket = double "MockSocket", :send => "", :recvfrom => [raw_response]
+  unless @client
+    url = "rtsp://fake-rtsp-server/some_path"
+    @client = RTSP::Client.new url, :socket => @fake_server
+  end
 
-  url = "rtsp://fake-rtsp-server/some_path"
-  @client = RTSP::Client.new url, :socket => mock_socket
   @initial_state = @client.session_state
   params = params.empty? ? {} : params
 

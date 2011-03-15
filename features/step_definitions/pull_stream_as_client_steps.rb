@@ -42,7 +42,8 @@ Then /^I should receive data on the same port$/ do
 end
 
 Given /^I know what the describe response looks like$/ do
-  @response_text = DESCRIBE_RESPONSE
+  #@response_text = DESCRIBE_RESPONSE
+  @response_text = @fake_server.describe
 end
 
 When /^I ask the server to describe$/ do

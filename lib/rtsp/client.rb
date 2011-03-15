@@ -332,6 +332,8 @@ module RTSP
     # @raise [RTSP::Exception] Raises if @session isn't set.
     # @return Returns whatever the block returns.
     def ensure_session_and
+      return_value = ""
+
       if @session > 0
         return_value = yield if block_given?
       else
