@@ -3,6 +3,7 @@ require 'timeout'
 require 'uri'
 
 require File.expand_path(File.dirname(__FILE__) + '/response')
+require File.expand_path(File.dirname(__FILE__) + '/exception')
 require File.expand_path(File.dirname(__FILE__) + '/helpers')
 require File.expand_path(File.dirname(__FILE__) + '/version')
 
@@ -140,7 +141,14 @@ module RTSP
     #
     # @return [RTSP::Response]
     def send_message
-      recv if timeout(@timeout) { @socket.send(message, 0) }
+      begin
+        Timeout::timeout(@timeout) do
+          @socket.send(message, 0)
+          recv
+        end
+      rescue Timeout::Error
+        raise RTSP::Exception, "Request took more than #{@timeout} seconds to send."
+      end
     end
 
     # @return [RTSP::Response]
