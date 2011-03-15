@@ -80,21 +80,19 @@ module RTSP
     # @return [RTSP::Response]
     def describe additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-      args = { :method => :describe,
-          :resource_url => @server_uri,
-          :headers => headers
+      args = { :method =>   :describe,
+          :resource_url =>  @server_uri,
+          :headers =>       headers
       }
 
       execute_request(args) do |response|
-        if response.code.to_s =~ /2../
-          @session_description = response.body
-          @session_start_time = response.body.start_time
-          @session_stop_time = response.body.stop_time
-          @content_base = build_resource_uri_from response.content_base
+        @session_description =  response.body
+        @session_start_time =   response.body.start_time
+        @session_stop_time =    response.body.stop_time
+        @content_base = build_resource_uri_from response.content_base
 
-          @media_control_tracks = media_control_tracks
-          @aggregate_control_track = aggregate_control_track
-        end
+        @media_control_tracks =     media_control_tracks
+        @aggregate_control_track =  aggregate_control_track
       end
     end
 
@@ -107,9 +105,9 @@ module RTSP
     def announce(request_url, description, additional_headers={})
       headers = ( { :cseq => @cseq }).merge(additional_headers)
       args = { :method => :announce,
-        :resource_url => request_url,
-        :headers => headers,
-        :body => description.to_s
+        :resource_url =>  request_url,
+        :headers =>       headers,
+        :body =>          description.to_s
       }
       execute_request(args)
     end
@@ -124,14 +122,14 @@ module RTSP
     # @return [RTSP::Response] The response formatted as a Hash.
     def setup(track, additional_headers={})
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-      args = { :method => :setup,
-            :resource_url => track,
-            :headers => headers
+      args = { :method =>     :setup,
+            :resource_url =>  track,
+            :headers =>       headers
       }
 
       execute_request(args) do |response|
         if @session_state == :init
-          @session_state = :ready if response.code.to_s =~ /2../
+          @session_state = :ready
         end
 
         @session = response.session
@@ -173,7 +171,7 @@ module RTSP
       }
 
       execute_request(args) do |response|
-        @session_state = :playing if response.code.to_s =~ /2../
+        @session_state = :playing
       end
     end
 
@@ -310,23 +308,17 @@ module RTSP
 
         compare_sequence_number response.cseq
 
-        yield response if block_given?
-
-=begin
-        if defined? response.session
-          compare_session_number response.session
-        end
-=end
-
-        @cseq += 1
-
-        if response.code.to_s =~ /(4|5)../
+        if response.code.to_s =~ /2../
+          yield response if block_given?
+        elsif response.code.to_s =~ /(4|5)../
           if (defined? response.connection) && response.connection == 'Closed'
             reset_state
           end
 
           raise RTSP::Exception, "#{response.code}: #{response.message}"
         end
+
+        @cseq += 1
       rescue RTSP::Exception => ex
         RTSP::Client.log "Got exception: #{ex.message}"
         ex.backtrace.each { |b| RTSP::Client.log b }
