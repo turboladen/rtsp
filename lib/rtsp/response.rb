@@ -17,7 +17,7 @@ module RTSP
     # @param [String] raw_response The raw response string returned from the
     # server/client.
     def initialize(raw_response)
-      if raw_response.nil?
+      if raw_response.nil? || raw_response.empty?
         raise RTSP::Exception, "#{self.class} received nil string--this shouldn't happen."
       end
 

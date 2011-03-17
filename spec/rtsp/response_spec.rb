@@ -6,7 +6,12 @@ describe RTSP::Response do
     it "expects a non-nil string on" do
       lambda { RTSP::Response.new(nil) }.should raise_exception RTSP::Exception
     end
+
+    it "expects a non-empty string on" do
+      lambda { RTSP::Response.new("") }.should raise_exception RTSP::Exception
+    end
   end
+
   context "options" do
     before do
       @response = RTSP::Response.new OPTIONS_RESPONSE
