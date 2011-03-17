@@ -71,7 +71,7 @@ describe RTSP::Client do
     end
   end
 
-  it "handles empty non-existant CSeq header" do
+  it "handles empty non-existent CSeq header" do
     pending
   end
 
