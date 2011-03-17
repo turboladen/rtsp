@@ -1,6 +1,8 @@
 require 'rubygems'
 require 'sdp'
 
+require File.expand_path(File.dirname(__FILE__) + '/exception')
+
 module RTSP
 
   # Parses raw response data from the server/client and turns it into
@@ -15,6 +17,10 @@ module RTSP
     # @param [String] raw_response The raw response string returned from the
     # server/client.
     def initialize(raw_response)
+      if raw_response.nil?
+        raise RTSP::Exception, "#{self.class} received nil string--this shouldn't happen."
+      end
+
       @raw_response = raw_response
 
       head_and_body = split_head_and_body_from raw_response

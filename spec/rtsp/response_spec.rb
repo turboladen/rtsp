@@ -2,6 +2,11 @@ require File.dirname(__FILE__) + '/../spec_helper'
 require 'rtsp/response'
 
 describe RTSP::Response do
+  describe "#initialize" do
+    it "expects a non-nil string on" do
+      lambda { RTSP::Response.new(nil) }.should raise_exception RTSP::Exception
+    end
+  end
   context "options" do
     before do
       @response = RTSP::Response.new OPTIONS_RESPONSE
