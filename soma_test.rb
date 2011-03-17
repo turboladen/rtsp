@@ -3,17 +3,20 @@ require './lib/rtsp/client'
 #RTSP::Client.log = false
 
 url = "rtsp://64.202.98.91/sa.sdp"
-r = RTSP::Client.new url
+client = RTSP::Client.new url
 
-r.options
-r.describe
+client.options
+client.describe
 
-media_track = r.media_control_tracks.first
+media_track = client.media_control_tracks.first
 puts "media track: #{media_track}"
 
-aggregate_track = r.aggregate_control_track
+aggregate_track = client.aggregate_control_track
 puts "aggregate track: #{aggregate_track}"
 
-r.setup media_track
-r.play aggregate_track
-r.teardown aggregate_track
+client.setup media_track
+#client[media_track].setup
+#client.media_control_tracks.play
+client.play aggregate_track
+#client[aggregate_track].play
+client.teardown aggregate_track
