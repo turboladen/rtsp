@@ -1,7 +1,7 @@
 Given /^an RTSP server at "([^"]*)" and port (\d+)$/ do |ip_address, port|
-  @rtp_port = port
+  @rtp_port = port.to_i
   @client = RTSP::Client.new ip_address
-  @client.setup :port => @rtp_port.to_i
+  @client.setup :port => @rtp_port
 end
 
 Given /^an RTSP server at "([^"]*)" and port (\d+) and URL "([^"]*)"$/ do |ip_address, port, path|
