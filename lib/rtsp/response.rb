@@ -12,7 +12,6 @@ module RTSP
     attr_reader :code
     attr_reader :message
     attr_reader :body
-    attr_reader :raw_response
 
     # @param [String] raw_response The raw response string returned from the
     # server/client.
