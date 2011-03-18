@@ -24,6 +24,7 @@ module RTSP
     RTSP_DEFAULT_LANGUAGE = "en-US"
     MAX_BYTES_TO_RECEIVE = 3000
     USER_AGENT = "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
+    DEFAULT_TIMEOUT = 30
 
     # Creates an instance of an RTSP::Request object and sends the message
     # over the socket.
@@ -56,7 +57,7 @@ module RTSP
     def initialize args
       @method =  args[:method] or raise ArgumentError, "must pass :method"
       @body =    args[:body]    || nil
-      @timeout = args[:timeout] || 2
+      @timeout = args[:timeout] || DEFAULT_TIMEOUT
 
       if args[:resource_url].is_a?(String)
         @resource_uri = build_resource_uri_from args[:resource_url]
