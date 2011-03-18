@@ -1,1 +1,4 @@
-class RTSP::Exception < StandardError; end
+module RTSP
+  class Exception < StandardError
+  end
+end
