@@ -5,6 +5,8 @@ source :rubygems
 gemspec
 gem 'sdp', '~> 0.2.2'
 
+gem 'simplecov', '>= 0.4.0', :require => false, :group => :test
+
 group :development do
   gem 'cucumber'
   gem 'rake',       '~> 0.8.7'

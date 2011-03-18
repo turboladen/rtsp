@@ -114,6 +114,9 @@ GEM
     sdp (0.2.2)
       parslet (~> 1.1.0)
     sexp_processor (3.0.5)
+    simplecov (0.4.1)
+      simplecov-html (~> 0.4.3)
+    simplecov-html (0.4.3)
     syntax (1.0.0)
     term-ansicolor (1.0.5)
     watchr (0.7)
@@ -136,4 +139,5 @@ DEPENDENCIES
   rspec (~> 2.4.0)
   rtsp!
   sdp (~> 0.2.2)
+  simplecov (>= 0.4.0)
   yard (~> 0.6.0)
