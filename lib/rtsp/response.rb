@@ -22,7 +22,7 @@ module RTSP
 
       @raw_response = raw_response
 
-      head_and_body = split_head_and_body_from raw_response
+      head_and_body = split_head_and_body_from @raw_response
       head = head_and_body.first
       body = head_and_body.last == head ? "" : head_and_body.last
       parse_head(head)
@@ -34,7 +34,7 @@ module RTSP
     end
 
     def inspect
-      me = "#<#{self.class.name} "
+      me = "#<#{self.class.name}:#{self.__id__} "
       self.instance_variables.each { |v| me << "#{v}=#{instance_variable_get(v).inspect}, " }
       me.sub!(/, $/, "")
       me << ">"

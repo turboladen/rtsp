@@ -12,6 +12,36 @@ describe RTSP::Response do
     end
   end
 
+  describe "#parse_head" do
+    pending
+  end
+
+  describe "#parse_body" do
+    pending
+  end
+
+  describe "#to_s" do
+    pending
+  end
+
+  describe "#inspect" do
+    before do
+      @response = RTSP::Response.new OPTIONS_RESPONSE
+    end
+
+    it "contains the class name and object ID first" do
+      @response.inspect.should match /^#<RTSP::Response:\d+/
+    end
+
+    it "begins with <# and ends with >" do
+      @response.inspect.should match /^#<.*>$/
+    end
+  end
+
+  describe "create_reader" do
+    pending
+  end
+
   context "options" do
     before do
       @response = RTSP::Response.new OPTIONS_RESPONSE
@@ -167,7 +197,7 @@ describe RTSP::Response do
     end
   end
 
-  context "#split_head_and_body_from" do
+  describe "#split_head_and_body_from" do
     it "splits responses with headers and no body" do
       response = RTSP::Response.new OPTIONS_RESPONSE
       head_and_body = response.split_head_and_body_from OPTIONS_RESPONSE
