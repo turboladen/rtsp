@@ -1,4 +1,4 @@
 infinity_test do
-  use :rubies => %w(jruby ree 1.8.7 1.9.2), :test_framework => :rspec
+  use :rubies => %w(jruby, 1.9.2), :test_framework => :rspec
   notifications :growl
 end
