@@ -17,6 +17,9 @@ module RTSP
     attr_reader :server_uri
     attr_reader :cseq
     attr_reader :session
+
+    # Extracted from the SDP info; the IP address from where the stream will come.
+    attr_reader :session_unicast_address
     attr_accessor :tracks
 
     # TODO: Break Stream out in to its own class.
@@ -58,11 +61,8 @@ module RTSP
     # @return [RTSP::Response]
     def options additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-      args = {
-          :method => :options,
-          :resource_url => @server_uri,
-          :headers => headers
-      }
+      args = { :method => :options, :resource_url => @server_uri,
+          :headers => headers }
 
       execute_request(args) do |response|
         @supported_methods = extract_supported_methods_from response.public
@@ -78,15 +78,14 @@ module RTSP
     # @return [RTSP::Response]
     def describe additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-      args = { :method =>   :describe,
-          :resource_url =>  @server_uri,
-          :headers =>       headers
-      }
+      args = { :method => :describe, :resource_url =>  @server_uri,
+          :headers => headers }
 
       execute_request(args) do |response|
         @session_description =  response.body
         @session_start_time =   response.body.start_time
         @session_stop_time =    response.body.stop_time
+        @session_unicast_address = response.body.unicast_address
         @content_base = build_resource_uri_from response.content_base
 
         @media_control_tracks =     media_control_tracks
@@ -102,11 +101,9 @@ module RTSP
     # @return [RTSP::Response]
     def announce(request_url, description, additional_headers={})
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-      args = { :method => :announce,
-        :resource_url =>  request_url,
-        :headers =>       headers,
-        :body =>          description.to_s
-      }
+      args = { :method => :announce, :resource_url => request_url,
+        :headers => headers, :body => description.to_s }
+
       execute_request(args)
     end
 
@@ -120,10 +117,7 @@ module RTSP
     # @return [RTSP::Response] The response formatted as a Hash.
     def setup(track, additional_headers={})
       headers = ( { :cseq => @cseq }).merge(additional_headers)
-      args = { :method =>     :setup,
-            :resource_url =>  track,
-            :headers =>       headers
-      }
+      args = { :method => :setup, :resource_url => track, :headers => headers }
 
       execute_request(args) do |response|
         if @session_state == :init
@@ -163,14 +157,9 @@ module RTSP
         ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
       end
 
-      args = { :method => :play,
-        :resource_url => track,
-        :headers => headers
-      }
+      args = { :method => :play, :resource_url => track, :headers => headers }
 
-      execute_request(args) do |response|
-        @session_state = :playing
-      end
+      execute_request(args) { @session_state = :playing }
     end
 
     # TODO: Should the socket be closed?
@@ -184,12 +173,9 @@ module RTSP
         ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
       end
 
-      args = {
-            :method => :pause,
-            :resource_url => url,
-            :headers => headers
-      }
-      execute_request(args) do |response|
+      args = { :method => :pause, :resource_url => url, :headers => headers }
+
+      execute_request(args) do
         if [:playing, :recording].include? @session_state
           @session_state = :ready
         end
@@ -205,11 +191,7 @@ module RTSP
     def teardown(track, additional_headers={})
       headers = ({ :cseq => @cseq, :session => @session }).merge(additional_headers)
 
-      args = {
-            :method => :teardown,
-            :resource_url => track,
-            :headers => headers
-      }
+      args = { :method => :teardown, :resource_url => track, :headers => headers }
 
       execute_request(args) do |response|
         if response.code.to_s =~ /2../
@@ -235,12 +217,8 @@ module RTSP
         }).merge(additional_headers)
       end
 
-      args = {
-            :method => :get_parameter,
-            :resource_url => track,
-            :headers => headers,
-            :body => body
-      }
+      args = { :method => :get_parameter, :resource_url => track,
+          :headers => headers, :body => body }
 
       execute_request(args)
     end
@@ -258,12 +236,8 @@ module RTSP
         }).merge(additional_headers)
       end
 
-      args = {
-          :method => :set_parameter,
-          :resource_url => track,
-          :headers => headers,
-          :body => parameters
-      }
+      args = { :method => :set_parameter, :resource_url => track,
+          :headers => headers, :body => parameters }
 
       execute_request(args)
     end
@@ -278,14 +252,9 @@ module RTSP
         ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
       end
 
-      args = { :method => :record,
-          :resource_url => track,
-          :headers => headers
-      }
+      args = { :method => :record, :resource_url => track, :headers => headers }
 
-      execute_request(args) do
-        @session_state = :recording
-      end
+      execute_request(args) { @session_state = :recording }
     end
 
     # Executes the Request with the arguments passed in, yields the response to
