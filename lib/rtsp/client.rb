@@ -2,6 +2,7 @@ require 'socket'
 require 'tempfile'
 
 require File.expand_path(File.dirname(__FILE__) + '/request')
+require File.expand_path(File.dirname(__FILE__) + '/message')
 require File.expand_path(File.dirname(__FILE__) + '/helpers')
 require File.expand_path(File.dirname(__FILE__) + '/exception')
 require File.expand_path(File.dirname(__FILE__) + '/global')
@@ -56,6 +57,7 @@ module RTSP
     #
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
+=begin
     def options additional_headers={}
       headers = ( { :cseq => @cseq }).merge(additional_headers)
       args = { :method => :options, :resource_url => @server_uri,
@@ -65,7 +67,15 @@ module RTSP
         @supported_methods = extract_supported_methods_from response.public
       end
     end
+=end
 
+    def options(additional_headers={})
+      message = RTSP::Message.new(:options, @server_uri) do
+        header :cseq, @cseq
+        additional_headers.each_pair { |h| header h.key, h.value }
+      end
+      execute_request(message.to_s)
+    end
     # TODO: get tracks, IP's, ports, multicast/unicast
     # Sends the DESCRIBE request, then extracts the SDP description into
     # @session_description, extracts the session @start_time and @stop_time,
@@ -238,6 +248,16 @@ module RTSP
       execute_request(args)
     end
 
+    def set_parameter_two(track, parameters, additional_headers={})
+      message = RTSP::Message.new(:set_parameter, track) do
+        header :cseq, @cseq
+        header :content_length, parameters.size
+        additional_headers.each_pair { |h| header h.key, h.value }
+        body parameters
+      end
+      execute_request(message)
+    end
+
     # Sends the RECORD request and sets @session_state to :recording.
     #
     # @param [String] track
@@ -253,6 +273,16 @@ module RTSP
       execute_request(args) { @session_state = :recording }
     end
 
+    def record_two(track, additional_headers={})
+      message = RTSP::Message.new(:record, track) do
+        header :cseq, @cseq
+        header :session, @session
+        additional_headers.each_pair { |h| header h.key, h.value }
+      end
+      execute_request(message) { @session_state = :recording }
+    end
+
+    # TODO: #ensure_session_and should occur just after receiving the response, not before sending a request.
     # Executes the Request with the arguments passed in, yields the response to
     # the calling block, checks the cseq response and the session response,
     # then increments @cseq by 1.  Handles any exceptions raised during the
@@ -267,7 +297,8 @@ module RTSP
           @session_state = :init
         end
 
-        response = RTSP::Request.execute(@args.merge(new_args))
+        #response = RTSP::Request.execute(@args.merge(new_args))
+        response = RTSP::Request.execute(new_args)
 
         compare_sequence_number response.cseq
 

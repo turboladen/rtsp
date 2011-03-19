@@ -13,7 +13,7 @@ GEM
     abstract (1.0.0)
     activesupport (3.0.5)
     arrayfields (4.7.4)
-    blankslate (2.1.2.3)
+    blankslate (2.1.2.4)
     builder (3.0.0)
     chronic (0.3.0)
     churn (0.0.13)
@@ -80,7 +80,7 @@ GEM
       ore-core (~> 0.1.0)
     parslet (1.1.1)
       blankslate (~> 2.0)
-    rails_best_practices (0.7.1)
+    rails_best_practices (0.7.2)
       activesupport
       colored (~> 1.2)
       erubis (~> 2.6.6)
@@ -120,7 +120,7 @@ GEM
     syntax (1.0.0)
     term-ansicolor (1.0.5)
     watchr (0.7)
-    yard (0.6.4)
+    yard (0.6.5)
 
 PLATFORMS
   java

@@ -60,7 +60,7 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
     "soma_test.rb",
     "spec/.rspec",
     "spec/rtsp/client_spec.rb",
-    "spec/rtsp/request_message_spec.rb",
+    "spec/rtsp/message_spec.rb",
     "spec/rtsp/request_spec.rb",
     "spec/rtsp/response_spec.rb",
     "spec/rtsp_spec.rb",
@@ -73,7 +73,7 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
   s.summary = %q{Library to allow RTSP streaming from RTSP-enabled devices.}
   s.test_files = [
     "spec/rtsp/client_spec.rb",
-    "spec/rtsp/request_message_spec.rb",
+    "spec/rtsp/message_spec.rb",
     "spec/rtsp/request_spec.rb",
     "spec/rtsp/response_spec.rb",
     "spec/rtsp_spec.rb"
