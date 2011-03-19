@@ -17,9 +17,6 @@ module RTSP
     attr_reader :server_uri
     attr_reader :cseq
     attr_reader :session
-
-    # Extracted from the SDP info; the IP address from where the stream will come.
-    attr_reader :session_unicast_address
     attr_accessor :tracks
 
     # TODO: Break Stream out in to its own class.
@@ -85,7 +82,6 @@ module RTSP
         @session_description =  response.body
         @session_start_time =   response.body.start_time
         @session_stop_time =    response.body.stop_time
-        @session_unicast_address = response.body.unicast_address
         @content_base = build_resource_uri_from response.content_base
 
         @media_control_tracks =     media_control_tracks
