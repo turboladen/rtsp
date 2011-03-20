@@ -34,6 +34,13 @@ describe RTSP::Helpers do
         uri.host.should == "64.202.98.91"
         uri.port.should == 554
         uri.path.should == ""
+        uri.to_s.should == "rtsp://64.202.98.91:554"
+      end
+
+      it "handles passing in a URI" do
+        uri = @my_object.build_resource_uri_from "rtsp://64.202.98.91"
+        lambda { @my_object.build_resource_uri_from uri
+          }.should raise_error
       end
     end
   end
