@@ -1,3 +1,4 @@
+require 'uri'
 require File.expand_path(File.dirname(__FILE__) + '/global')
 
 module RTSP

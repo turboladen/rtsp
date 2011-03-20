@@ -39,20 +39,20 @@ class FakeRTSPServer
     message << "Content-Base: rtsp://64.202.98.91:554/sa.sdp/\r\n"
     message << "\r\n"
     message << "v=\r\n"
-    message << "o=- 1905836198 1274535354 IN IP4 127.0.0.\r\n"
-    message << "s=Secret Agent from SomaF\r\n"
-    message << "i=Downtempo Spy Loung\r\n"
-    message << "c=IN IP4 0.0.0.\r\n"
-    message << "t=0 \r\n"
-    message << "a=x-qt-text-cmt:Orban Opticodec-P\r\n"
-    message << "a=x-qt-text-nam:Secret Agent from SomaF\r\n"
-    message << "a=x-qt-text-inf:Downtempo Spy Loung\r\n"
-    message << "a=control:\r\n"
-    message << "m=audio 0 RTP/AVP 9\r\n"
-    message << "b=AS:4\r\n"
-    message << "a=rtpmap:96 MP4A-LATM/44100/\r\n"
-    message << "a=fmtp:96 cpresent=0;config=40002720000\r\n"
-    message << "a=control:trackID=\r\n"
+    message << "o=- 1905836198 1274535354 IN IP4 127.0.0.1\r\n"
+    message << "s=Secret Agent from SomaFM\r\n"
+    message << "i=Downtempo Spy Lounge\r\n"
+    message << "c=IN IP4 0.0.0.0\r\n"
+    message << "t=0 0\r\n"
+    message << "a=x-qt-text-cmt:Orban Opticodec-PC\r\n"
+    message << "a=x-qt-text-nam:Secret Agent from SomaFM\r\n"
+    message << "a=x-qt-text-inf:Downtempo Spy Lounge\r\n"
+    message << "a=control:*\r\n"
+    message << "m=audio 0 RTP/AVP 96\r\n"
+    message << "b=AS:40\r\n"
+    message << "a=rtpmap:96 MP4A-LATM/44100/2\r\n"
+    message << "a=fmtp:96 cpresent=0;config=400027200000\r\n"
+    message << "a=control:trackID=1\r\n"
     message << "\r\n"
   end
 
@@ -82,7 +82,7 @@ RTP-Info: url=rtsp://10.221.222.235/stream1/track1;seq=17320;rtptime=400880602\r
   end
 
   def pause
-    %Q{ RTSP/1.0 200 OK\r
+    %Q{RTSP/1.0 200 OK\r
 CSeq: #{@cseq}\r
 Date: #{Time.now.httpdate}\r
 \r\n}
@@ -95,6 +95,24 @@ Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )\r
 Session: #{@session}\r
 Connection: Close\r
 \r\n}
+  end
+
+  def get_parameter
+    %Q{RTSP/1.0 200 OK\r
+CSeq: #{@cseq}\r
+Content-Length: 8\r
+\r
+response\r
+\r\n}
+  end
+
+  def set_parameter
+    %Q{RTSP/1.0 200 OK\r
+CSeq: #{@cseq}\r
+Content-Length: 8\r
+    \r
+response\r
+    \r\n}
   end
 
   def record

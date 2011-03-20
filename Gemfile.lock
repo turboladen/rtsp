@@ -2,9 +2,7 @@ PATH
   remote: .
   specs:
     rtsp (0.1.0)
-      rtsp
       sdp (~> 0.2.2)
-      sdp (~> 0.2.0)
 
 GEM
   remote: http://rubygems.org/
@@ -74,6 +72,7 @@ GEM
       reek (>= 1.2.6)
       roodi (>= 2.1.0)
       syntax
+    mime-types (1.16)
     notifiers (1.1.0)
     ore-core (0.1.4)
     ore-tasks (0.3.0)
@@ -97,14 +96,14 @@ GEM
       sexp_processor (~> 3.0)
     roodi (2.1.0)
       ruby_parser
-    rspec (2.4.0)
-      rspec-core (~> 2.4.0)
-      rspec-expectations (~> 2.4.0)
-      rspec-mocks (~> 2.4.0)
-    rspec-core (2.4.0)
-    rspec-expectations (2.4.0)
+    rspec (2.5.0)
+      rspec-core (~> 2.5.0)
+      rspec-expectations (~> 2.5.0)
+      rspec-mocks (~> 2.5.0)
+    rspec-core (2.5.1)
+    rspec-expectations (2.5.0)
       diff-lcs (~> 1.1.2)
-    rspec-mocks (2.4.0)
+    rspec-mocks (2.5.0)
     ruby-progressbar (0.0.9)
     ruby2ruby (1.2.5)
       ruby_parser (~> 2.0)
@@ -133,10 +132,11 @@ DEPENDENCIES
   infinity_test
   jeweler (~> 1.5.0)
   metric_fu
+  mime-types (~> 1.16)
   ore-core (~> 0.1.0)
   ore-tasks (~> 0.3.0)
   rake (~> 0.8.7)
-  rspec (~> 2.4.0)
+  rspec (~> 2.5.0)
   rtsp!
   sdp (~> 0.2.2)
   simplecov (>= 0.4.0)

@@ -1,12 +1,13 @@
 require 'socket'
 require 'tempfile'
+require 'timeout'
 
-require File.expand_path(File.dirname(__FILE__) + '/request')
-require File.expand_path(File.dirname(__FILE__) + '/message')
-require File.expand_path(File.dirname(__FILE__) + '/helpers')
+#require File.expand_path(File.dirname(__FILE__) + '/capturer')
 require File.expand_path(File.dirname(__FILE__) + '/exception')
 require File.expand_path(File.dirname(__FILE__) + '/global')
-#require File.expand_path(File.dirname(__FILE__) + '/capturer')
+require File.expand_path(File.dirname(__FILE__) + '/helpers')
+require File.expand_path(File.dirname(__FILE__) + '/message')
+require File.expand_path(File.dirname(__FILE__) + '/response')
 
 module RTSP
 
@@ -15,9 +16,13 @@ module RTSP
     include RTSP::Helpers
     extend RTSP::Global
 
+    DEFAULT_TIMEOUT = 30
+    MAX_BYTES_TO_RECEIVE = 3000
+
     attr_reader :server_uri
     attr_reader :cseq
     attr_reader :session
+    attr_reader :supported_methods
     attr_accessor :tracks
 
     # TODO: Break Stream out in to its own class.
@@ -38,7 +43,8 @@ module RTSP
       @cseq = 1
       @session_state = :init
       @session = 0
-      @args[:socket] ||= TCPSocket.new(@server_uri.host, @server_uri.port)
+      @timeout = args[:timeout] || DEFAULT_TIMEOUT
+      @socket = @args[:socket] || TCPSocket.new(@server_uri.host, @server_uri.port)
       @args[:logger] = RTSP::Client.log? ? RTSP::Client.logger : nil
     end
 
@@ -51,31 +57,49 @@ module RTSP
       @server_uri = build_resource_uri_from new_url
     end
 
+    # Sends the message over the socket.
+    #
+    # @param [RTSP::Message] message
+    # @return [RTSP::Response]
+    def send_message message
+      RTSP::Client.log "Sending #{message.method.upcase} to #{message.request_uri}"
+      message.to_s.each_line { |line| RTSP::Client.log line.strip }
+
+      begin
+        response = Timeout::timeout(@timeout) do
+          @socket.send(message.to_s, 0)
+          socket_data = @socket.recvfrom MAX_BYTES_TO_RECEIVE
+          RTSP::Response.new socket_data.first
+        end
+      rescue Timeout::Error
+        raise RTSP::Exception, "Request took more than #{@timeout} seconds to send."
+      end
+
+      RTSP::Client.log "Received response:"
+
+      if response
+        response.to_s.each_line { |line| RTSP::Client.log line.strip }
+      end
+
+      response
+    end
+
     # Sends an OPTIONS message to the server specified by @server_uri.  Sets
     # @supported_methods based on the list of supported methods returned in the
     # Public headers.
     #
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
-=begin
-    def options additional_headers={}
-      headers = ( { :cseq => @cseq }).merge(additional_headers)
-      args = { :method => :options, :resource_url => @server_uri,
-          :headers => headers }
+    def options(additional_headers={})
+      message = RTSP::Message.options(@server_uri.to_s).with_headers({
+        cseq: @cseq })
+      message.add_headers additional_headers
 
-      execute_request(args) do |response|
+      request(message) do |response|
         @supported_methods = extract_supported_methods_from response.public
       end
     end
-=end
 
-    def options(additional_headers={})
-      message = RTSP::Message.new(:options, @server_uri) do
-        header :cseq, @cseq
-        additional_headers.each_pair { |h| header h.key, h.value }
-      end
-      execute_request(message.to_s)
-    end
     # TODO: get tracks, IP's, ports, multicast/unicast
     # Sends the DESCRIBE request, then extracts the SDP description into
     # @session_description, extracts the session @start_time and @stop_time,
@@ -84,14 +108,14 @@ module RTSP
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def describe additional_headers={}
-      headers = ( { :cseq => @cseq }).merge(additional_headers)
-      args = { :method => :describe, :resource_url =>  @server_uri,
-          :headers => headers }
+      message = RTSP::Message.describe(@server_uri.to_s).with_headers({
+        cseq: @cseq })
+      additional_headers.each_pair { |h| message.header h.key, h.value }
 
-      execute_request(args) do |response|
+      request(message) do |response|
         @session_description =  response.body
-        @session_start_time =   response.body.start_time
-        @session_stop_time =    response.body.stop_time
+        #@session_start_time =   response.body.start_time
+        #@session_stop_time =    response.body.stop_time
         @content_base = build_resource_uri_from response.content_base
 
         @media_control_tracks =     media_control_tracks
@@ -106,11 +130,11 @@ module RTSP
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def announce(request_url, description, additional_headers={})
-      headers = ( { :cseq => @cseq }).merge(additional_headers)
-      args = { :method => :announce, :resource_url => request_url,
-        :headers => headers, :body => description.to_s }
+      message = RTSP::Message.announce(request_url).with_headers({ cseq: @cseq })
+      additional_headers.each_pair { |h| message.header h.key, h.value }
+      message.body = description.to_s
 
-      execute_request(args)
+      request(message.to_s)
     end
 
     # TODO: parse Transport header (http://tools.ietf.org/html/rfc2326#section-12.39)
@@ -122,66 +146,60 @@ module RTSP
     # @param [Hash] additional_headers
     # @return [RTSP::Response] The response formatted as a Hash.
     def setup(track, additional_headers={})
-      headers = ( { :cseq => @cseq }).merge(additional_headers)
-      args = { :method => :setup, :resource_url => track, :headers => headers }
+      message = RTSP::Message.setup(track).with_headers({ cseq: @cseq })
+      additional_headers.each_pair { |h| message.header h.key, h.value }
 
-      execute_request(args) do |response|
+      request(message) do |response|
         if @session_state == :init
           @session_state = :ready
         end
 
         @session = response.session
-        parse_transport_from response.transport
+        @transport = parse_transport_from response.transport
       end
     end
 
     def parse_transport_from field_string
       fields = field_string.split ";"
-      @transport = {}
+      transport = {}
       specifier = fields.shift
-      @transport[:protocol] = specifier.split("/")[0]
-      @transport[:profile] =  specifier.split("/")[1]
+      transport[:protocol] = specifier.split("/")[0]
+      transport[:profile] =  specifier.split("/")[1]
       #@transport[:lower_transport] = specifier.split("/")[2].downcase.to_sym || :udp
-      @transport[:network_type] = fields.shift.to_sym || :multicast
+      transport[:network_type] = fields.shift.to_sym || :multicast
 
       extras = fields.inject({}) do |result, field_and_value_string|
         field_and_value_array = field_and_value_string.split "="
         result[field_and_value_array.first.to_sym] = field_and_value_array.last
         result
       end
-      @transport.merge! extras
+      transport.merge! extras
     end
 
-    # TODO: If Response !=200, that should be an exception.  Handle that exception then reset CSeq and session.
     # Sends the PLAY request and sets @session_state to :playing.
     #
     # @param [String] track
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def play(track, additional_headers={})
-      headers = ensure_session_and do
-        ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
-      end
+      message = RTSP::Message.play(track).with_headers({
+          cseq: @cseq, session: @session })
+      additional_headers.each_pair { |h| message.header h.key, h.value }
 
-      args = { :method => :play, :resource_url => track, :headers => headers }
-
-      execute_request(args) { @session_state = :playing }
+      request(message) { @session_state = :playing }
     end
 
-    # TODO: Should the socket be closed?
-    # Sends the PAUSE request and sets @session_state to :paused.
+    # Sends the PAUSE request and sets @session_state to :ready.
     #
-    # @param [String] url A track or presentation URL to pause.
+    # @param [String] track A track or presentation URL to pause.
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
-    def pause(url, additional_headers={})
-      headers = ensure_session_and do
-        ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
-      end
+    def pause(track, additional_headers={})
+      message = RTSP::Message.pause(track).with_headers({
+          cseq: @cseq, session: @session })
+      additional_headers.each_pair { |h| message.header h.key, h.value }
 
-      args = { :method => :pause, :resource_url => url, :headers => headers }
-
-      execute_request(args) do
+      request(message) do
         if [:playing, :recording].include? @session_state
           @session_state = :ready
         end
@@ -195,18 +213,13 @@ module RTSP
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def teardown(track, additional_headers={})
-      headers = ({ :cseq => @cseq, :session => @session }).merge(additional_headers)
+      message = RTSP::Message.teardown(track).with_headers({
+          cseq: @cseq, session: @session })
+      additional_headers.each_pair { |h| message.header h.key, h.value }
 
-      args = { :method => :teardown, :resource_url => track, :headers => headers }
-
-      execute_request(args) do |response|
-        if response.code.to_s =~ /2../
-          @session_state = :init
-          @session = 0
-        else
-          message = "#{response.code}: #{response.message}\nAllowed methods: #{response.allow}"
-          raise RTSP::Exception, message
-        end
+      request(message) do
+        @session_state = :init
+        @session = 0
       end
     end
 
@@ -216,17 +229,13 @@ module RTSP
     # @param [String] body The string containing the parameters to send.
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
-    def get_parameter(track, body, additional_headers={})
-      headers = ensure_session_and do
-        ( { :cseq => @cseq,
-            :content_length => body.size
-        }).merge(additional_headers)
-      end
+    def get_parameter(track, body="", additional_headers={})
+      message = RTSP::Message.get_parameter(track).with_headers({
+          cseq: @cseq })
+      additional_headers.each_pair { |h| message.header h.key, h.value }
+      message.body = body
 
-      args = { :method => :get_parameter, :resource_url => track,
-          :headers => headers, :body => body }
-
-      execute_request(args)
+      request(message)
     end
 
     # Sends the SET_PARAMETERS request.
@@ -236,26 +245,12 @@ module RTSP
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def set_parameter(track, parameters, additional_headers={})
-      headers = ensure_session_and do
-        ( { :cseq => @cseq,
-            :content_length => parameters.size
-        }).merge(additional_headers)
-      end
+      message = RTSP::Message.set_parameter(track).with_headers({
+          cseq: @cseq })
+      additional_headers.each_pair { |h| message.header h.key, h.value }
+      message.body = parameters
 
-      args = { :method => :set_parameter, :resource_url => track,
-          :headers => headers, :body => parameters }
-
-      execute_request(args)
-    end
-
-    def set_parameter_two(track, parameters, additional_headers={})
-      message = RTSP::Message.new(:set_parameter, track) do
-        header :cseq, @cseq
-        header :content_length, parameters.size
-        additional_headers.each_pair { |h| header h.key, h.value }
-        body parameters
-      end
-      execute_request(message)
+      request(message)
     end
 
     # Sends the RECORD request and sets @session_state to :recording.
@@ -264,22 +259,11 @@ module RTSP
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def record(track, additional_headers={})
-      headers = ensure_session_and do
-        ( { :cseq => @cseq, :session => @session }).merge(additional_headers)
-      end
+      message = RTSP::Message.record(track).with_headers({
+          cseq: @cseq, session: @session })
+      additional_headers.each_pair { |h| message.header h.key, h.value }
 
-      args = { :method => :record, :resource_url => track, :headers => headers }
-
-      execute_request(args) { @session_state = :recording }
-    end
-
-    def record_two(track, additional_headers={})
-      message = RTSP::Message.new(:record, track) do
-        header :cseq, @cseq
-        header :session, @session
-        additional_headers.each_pair { |h| header h.key, h.value }
-      end
-      execute_request(message) { @session_state = :recording }
+      request(message) { @session_state = :recording }
     end
 
     # TODO: #ensure_session_and should occur just after receiving the response, not before sending a request.
@@ -291,14 +275,13 @@ module RTSP
     # @param [Hash] new_args
     # @yield [RTSP::Response]
     # @return [RTSP::Response]
-    def execute_request new_args
+    def request message
       begin
         if @args[:method] == :setup && @session_state == :inactive
           @session_state = :init
         end
 
-        #response = RTSP::Request.execute(@args.merge(new_args))
-        response = RTSP::Request.execute(new_args)
+        response = send_message message
 
         compare_sequence_number response.cseq
 
@@ -310,6 +293,8 @@ module RTSP
           end
 
           raise RTSP::Exception, "#{response.code}: #{response.message}"
+        else
+          raise RTSP::Exception, "Unknown Response code: #{response.code}"
         end
 
         @cseq += 1
@@ -320,6 +305,19 @@ module RTSP
 
       response
     end
+=begin
+    def connect
+      timeout(@timeout) { @socket = TCPSocket.new(@host, @port) } #rescue @socket = nil
+    end
+
+    def connected?
+      @socket == nil ? true : false
+    end
+
+    def disconnect
+      timeout(@timeout) { @socket.close } rescue @socket = nil
+    end
+=end
 
     # Ensures that @session is set before continuing on.
     #

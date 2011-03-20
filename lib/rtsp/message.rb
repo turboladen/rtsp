@@ -1,5 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/helpers')
 require File.expand_path(File.dirname(__FILE__) + '/exception')
+require File.expand_path(File.dirname(__FILE__) + '/version')
 
 module RTSP
   class Message
@@ -13,22 +14,25 @@ module RTSP
     RTP_DEFAULT_ROUTING = "unicast"
     USER_AGENT = "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
 
+    attr_reader :method
+    attr_reader :request_uri
     attr_reader :headers
     attr_reader :body
     attr_writer :rtsp_version
 
+    def self.method_missing(method, request_uri)
+      self.new(method, request_uri)
+      #super
+    end
+
     # @param [Symbol] :method_type The RTSP method to build and send.
     # @param [String] request_uri The URL to communicate to.
-    def initialize(method_type, request_uri, &block)
+    def initialize(method_type, request_uri)
       @method = method_type
       @request_uri = build_resource_uri_from request_uri
       @headers = default_headers
       @body = ""
       @version = DEFAULT_VERSION
-
-      self.instance_eval &block if block_given?
-
-      to_s
     end
 
     # Adds the header and its value to the list of headers for the message.
@@ -43,10 +47,26 @@ module RTSP
       end
     end
 
+    def with_headers(new_headers)
+      add_headers new_headers
+
+      self
+    end
+
+    def add_headers(new_headers)
+      @headers.merge! new_headers
+    end
+
+    def with_body(body)
+      body = body
+
+      self
+    end
+
     # @param [String] value Content to send as the body of the message.
     # Generally this will be a String of some sort, but could be binary data as
-    # well.
-    def body value
+    # well. Also, this adds the Content-Length header to the header list.
+    def body= value
       headers[:content_length] = value.length
       @body = value
     end
@@ -92,6 +112,10 @@ module RTSP
         headers[:transport] = transport
       when :play
         headers[:range] = "npt=#{RTSP_DEFAULT_NPT}"
+      when :get_parameter
+        headers[:content_type] = 'text/parameters'
+      when :set_parameter
+        headers[:content_type] = 'text/parameters'
       else
         {}
       end

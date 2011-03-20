@@ -1,7 +1,20 @@
+require 'sdp'
 require File.dirname(__FILE__) + '/../spec_helper'
 require 'rtsp/client'
+require 'support/fake_rtsp_server'
 
 describe RTSP::Client do
+  def setup_client_at(url)
+    fake_rtsp_server = FakeRTSPServer.new
+    mock_logger = double 'MockLogger', :send => nil
+    client = RTSP::Client.new(url, :socket => fake_rtsp_server)
+    RTSP::Client.reset_config!
+    RTSP::Client.configure { |config| config.log = false }
+    client.logger = mock_logger
+
+    client
+  end
+
   describe "#initialize" do
     before :each do
       mock_socket = double 'MockSocket'
@@ -74,11 +87,9 @@ describe RTSP::Client do
   it "handles empty non-existent CSeq header" do
     pending
   end
-
   context "#server_url" do
     before :each do
-      mock_socket = double 'MockSocket'
-      @client = RTSP::Client.new "rtsp://localhost", :socket => mock_socket
+      @client = setup_client_at "rtsp://localhost"
     end
 
     it "allows for changing the server URL on the fly" do
@@ -95,18 +106,13 @@ describe RTSP::Client do
 
   describe "#options" do
     before :each do
-      mock_socket = double 'MockSocket', :send => "", :recvfrom => [OPTIONS_RESPONSE]
-      mock_logger = double 'MockLogger', :send => nil
-      @client = RTSP::Client.new "rtsp://localhost", :socket => mock_socket
-      RTSP::Client.reset_config!
-      RTSP::Client.configure { |config| config.log = false }
-      @client.logger = mock_logger
+      @client = setup_client_at "rtsp://localhost"
     end
 
     it "extracts the server's supported methods" do
       @client.options
-      @client.instance_variable_get(:@supported_methods).should ==
-          [:options, :describe, :setup, :teardown, :play, :pause]
+      @client.supported_methods.should ==
+          [:describe, :setup, :teardown, :play, :pause]
     end
 
     it "returns a Response" do
@@ -117,31 +123,183 @@ describe RTSP::Client do
 
   describe "#describe" do
     before do
-      mock_socket = double 'MockSocket', :send => "", :recvfrom => [DESCRIBE_RESPONSE]
-      mock_logger = double 'MockLogger', :send => nil
-      @client = RTSP::Client.new "rtsp://localhost", :socket => mock_socket
-      @client.logger = mock_logger
+      @client = setup_client_at "rtsp://localhost"
+      @response = @client.describe
     end
 
     it "extracts the aggregate control track" do
-      @client.describe
-      @client.aggregate_control_track.should == "rtsp://64.202.98.91:554/gs.sdp/"
+      @client.aggregate_control_track.should == "rtsp://64.202.98.91:554/sa.sdp/"
     end
 
     it "extracts the media control tracks" do
-      @client.describe
-      @client.media_control_tracks.should == ["rtsp://64.202.98.91:554/gs.sdp/trackID=1"]
+      @client.media_control_tracks.should == ["rtsp://64.202.98.91:554/sa.sdp/trackID=1"]
     end
 
-    it "increases @cseq by 1" do
-      cseq_before = @client.instance_variable_get :@cseq
-      @client.describe
-      @client.instance_variable_get(:@cseq).should == cseq_before + 1
+    it "extracts the SDP object" do
+      @client.instance_variable_get(:@session_description).should ==
+          @response.body
+    end
+
+    it "extracts the Content-Base header" do
+      @client.instance_variable_get(:@content_base).should ==
+          URI.parse("rtsp://64.202.98.91:554/sa.sdp/")
     end
 
     it "returns a Response" do
-      response = @client.describe
+      @response.is_a?(RTSP::Response).should be_true
+    end
+  end
+
+  describe "#announce" do
+    it "returns a Response" do
+      client = setup_client_at "rtsp://localhost"
+      sdp = SDP::Description.new
+      response = client.announce("rtsp://localhost/another_track", sdp)
       response.is_a?(RTSP::Response).should be_true
+    end
+  end
+
+  describe "#setup" do
+    before :each do
+      @client = setup_client_at "rtsp://localhost"
+    end
+
+    it "extracts the session number" do
+      @client.session.should be_zero
+      @client.setup("rtsp://localhost/some_track")
+      @client.session.should == 1234567890
+    end
+
+    it "changes the session_state to :ready" do
+      @client.setup("rtsp://localhost/some_track")
+      @client.session_state.should == :ready
+    end
+
+    it "extracts the transport header info" do
+      @client.instance_variable_get(:@transport).should be_nil
+      @client.setup("rtsp://localhost/some_track")
+      @client.instance_variable_get(:@transport).should_not be_nil
+    end
+
+    it "returns a Response" do
+      response = @client.setup("rtsp://localhost/some_track")
+      response.is_a?(RTSP::Response).should be_true
+    end
+  end
+
+  describe "#play" do
+    before :each do
+      @client = setup_client_at "rtsp://localhost"
+    end
+
+    it "changes the session_state to :playing" do
+      @client.play("rtsp://localhost/some_track")
+      @client.session_state.should == :playing
+    end
+
+    it "returns a Response" do
+      response = @client.play("rtsp://localhost/some_track")
+      response.is_a?(RTSP::Response).should be_true
+    end
+  end
+
+  describe "#pause" do
+    before :each do
+      @client = setup_client_at "rtsp://localhost"
+      @client.setup("rtsp://localhost/some_track")
+    end
+
+    it "changes the session_state from :playing to :ready" do
+      @client.play("rtsp://localhost/some_track")
+      @client.pause("rtsp://localhost/some_track")
+      @client.session_state.should == :ready
+    end
+
+    it "changes the session_state from :recording to :ready" do
+      pending
+      @client.record("rtsp://localhost/some_track")
+      @client.pause("rtsp://localhost/some_track")
+      @client.session_state.should == :ready
+    end
+
+    it "returns a Response" do
+      response = @client.pause("rtsp://localhost/some_track")
+      response.is_a?(RTSP::Response).should be_true
+    end
+  end
+
+  describe "#teardown" do
+    before :each do
+      @client = setup_client_at "rtsp://localhost"
+      @client.setup("rtsp://localhost/some_track")
+    end
+
+    it "changes the session_state to :init" do
+      @client.session_state.should_not == :init
+      @client.teardown("rtsp://localhost/some_track")
+      @client.session_state.should == :init
+    end
+
+    it "changes the session back to 0" do
+      @client.session.should_not be_zero
+      @client.teardown("rtsp://localhost/some_track")
+      @client.session.should be_zero
+    end
+    
+    it "returns a Response" do
+      response = @client.teardown("rtsp://localhost/some_track")
+      response.is_a?(RTSP::Response).should be_true
+    end
+  end
+
+  describe "#get_parameter" do
+    before :each do
+      @client = setup_client_at "rtsp://localhost"
+    end
+
+    it "returns a Response" do
+      response = @client.get_parameter("rtsp://localhost/some_track", "ping!")
+      response.is_a?(RTSP::Response).should be_true
+    end
+  end
+
+  describe "#set_parameter" do
+    before :each do
+      @client = setup_client_at "rtsp://localhost"
+    end
+
+    it "returns a Response" do
+      response = @client.set_parameter("rtsp://localhost/some_track", "ping!")
+      response.is_a?(RTSP::Response).should be_true
+    end
+  end
+
+  describe "#record" do
+    before :each do
+      @client = setup_client_at "rtsp://localhost"
+      @client.setup("rtsp://localhost/some_track")
+    end
+
+    it "returns a Response" do
+      response = @client.record("rtsp://localhost/some_track")
+      response.is_a?(RTSP::Response).should be_true
+    end
+
+    it "changes the session_state to :recording" do
+      @client.session_state.should == :ready
+      @client.record("rtsp://localhost/some_track")
+      @client.session_state.should == :recording
+    end
+  end
+  describe "#parse_transport_from" do
+    it "extracts the transport header info" do
+      transport_line = "RTP/AVP;unicast;destination=10.221.222.186;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701\r"
+      @client = setup_client_at "rtsp://localhost"
+      transport = @client.parse_transport_from(transport_line)
+      transport[:protocol].should == 'RTP'
+      transport[:profile].should == 'AVP'
+      transport[:network_type].should == :unicast
+      transport[:destination].should == "10.221.222.186"
     end
   end
 end
