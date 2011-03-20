@@ -6,7 +6,7 @@ class FakeRTSPServer
 
   def send(*args)
     message = args.first
-    message =~ /^(\w+).+CSeq: (\S+)/m
+    message =~ /^(\w+) .+CSeq: (\S+)/m
     @message_type = $1.downcase
     @cseq = $2
     @session = 1234567890
@@ -18,7 +18,7 @@ class FakeRTSPServer
   end
 
   def options
-    message = "RTSP/1.0 200/OK\r\n"
+    message = "RTSP/1.0 200 OK\r\n"
     message << "CSeq: #{@cseq}\r\n"
     message << "Date: #{Time.now.httpdate}\r\n"
     message << "Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r\n"
@@ -26,7 +26,7 @@ class FakeRTSPServer
   end
 
   def describe
-    message = "RTSP/1.0 200/OK\r\n"
+    message = "RTSP/1.0 200 OK\r\n"
     message << "CSeq: #{@cseq}\r\n"
     message << "Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )\r\n"
     message << "Cache-Control: no-cache\r\n"
@@ -53,6 +53,12 @@ class FakeRTSPServer
     message << "a=rtpmap:96 MP4A-LATM/44100/\r\n"
     message << "a=fmtp:96 cpresent=0;config=40002720000\r\n"
     message << "a=control:trackID=\r\n"
+    message << "\r\n"
+  end
+
+  def announce
+    message = "RTSP/1.0 200 OK\r\n"
+    message << "CSeq: #{@cseq}\r\n"
     message << "\r\n"
   end
 
