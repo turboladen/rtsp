@@ -62,7 +62,7 @@ module RTSP
     # @param [RTSP::Message] message
     # @return [RTSP::Response]
     def send_message message
-      RTSP::Client.log "Sending #{message.method.upcase} to #{message.request_uri}"
+      RTSP::Client.log "Sending #{message.method_type.upcase} to #{message.request_uri}"
       message.to_s.each_line { |line| RTSP::Client.log line.strip }
 
       begin
@@ -134,7 +134,7 @@ module RTSP
       additional_headers.each_pair { |h| message.header h.key, h.value }
       message.body = description.to_s
 
-      request(message.to_s)
+      request(message)
     end
 
     # TODO: parse Transport header (http://tools.ietf.org/html/rfc2326#section-12.39)

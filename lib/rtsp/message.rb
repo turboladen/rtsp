@@ -14,7 +14,7 @@ module RTSP
     RTP_DEFAULT_ROUTING = "unicast"
     USER_AGENT = "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
 
-    attr_reader :method
+    attr_reader :method_type
     attr_reader :request_uri
     attr_reader :headers
     attr_reader :body
@@ -28,7 +28,7 @@ module RTSP
     # @param [Symbol] :method_type The RTSP method to build and send.
     # @param [String] request_uri The URL to communicate to.
     def initialize(method_type, request_uri)
-      @method = method_type
+      @method_type = method_type
       @request_uri = build_resource_uri_from request_uri
       @headers = default_headers
       @body = ""
@@ -80,7 +80,7 @@ module RTSP
     private
 
     def message
-      message = "#{@method.to_s.upcase} #{@request_uri} RTSP/#{@version}\r\n"
+      message = "#{@method_type.to_s.upcase} #{@request_uri} RTSP/#{@version}\r\n"
       message << headers_to_s(@headers)
       message << "\r\n"
       message << "#{@body}" unless @body.nil?
@@ -99,7 +99,7 @@ module RTSP
       headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
       headers[:user_agent] ||= USER_AGENT
 
-      case @method
+      case @method_type
       when :describe
         headers[:accept] = RTSP_ACCEPT_TYPE
       when :announce
