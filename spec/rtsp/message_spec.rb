@@ -373,4 +373,18 @@ describe "RTSP::Message" do
       string.should include "Content-Type: application/sdp, application/x-rtsp-mh"
     end
   end
+
+  describe "#with_body" do
+    it "adds the passed-in text to the body of the message" do
+      new_body = "1234567890"
+      message = RTSP::Message.record("rtsp://localhost/track").with_body(new_body)
+      message.to_s.should match /\r\n\r\n#{new_body}$/
+    end
+
+    it "adds the Content-Length header to reflect the body" do
+      new_body = "1234567890"
+      message = RTSP::Message.record("rtsp://localhost/track").with_body(new_body)
+      message.to_s.should match /Content-Length: #{new_body.size}\r\n/
+    end
+  end
 end

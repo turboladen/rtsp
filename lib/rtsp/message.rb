@@ -57,18 +57,22 @@ module RTSP
       @headers.merge! new_headers
     end
 
-    def with_body(body)
-      body = body
+    def with_body(new_body)
+      add_body new_body
 
       self
+    end
+
+    def add_body new_body
+      add_headers({ content_length: new_body.length })
+      @body = new_body
     end
 
     # @param [String] value Content to send as the body of the message.
     # Generally this will be a String of some sort, but could be binary data as
     # well. Also, this adds the Content-Length header to the header list.
     def body= value
-      headers[:content_length] = value.length
-      @body = value
+      add_body value
     end
 
     def to_s
