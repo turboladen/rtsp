@@ -21,7 +21,10 @@ describe RTSP::Response do
   end
 
   describe "#to_s" do
-    pending
+    it "returns the text that was passed in" do
+      response = RTSP::Response.new OPTIONS_RESPONSE
+      response.to_s.should == OPTIONS_RESPONSE
+    end
   end
 
   describe "#inspect" do
