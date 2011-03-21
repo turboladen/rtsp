@@ -5,7 +5,6 @@ require 'cucumber/rspec/doubles'
 
 $:.unshift(File.dirname(__FILE__) + '/../../lib')
 require 'rtsp/client'
-require 'rtsp/request'
 
 $:.unshift(File.dirname(__FILE__) + '/../../spec/support')
 require 'fake_rtsp_server'

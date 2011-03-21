@@ -34,8 +34,8 @@ module RTSP
       yield self if block_given?
     end
 
-    # @param [String] rtsp_url URL to the resource to stream.  If no scheme is given,
-    # "rtsp" is assumed.  If no port is given, 554 is assumed.
+    # @param [String] rtsp_url URL to the resource to stream.  If no scheme is
+    # given, "rtsp" is assumed.  If no port is given, 554 is assumed.
     def initialize(rtsp_url, args={})
       @server_uri = build_resource_uri_from rtsp_url
       @args = args
@@ -277,10 +277,6 @@ module RTSP
     # @return [RTSP::Response]
     def request message
       begin
-        if @args[:method] == :setup && @session_state == :inactive
-          @session_state = :init
-        end
-
         response = send_message message
 
         compare_sequence_number response.cseq
