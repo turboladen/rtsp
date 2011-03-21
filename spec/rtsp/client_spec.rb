@@ -87,6 +87,7 @@ describe RTSP::Client do
   it "handles empty non-existent CSeq header" do
     pending
   end
+
   context "#server_url" do
     before :each do
       @client = setup_client_at "rtsp://localhost"
@@ -291,6 +292,7 @@ describe RTSP::Client do
       @client.session_state.should == :recording
     end
   end
+
   describe "#parse_transport_from" do
     it "extracts the transport header info" do
       transport_line = "RTP/AVP;unicast;destination=10.221.222.186;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701\r"
@@ -300,6 +302,13 @@ describe RTSP::Client do
       transport[:profile].should == 'AVP'
       transport[:network_type].should == :unicast
       transport[:destination].should == "10.221.222.186"
+    end
+  end
+
+  describe "#send_message" do
+    it "raises if the send takes longer than the timeout" do
+      pending "until I figure out how to test the time out raises"
+      @client = setup_client_at "rtsp://localhost"
     end
   end
 end

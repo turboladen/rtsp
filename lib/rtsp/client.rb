@@ -41,8 +41,7 @@ module RTSP
       @args = args
 
       @cseq = 1
-      @session_state = :init
-      @session = 0
+      reset_state
       @timeout = args[:timeout] || DEFAULT_TIMEOUT
       @socket = @args[:socket] || TCPSocket.new(@server_uri.host, @server_uri.port)
       @args[:logger] = RTSP::Client.log? ? RTSP::Client.logger : nil
@@ -218,9 +217,13 @@ module RTSP
       additional_headers.each_pair { |h| message.header h.key, h.value }
 
       request(message) do
-        @session_state = :init
-        @session = 0
+        reset_state
       end
+    end
+
+    def reset_state
+      @session_state = :init
+      @session = 0
     end
 
     # Sends the GET_PARAMETERS request.
@@ -266,7 +269,6 @@ module RTSP
       request(message) { @session_state = :recording }
     end
 
-    # TODO: #ensure_session_and should occur just after receiving the response, not before sending a request.
     # Executes the Request with the arguments passed in, yields the response to
     # the calling block, checks the cseq response and the session response,
     # then increments @cseq by 1.  Handles any exceptions raised during the
@@ -283,6 +285,7 @@ module RTSP
 
         if response.code.to_s =~ /2../
           yield response if block_given?
+          ensure_session
         elsif response.code.to_s =~ /(4|5)../
           if (defined? response.connection) && response.connection == 'Closed'
             reset_state
@@ -319,16 +322,10 @@ module RTSP
     #
     # @raise [RTSP::Exception] Raises if @session isn't set.
     # @return Returns whatever the block returns.
-    def ensure_session_and
-      return_value = ""
-
-      if @session > 0
-        return_value = yield if block_given?
-      else
+    def ensure_session
+      unless @session > 0
         raise RTSP::Exception, "Session number not retrieved from server yet.  Run SETUP first."
       end
-
-      return_value
     end
 
     # Extracts the URL associated with the "control" attribute from the main
