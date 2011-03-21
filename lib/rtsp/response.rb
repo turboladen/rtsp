@@ -22,9 +22,7 @@ module RTSP
 
       @raw_response = raw_response
 
-      head_and_body = split_head_and_body_from @raw_response
-      head = head_and_body.first
-      body = head_and_body.last == head ? "" : head_and_body.last
+      head, body = split_head_and_body_from @raw_response
       parse_head(head)
       @body = parse_body(body)
     end
@@ -49,7 +47,11 @@ module RTSP
     # @return [Array<String>] 2-element Array containing the head and body of
     # the response.
     def split_head_and_body_from raw_response
-      raw_response.split("\r\n\r\n", 2)
+      head_and_body = raw_response.split("\r\n\r\n", 2)
+      head = head_and_body.first
+      body = head_and_body.last == head ? "" : head_and_body.last
+
+      [head, body]
     end
 
     # Reads through each header line of the RTSP response, extracts the response
