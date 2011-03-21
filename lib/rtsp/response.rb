@@ -49,13 +49,7 @@ module RTSP
     # @return [Array<String>] 2-element Array containing the head and body of
     # the response.
     def split_head_and_body_from raw_response
-      response_array = raw_response.split("\r\n\r\n", 2)
-
-      if response_array.empty?
-        response_array = raw_response.split "\n\n"
-      end
-
-      response_array
+      raw_response.split("\r\n\r\n", 2)
     end
 
     # Reads through each header line of the RTSP response, extracts the response
@@ -88,7 +82,6 @@ module RTSP
     #
     # @param [String] body
     def parse_body body
-      #response[:body] = read_nonblock(size).split("\r\n") unless @content_length == 0
       if body =~ /^(\r\n|\n)/
         body.gsub!(/^(\r\n|\n)/, '')
       end

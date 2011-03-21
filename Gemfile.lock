@@ -72,7 +72,6 @@ GEM
       reek (>= 1.2.6)
       roodi (>= 2.1.0)
       syntax
-    mime-types (1.16)
     notifiers (1.1.0)
     ore-core (0.1.4)
     ore-tasks (0.3.0)
@@ -132,7 +131,6 @@ DEPENDENCIES
   infinity_test
   jeweler (~> 1.5.0)
   metric_fu
-  mime-types (~> 1.16)
   ore-core (~> 0.1.0)
   ore-tasks (~> 0.3.0)
   rake (~> 0.8.7)
