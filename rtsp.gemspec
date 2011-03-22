@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 1.3.6") if s.respond_to? :required_rubygems_version=
   s.authors = ["Steve Loveless, Mike Kirby"]
-  s.date = %q{2011-03-19}
+  s.date = %q{2011-03-22}
   s.default_executable = %q{rtsp}
   s.description = %q{This library intends to follow the RTSP RFC document (2326) to allow for working with RTSP servers.  At this point, it's up to you to parse the data from a play call, but we'll get there.  ...eventually.
 For more information
@@ -53,6 +53,7 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
     "lib/rtsp/response.rb",
     "lib/rtsp/version.rb",
     "nsm_test.rb",
+    "rtsp.gemspec",
     "sarix_test.rb",
     "soma_test.rb",
     "spec/.rspec",
@@ -82,9 +83,24 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<sdp>, ["~> 0.2.0"])
+      s.add_runtime_dependency(%q<eventmachine>, ["~> 0.12.10"])
       s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
       s.add_development_dependency(%q<yard>, ["~> 0.6.0"])
+      s.add_runtime_dependency(%q<rtsp>, [">= 0"])
       s.add_runtime_dependency(%q<sdp>, ["~> 0.2.2"])
+      s.add_runtime_dependency(%q<eventmachine>, ["~> 0.12.10"])
+      s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
+      s.add_development_dependency(%q<yard>, ["~> 0.6.0"])
+      s.add_development_dependency(%q<code_statistics>, ["~> 0.2.13"])
+      s.add_development_dependency(%q<cucumber>, [">= 0"])
+      s.add_development_dependency(%q<infinity_test>, [">= 0"])
+      s.add_development_dependency(%q<jeweler>, ["~> 1.5.0"])
+      s.add_development_dependency(%q<metric_fu>, [">= 0"])
+      s.add_development_dependency(%q<ore-core>, ["~> 0.1.0"])
+      s.add_development_dependency(%q<ore-tasks>, ["~> 0.3.0"])
+      s.add_development_dependency(%q<rake>, ["~> 0.8.7"])
+      s.add_development_dependency(%q<rspec>, ["~> 2.5.0"])
+      s.add_development_dependency(%q<yard>, ["~> 0.6.0"])
       s.add_development_dependency(%q<code_statistics>, ["~> 0.2.13"])
       s.add_development_dependency(%q<cucumber>, [">= 0"])
       s.add_development_dependency(%q<infinity_test>, [">= 0"])
@@ -97,9 +113,24 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
       s.add_development_dependency(%q<yard>, ["~> 0.6.0"])
     else
       s.add_dependency(%q<sdp>, ["~> 0.2.0"])
+      s.add_dependency(%q<eventmachine>, ["~> 0.12.10"])
       s.add_dependency(%q<bundler>, ["~> 1.0.0"])
       s.add_dependency(%q<yard>, ["~> 0.6.0"])
+      s.add_dependency(%q<rtsp>, [">= 0"])
       s.add_dependency(%q<sdp>, ["~> 0.2.2"])
+      s.add_dependency(%q<eventmachine>, ["~> 0.12.10"])
+      s.add_dependency(%q<bundler>, ["~> 1.0.0"])
+      s.add_dependency(%q<yard>, ["~> 0.6.0"])
+      s.add_dependency(%q<code_statistics>, ["~> 0.2.13"])
+      s.add_dependency(%q<cucumber>, [">= 0"])
+      s.add_dependency(%q<infinity_test>, [">= 0"])
+      s.add_dependency(%q<jeweler>, ["~> 1.5.0"])
+      s.add_dependency(%q<metric_fu>, [">= 0"])
+      s.add_dependency(%q<ore-core>, ["~> 0.1.0"])
+      s.add_dependency(%q<ore-tasks>, ["~> 0.3.0"])
+      s.add_dependency(%q<rake>, ["~> 0.8.7"])
+      s.add_dependency(%q<rspec>, ["~> 2.5.0"])
+      s.add_dependency(%q<yard>, ["~> 0.6.0"])
       s.add_dependency(%q<code_statistics>, ["~> 0.2.13"])
       s.add_dependency(%q<cucumber>, [">= 0"])
       s.add_dependency(%q<infinity_test>, [">= 0"])
@@ -113,9 +144,24 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
     end
   else
     s.add_dependency(%q<sdp>, ["~> 0.2.0"])
+    s.add_dependency(%q<eventmachine>, ["~> 0.12.10"])
     s.add_dependency(%q<bundler>, ["~> 1.0.0"])
     s.add_dependency(%q<yard>, ["~> 0.6.0"])
+    s.add_dependency(%q<rtsp>, [">= 0"])
     s.add_dependency(%q<sdp>, ["~> 0.2.2"])
+    s.add_dependency(%q<eventmachine>, ["~> 0.12.10"])
+    s.add_dependency(%q<bundler>, ["~> 1.0.0"])
+    s.add_dependency(%q<yard>, ["~> 0.6.0"])
+    s.add_dependency(%q<code_statistics>, ["~> 0.2.13"])
+    s.add_dependency(%q<cucumber>, [">= 0"])
+    s.add_dependency(%q<infinity_test>, [">= 0"])
+    s.add_dependency(%q<jeweler>, ["~> 1.5.0"])
+    s.add_dependency(%q<metric_fu>, [">= 0"])
+    s.add_dependency(%q<ore-core>, ["~> 0.1.0"])
+    s.add_dependency(%q<ore-tasks>, ["~> 0.3.0"])
+    s.add_dependency(%q<rake>, ["~> 0.8.7"])
+    s.add_dependency(%q<rspec>, ["~> 2.5.0"])
+    s.add_dependency(%q<yard>, ["~> 0.6.0"])
     s.add_dependency(%q<code_statistics>, ["~> 0.2.13"])
     s.add_dependency(%q<cucumber>, [">= 0"])
     s.add_dependency(%q<infinity_test>, [">= 0"])
