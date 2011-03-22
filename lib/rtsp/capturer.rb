@@ -1,41 +1,18 @@
-require 'socket'
-require 'timeout'
-
-require File.expand_path(File.dirname(__FILE__) + '/exception')
+require 'eventmachine'
 
 module RTSP
-  class Capturer
+  class Capturer < EventMachine::Connection
 
-    MAX_PACKET_BYTES= 1500
+    DEFAULT_CAPFILE_NAME = "rtsp_capture.rtsp"
 
-    def initialize(socket_type, port, save_to_file=false)
-      puts "port: #{port}"
+    attr_reader :capture_file
 
-      if socket_type == :udp
-        @capture_socket = UDPSocket.new
-        @capture_socket.bind("0.0.0.0", port)
-      #elsif socket_type == :tcp
-      #  @capture_socket = TCPSocket.new(host, port)
-      else
-        raise RTSP::Exception, "Invalid socket type: #{socket_type}"
-      end
-
-      @save_to_file = save_to_file
-
-      #while data = @capture_socket.recvfrom(MAX_PACKET_BYTES).first
-      #  puts data
-      #end
+    def post_init
+      puts "client connected"
     end
 
-    def start
-      @capture_thread = Thread.start(@capture_socket) do |capture|
-        data = capture.recvfrom(MAX_PACKET_BYTES)
-        puts data
-      end
-    end
-
-    def stop
-      @capture_thread.join
+    def receive_data data
+      p data
     end
   end
 end

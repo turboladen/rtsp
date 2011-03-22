@@ -2,7 +2,7 @@ require 'socket'
 require 'tempfile'
 require 'timeout'
 
-#require File.expand_path(File.dirname(__FILE__) + '/capturer')
+require File.expand_path(File.dirname(__FILE__) + '/capturer')
 require File.expand_path(File.dirname(__FILE__) + '/exception')
 require File.expand_path(File.dirname(__FILE__) + '/global')
 require File.expand_path(File.dirname(__FILE__) + '/helpers')
@@ -16,7 +16,7 @@ module RTSP
     include RTSP::Helpers
     extend RTSP::Global
 
-    DEFAULT_TIMEOUT = 30
+    DEFAULT_CAPFILE_NAME = "ruby_rtsp_capture.rtsp"
     MAX_BYTES_TO_RECEIVE = 3000
 
     attr_reader :server_uri
@@ -38,13 +38,19 @@ module RTSP
     # given, "rtsp" is assumed.  If no port is given, 554 is assumed.
     def initialize(rtsp_url, args={})
       @server_uri = build_resource_uri_from rtsp_url
-      @args = args
-
       @cseq = 1
       reset_state
-      @timeout = args[:timeout] || DEFAULT_TIMEOUT
-      @socket = @args[:socket] || TCPSocket.new(@server_uri.host, @server_uri.port)
-      @args[:logger] = RTSP::Client.log? ? RTSP::Client.logger : nil
+      @timeout = args[:timeout] || 30
+      @socket = args[:socket] || TCPSocket.new(@server_uri.host, @server_uri.port)
+
+      @play_thread = nil
+      @capture_data = args[:capture_data] || true
+      @capture_file = args[:capture_file] || Tempfile.new(DEFAULT_CAPFILE_NAME)
+
+      @transport = {}
+      @transport[:client_port] = args[:client_port] || 9000
+      @transport[:specifier] = args[:transport_specifier] || "RTP/AVP"
+      @transport[:routing] = args[:routing] || "unicast"
     end
 
     # The URL for the RTSP server to talk to can change if multiple servers are
@@ -109,7 +115,7 @@ module RTSP
     def describe additional_headers={}
       message = RTSP::Message.describe(@server_uri.to_s).with_headers({
         cseq: @cseq })
-      additional_headers.each_pair { |h| message.header h.key, h.value }
+      message.add_headers additional_headers
 
       request(message) do |response|
         @session_description =  response.body
@@ -130,7 +136,7 @@ module RTSP
     # @return [RTSP::Response]
     def announce(request_url, description, additional_headers={})
       message = RTSP::Message.announce(request_url).with_headers({ cseq: @cseq })
-      additional_headers.each_pair { |h| message.header h.key, h.value }
+      message.add_headers additional_headers
       message.body = description.to_s
 
       request(message)
@@ -145,8 +151,13 @@ module RTSP
     # @param [Hash] additional_headers
     # @return [RTSP::Response] The response formatted as a Hash.
     def setup(track, additional_headers={})
-      message = RTSP::Message.setup(track).with_headers({ cseq: @cseq })
-      additional_headers.each_pair { |h| message.header h.key, h.value }
+      transport_value = "#{@transport[:specifier]};#{@transport[:routing]};"
+      transport_value << "client_port=#{@transport[:client_port]}-"
+      transport_value << "#{@transport[:client_port] + 1}"
+
+      message = RTSP::Message.setup(track).with_headers({
+          cseq: @cseq, transport: transport_value })
+      message.add_headers additional_headers
 
       request(message) do |response|
         if @session_state == :init
@@ -154,17 +165,18 @@ module RTSP
         end
 
         @session = response.session
-        @transport = parse_transport_from response.transport
+        #@transport = parse_transport_from response.transport
       end
     end
 
     def parse_transport_from field_string
+=begin
       fields = field_string.split ";"
       transport = {}
       specifier = fields.shift
       transport[:protocol] = specifier.split("/")[0]
       transport[:profile] =  specifier.split("/")[1]
-      #@transport[:lower_transport] = specifier.split("/")[2].downcase.to_sym || :udp
+      transport[:lower_transport] = specifier.split("/")[2].downcase.to_sym || :udp
       transport[:network_type] = fields.shift.to_sym || :multicast
 
       extras = fields.inject({}) do |result, field_and_value_string|
@@ -173,6 +185,9 @@ module RTSP
         result
       end
       transport.merge! extras
+=end
+      pattern = /(?<transport_protocol>\w+)\/(?<profile>\w+)(\/(?<lower_transport>\w+))?;(?<net_cast>\w+);(?<everything_else>.*)/
+      transport_match = pattern.match(field_string)
     end
 
     # Sends the PLAY request and sets @session_state to :playing.
@@ -183,9 +198,24 @@ module RTSP
     def play(track, additional_headers={})
       message = RTSP::Message.play(track).with_headers({
           cseq: @cseq, session: @session })
-      additional_headers.each_pair { |h| message.header h.key, h.value }
+      message.add_headers additional_headers
 
-      request(message) { @session_state = :playing }
+      request(message) do
+        @play_thread = Thread.new { start_capture }
+        @session_state = :playing
+      end
+    end
+
+    def start_capture
+      rtp_port = 9000
+
+      EventMachine.run {
+        #EventMachine.connect('0.0.0.0', 9000, RTSP::Capturer)
+        EventMachine.open_datagram_socket('0.0.0.0', rtp_port, RTSP::Capturer)
+        EventMachine.add_periodic_timer(1) do
+          RTSP::Client.log "Waiting for UDP data on port #{rtp_port}..."
+        end
+      }
     end
 
     # Sends the PAUSE request and sets @session_state to :ready.
@@ -196,7 +226,7 @@ module RTSP
     def pause(track, additional_headers={})
       message = RTSP::Message.pause(track).with_headers({
           cseq: @cseq, session: @session })
-      additional_headers.each_pair { |h| message.header h.key, h.value }
+      message.add_headers additional_headers
 
       request(message) do
         if [:playing, :recording].include? @session_state
@@ -214,10 +244,11 @@ module RTSP
     def teardown(track, additional_headers={})
       message = RTSP::Message.teardown(track).with_headers({
           cseq: @cseq, session: @session })
-      additional_headers.each_pair { |h| message.header h.key, h.value }
+      message.add_headers additional_headers
 
       request(message) do
         reset_state
+        @play_thread.exit if @play_thread
       end
     end
 
@@ -235,7 +266,7 @@ module RTSP
     def get_parameter(track, body="", additional_headers={})
       message = RTSP::Message.get_parameter(track).with_headers({
           cseq: @cseq })
-      additional_headers.each_pair { |h| message.header h.key, h.value }
+      message.add_headers additional_headers
       message.body = body
 
       request(message)
@@ -250,7 +281,7 @@ module RTSP
     def set_parameter(track, parameters, additional_headers={})
       message = RTSP::Message.set_parameter(track).with_headers({
           cseq: @cseq })
-      additional_headers.each_pair { |h| message.header h.key, h.value }
+      message.add_headers additional_headers
       message.body = parameters
 
       request(message)
@@ -264,7 +295,7 @@ module RTSP
     def record(track, additional_headers={})
       message = RTSP::Message.record(track).with_headers({
           cseq: @cseq, session: @session })
-      additional_headers.each_pair { |h| message.header h.key, h.value }
+      message.add_headers additional_headers
 
       request(message) { @session_state = :recording }
     end
@@ -280,12 +311,11 @@ module RTSP
     def request message
       begin
         response = send_message message
-
         compare_sequence_number response.cseq
+        @cseq += 1
 
         if response.code.to_s =~ /2../
           yield response if block_given?
-          ensure_session
         elsif response.code.to_s =~ /(4|5)../
           if (defined? response.connection) && response.connection == 'Closed'
             reset_state
@@ -296,7 +326,9 @@ module RTSP
           raise RTSP::Exception, "Unknown Response code: #{response.code}"
         end
 
-        @cseq += 1
+        unless [:options, :describe, :teardown].include? message.method_type
+          ensure_session
+        end
       rescue RTSP::Exception => ex
         RTSP::Client.log "Got exception: #{ex.message}"
         ex.backtrace.each { |b| RTSP::Client.log b }
@@ -304,19 +336,6 @@ module RTSP
 
       response
     end
-=begin
-    def connect
-      timeout(@timeout) { @socket = TCPSocket.new(@host, @port) } #rescue @socket = nil
-    end
-
-    def connected?
-      @socket == nil ? true : false
-    end
-
-    def disconnect
-      timeout(@timeout) { @socket.close } rescue @socket = nil
-    end
-=end
 
     # Ensures that @session is set before continuing on.
     #

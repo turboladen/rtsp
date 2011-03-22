@@ -15,6 +15,7 @@ aggregate_track = client.aggregate_control_track
 puts "aggregate track: #{aggregate_track}"
 
 client.setup media_track
+#client.setup media_track, :transport => "RTP/AVP;unicast;client_port=9000-9001"
 #client[media_track].setup
 #client.media_control_tracks.play
 client.play aggregate_track

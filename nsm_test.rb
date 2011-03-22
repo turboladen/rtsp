@@ -8,10 +8,6 @@ r = RTSP::Client.new url
 r.options
 r.describe
 
-require 'ap'
-ap r.instance_variable_get :@session_description
-exit
-
 media_track = r.media_control_tracks.first
 puts "media track: #{media_track}"
 
@@ -20,4 +16,9 @@ puts "aggregate track: #{aggregate_track}"
 
 r.setup media_track
 r.play aggregate_track
-
+sleep 2
+r.pause aggregate_track
+sleep 2
+r.play aggregate_track
+sleep 2
+r.teardown aggregate_track

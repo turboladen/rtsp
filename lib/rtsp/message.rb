@@ -9,9 +9,6 @@ module RTSP
     RTSP_ACCEPT_TYPE = "application/sdp"
     RTSP_DEFAULT_NPT = "0.000-"
     RTSP_DEFAULT_SEQUENCE_NUMBER = 1
-    RTP_DEFAULT_CLIENT_PORT = 9000
-    RTP_DEFAULT_PACKET_TYPE = "RTP/AVP"
-    RTP_DEFAULT_ROUTING = "unicast"
     USER_AGENT = "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
 
     attr_reader :method_type
@@ -108,12 +105,6 @@ module RTSP
         headers[:accept] = RTSP_ACCEPT_TYPE
       when :announce
         headers[:content_type] = RTSP_ACCEPT_TYPE
-      when :setup
-        transport = "#{RTP_DEFAULT_PACKET_TYPE};"
-        transport << "#{RTP_DEFAULT_ROUTING};"
-        transport << "client_port=#{RTP_DEFAULT_CLIENT_PORT}-#{RTP_DEFAULT_CLIENT_PORT + 1}"
-
-        headers[:transport] = transport
       when :play
         headers[:range] = "npt=#{RTSP_DEFAULT_NPT}"
       when :get_parameter
