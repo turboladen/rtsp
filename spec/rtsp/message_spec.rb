@@ -121,6 +121,7 @@ describe "RTSP::Message" do
 
   context "builds a SETUP string" do
     it "with default sequence, transport, client_port, and routing values" do
+      pending "decision on if Transport should be left out of Message."
       message = RTSP::Message.setup(@stream)
 
       message.to_s.should match /^SETUP rtsp/

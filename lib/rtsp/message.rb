@@ -3,13 +3,63 @@ require File.expand_path(File.dirname(__FILE__) + '/exception')
 require File.expand_path(File.dirname(__FILE__) + '/version')
 
 module RTSP
+
+  # This class is responsible for building a single RTSP message that can be
+  # used by both clients and servers.
+  #
+  # If you need to add a new message type, you can simply add to the supported
+  # list by:
+  #    RTSP::Message.message_types << :my_new_type
   class Message
     include RTSP::Helpers
 
     RTSP_ACCEPT_TYPE = "application/sdp"
-    RTSP_DEFAULT_NPT = "0.000-"
+    RTSP_DEFAULT_NPT             = "0.000-"
     RTSP_DEFAULT_SEQUENCE_NUMBER = 1
-    USER_AGENT = "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
+    USER_AGENT                   = "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
+
+    @message_types = [
+        :announce,
+            :describe,
+            :get_parameter,
+            :options,
+            :play,
+            :pause,
+            :record,
+            :redirect,
+            :set_parameter,
+            :setup,
+            :teardown
+    ]
+
+    class << self
+
+      # Lists the method/message types this class can create.
+      # @return [Array<Symbol>]
+      attr_accessor :message_types
+
+      # Make sure the class responds to our message types.
+      #
+      # @param [Symbol] method
+      def respond_to?(method)
+        @message_types.include?(method) || super
+      end
+
+      # Creates a new message based on the given method type and URI.
+      #
+      # @param [Symbol] method
+      # @param [Array] args
+      # @return [RTSP::Message]
+      def method_missing(method, *args)
+        request_uri = args.first
+
+        if @message_types.include? method
+          self.new(method, request_uri)
+        else
+          super
+        end
+      end
+    end
 
     attr_reader :method_type
     attr_reader :request_uri
@@ -17,19 +67,14 @@ module RTSP
     attr_reader :body
     attr_writer :rtsp_version
 
-    def self.method_missing(method, request_uri)
-      self.new(method, request_uri)
-      #super
-    end
-
     # @param [Symbol] :method_type The RTSP method to build and send.
     # @param [String] request_uri The URL to communicate to.
     def initialize(method_type, request_uri)
       @method_type = method_type
       @request_uri = build_resource_uri_from request_uri
-      @headers = default_headers
-      @body = ""
-      @version = DEFAULT_VERSION
+      @headers     = default_headers
+      @body        = ""
+      @version     = DEFAULT_VERSION
     end
 
     # Adds the header and its value to the list of headers for the message.
