@@ -4,6 +4,7 @@ source :rubygems
 
 gemspec
 gem 'sdp', '~> 0.2.2'
+gem 'eventmachine', '~> 0.12.10'
 
 gem 'simplecov', '>= 0.4.0', :require => false, :group => :test
 

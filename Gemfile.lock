@@ -33,6 +33,8 @@ GEM
     diff-lcs (1.1.2)
     erubis (2.6.6)
       abstract (>= 1.0.0)
+    eventmachine (0.12.10)
+    eventmachine (0.12.10-java)
     fattr (2.2.0)
     flay (1.4.2)
       ruby_parser (~> 2.0)
@@ -129,6 +131,7 @@ DEPENDENCIES
   bundler (~> 1.0.0)
   code_statistics (~> 0.2.13)
   cucumber
+  eventmachine (~> 0.12.10)
   infinity_test
   jeweler (~> 1.5.0)
   metric_fu
