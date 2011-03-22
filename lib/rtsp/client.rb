@@ -211,7 +211,7 @@ module RTSP
 
       EventMachine.run {
         #EventMachine.connect('0.0.0.0', 9000, RTSP::Capturer)
-        EventMachine.open_datagram_socket('0.0.0.0', rtp_port, RTSP::Capturer)
+        EventMachine.open_datagram_socket('0.0.0.0', rtp_port, RTSP::Capturer, @capture_file)
         EventMachine.add_periodic_timer(1) do
           RTSP::Client.log "Waiting for UDP data on port #{rtp_port}..."
         end

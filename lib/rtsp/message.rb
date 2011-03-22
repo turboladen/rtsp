@@ -32,6 +32,7 @@ module RTSP
             :teardown
     ]
 
+    # TODO: define #describe somewhere so I can actually test that method.
     class << self
 
       # Lists the method/message types this class can create.
