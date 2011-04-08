@@ -13,7 +13,7 @@ describe RTSP::TransportParser do
     end
 
     it "extracts the protocol" do
-      @result[:protocol].should == 'RTP'
+      @result[:streaming_protocol].should == 'RTP'
     end
 
     it "extracts the profile" do
@@ -40,7 +40,7 @@ describe RTSP::TransportParser do
     end
 
     it "extracts the lower transport type" do
-      @result[:lower_transport].should == 'TCP'
+      @result[:transport_protocol].should == 'TCP'
     end
 
     it "extracts the interleaved RTP channel" do

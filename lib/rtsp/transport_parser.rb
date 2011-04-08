@@ -8,15 +8,18 @@ module RTSP
     end
 
     rule(:transport_specifier) do
-      match('[A-Z]').repeat(3).as(:protocol) >> forward_slash >>
+      match('[A-Z]').repeat(3).as(:streaming_protocol) >> forward_slash >>
           match('[A-Z]').repeat(3).as(:profile) >>
-          (forward_slash >> match('[A-Z]').repeat(3).as(:lower_transport)).maybe
+          (forward_slash >> match('[A-Z]').repeat(3).as(:transport_protocol)).maybe
     end
 
     rule(:broadcast_type) do
       str('unicast')
     end
 
+    rule(:destination) do
+      str('destination=') >> ip_address
+    end
     rule(:source) do
       str('source=') >> ip_address
     end
@@ -48,6 +51,7 @@ module RTSP
     rule(:header_field) do
       transport_specifier >>
           (semi_colon >> broadcast_type.as(:broadcast_type)).maybe >>
+          (semi_colon >> destination.as(:destination)).maybe >>
           (semi_colon >> source.as(:source)).maybe >>
           (semi_colon >> client_port.as(:client_port)).maybe >>
           (semi_colon >> server_port.as(:server_port)).maybe >>
