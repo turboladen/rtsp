@@ -1,24 +1,46 @@
+require_relative 'exception'
 require 'tempfile'
-require 'eventmachine'
+require 'socket'
 
 module RTSP
-  class Capturer < EventMachine::Connection
-
+  class Capturer
     DEFAULT_CAPFILE_NAME = "rtsp_capture.rtsp"
 
-    attr_reader :capture_file
+    attr_accessor :media_file
+    attr_accessor :port
+    attr_accessor :protocol
+    attr_accessor :broadcast_type
 
-    def initialize(capture_file=nil)
+    # @param [Symbol] protocol :udp or :tcp
+    def initialize(protocol=:udp, rtp_port=9000, capture_file=nil)
+      if protocol == :udp
+        init_udp_server(rtp_port)
+      elsif protocol == :tcp
+        init_tcp_server(rtp_port)
+      else
+        raise RTSP::Exception
+      end
+
       @capture_file = capture_file || Tempfile.new(DEFAULT_CAPFILE_NAME)
     end
 
-    def post_init
-      puts "client connected"
+    def run
+      loop do
+        data = @server.recvfrom(MAX_BYTES_TO_RECEIVE).first
+        puts data.size
+        @capture_file.write data
+      end
     end
 
-    def receive_data data
-      p data.size
-      @capture_file.write data
+    def init_udp_server(rtp_port)
+      @server = UDPSocket.open
+      #opt = [1].pack("i")
+      #@server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, opt)
+      @server.bind('0.0.0.0', rtp_port)
+    end
+
+    def init_tcp_server(rtp_port)
+      @server = TCPSocket.new('0.0.0.0', rtp_port)
     end
   end
 end

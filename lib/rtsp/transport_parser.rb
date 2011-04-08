@@ -2,6 +2,11 @@ require 'parslet'
 
 module RTSP
   class TransportParser < Parslet::Parser
+
+    def initialize
+      super
+    end
+
     rule(:transport_specifier) do
       match('[A-Z]').repeat(3).as(:protocol) >> forward_slash >>
           match('[A-Z]').repeat(3).as(:profile) >>

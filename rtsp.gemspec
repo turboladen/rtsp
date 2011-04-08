@@ -10,7 +10,6 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = Gem::Requirement.new(">= 1.3.6") if s.respond_to? :required_rubygems_version=
   s.authors = ["Steve Loveless, Mike Kirby"]
   s.date = %q{2011-03-22}
-  s.default_executable = %q{rtsp}
   s.description = %q{This library intends to follow the RTSP RFC document (2326) to allow for working with RTSP servers.  At this point, it's up to you to parse the data from a play call, but we'll get there.  ...eventually.
 For more information
 RTSP: http://www.ietf.org/rfc/rfc2326.txt}

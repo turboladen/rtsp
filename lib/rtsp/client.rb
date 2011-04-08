@@ -2,6 +2,7 @@ require 'socket'
 require 'tempfile'
 require 'timeout'
 
+require_relative 'transport_parser'
 require File.expand_path(File.dirname(__FILE__) + '/capturer')
 require File.expand_path(File.dirname(__FILE__) + '/exception')
 require File.expand_path(File.dirname(__FILE__) + '/global')
@@ -24,6 +25,8 @@ module RTSP
     attr_reader :session
     attr_reader :supported_methods
     attr_accessor :tracks
+    attr_accessor :connection
+    attr_accessor :capturer
 
     # TODO: Break Stream out in to its own class.
     # See RFC section A.1.
@@ -36,6 +39,7 @@ module RTSP
 
     # @param [String] rtsp_url URL to the resource to stream.  If no scheme is
     # given, "rtsp" is assumed.  If no port is given, 554 is assumed.
+=begin
     def initialize(rtsp_url, args={})
       @server_uri = build_resource_uri_from rtsp_url
       @cseq = 1
@@ -47,10 +51,36 @@ module RTSP
       @capture_data = args[:capture_data] || true
       @capture_file = args[:capture_file] || Tempfile.new(DEFAULT_CAPFILE_NAME)
 
-      @transport = {}
-      @transport[:client_port] = args[:client_port] || 9000
-      @transport[:specifier] = args[:transport_specifier] || "RTP/AVP"
-      @transport[:routing] = args[:routing] || "unicast"
+      @transport_request = {}
+      @transport_request[:client_port_request] = args[:client_port_request] || 9000
+      @transport_request[:protocol] = args[:protocol] || "RTP"
+      @transport_request[:profile] = args[:profile] || "AVP"
+      @transport_request[:broadcast_type_request] = args[:broadcast_type_request] || "unicast"
+    end
+=end
+    # TODO: Use server_url everywhere; just use URI to ensure the port & rtspu.
+    def initialize(server_url=nil)
+      Struct.new("Connection", :server_url, :timeout, :socket,
+        :do_capture, :interleave)
+      @connection = Struct::Connection.new
+      @capturer = RTSP::Capturer.new
+
+      yield(connection, capturer) if block_given?
+
+      @connection.server_url = server_url || @connection.server_url
+      @server_uri = build_resource_uri_from(@connection.server_url)
+      @connection.timeout ||= 30
+      @connection.socket  ||= TCPSocket.new(@server_uri.host, @server_uri.port)
+      @connection.do_capture ||= true
+      @connection.interleave ||= false
+      @capturer.port ||= 9000
+      @capturer.protocol ||= :udp
+      @capturer.broadcast_type ||= :unicast
+      @capturer.media_file ||= Tempfile.new(DEFAULT_CAPFILE_NAME)
+
+      @play_thread = nil
+      @cseq = 1
+      reset_state
     end
 
     # The URL for the RTSP server to talk to can change if multiple servers are
@@ -71,13 +101,13 @@ module RTSP
       message.to_s.each_line { |line| RTSP::Client.log line.strip }
 
       begin
-        response = Timeout::timeout(@timeout) do
-          @socket.send(message.to_s, 0)
-          socket_data = @socket.recvfrom MAX_BYTES_TO_RECEIVE
+        response = Timeout::timeout(@connection.timeout) do
+          @connection.socket.send(message.to_s, 0)
+          socket_data = @connection.socket.recvfrom MAX_BYTES_TO_RECEIVE
           RTSP::Response.new socket_data.first
         end
       rescue Timeout::Error
-        raise RTSP::Exception, "Request took more than #{@timeout} seconds to send."
+        raise RTSP::Exception, "Request took more than #{@connection.timeout} seconds to send."
       end
 
       RTSP::Client.log "Received response:"
@@ -142,7 +172,11 @@ module RTSP
       request(message)
     end
 
-    # TODO: parse Transport header (http://tools.ietf.org/html/rfc2326#section-12.39)
+    def request_transport
+      value = "RTP/AVP;#{@capturer.broadcast_type};client_port="
+      value << "#{@capturer.port}-#{@capturer.port + 1}"
+    end
+
     # TODO: @session numbers are relevant to tracks, and a client can play multiple tracks at the same time.
     # Sends the SETUP request, then sets @session to the value returned in the
     # Session header from the server, then sets the @session_state to :ready.
@@ -151,12 +185,8 @@ module RTSP
     # @param [Hash] additional_headers
     # @return [RTSP::Response] The response formatted as a Hash.
     def setup(track, additional_headers={})
-      transport_value = "#{@transport[:specifier]};#{@transport[:routing]};"
-      transport_value << "client_port=#{@transport[:client_port]}-"
-      transport_value << "#{@transport[:client_port] + 1}"
-
       message = RTSP::Message.setup(track).with_headers({
-          cseq: @cseq, transport: transport_value })
+          cseq: @cseq, transport: request_transport})
       message.add_headers additional_headers
 
       request(message) do |response|
@@ -165,29 +195,9 @@ module RTSP
         end
 
         @session = response.session
-        #@transport = parse_transport_from response.transport
+        parser = RTSP::TransportParser.new
+        @transport = parser.parse response.transport
       end
-    end
-
-    def parse_transport_from field_string
-=begin
-      fields = field_string.split ";"
-      transport = {}
-      specifier = fields.shift
-      transport[:protocol] = specifier.split("/")[0]
-      transport[:profile] =  specifier.split("/")[1]
-      transport[:lower_transport] = specifier.split("/")[2].downcase.to_sym || :udp
-      transport[:network_type] = fields.shift.to_sym || :multicast
-
-      extras = fields.inject({}) do |result, field_and_value_string|
-        field_and_value_array = field_and_value_string.split "="
-        result[field_and_value_array.first.to_sym] = field_and_value_array.last
-        result
-      end
-      transport.merge! extras
-=end
-      pattern = /(?<transport_protocol>\w+)\/(?<profile>\w+)(\/(?<lower_transport>\w+))?;(?<net_cast>\w+);(?<everything_else>.*)/
-      transport_match = pattern.match(field_string)
     end
 
     # Sends the PLAY request and sets @session_state to :playing.
@@ -206,16 +216,12 @@ module RTSP
       end
     end
 
+    # TODO: If playback over UDP doesn't result in any data coming in on the socket,
+    #       re-setup with RTP/AVP/TCP;unicast;interleaved=0-1
     def start_capture
-      rtp_port = 9000
-
-      EventMachine.run {
-        #EventMachine.connect('0.0.0.0', 9000, RTSP::Capturer)
-        EventMachine.open_datagram_socket('0.0.0.0', rtp_port, RTSP::Capturer, @capture_file)
-        EventMachine.add_periodic_timer(1) do
-          RTSP::Client.log "Waiting for UDP data on port #{rtp_port}..."
-        end
-      }
+      log "Capturing on port #{@transport[:client_port]}"
+      @capturer = RTSP::Capturer.new(:udp, @transport[:client_port], @capture_file)
+      @capturer.run
     end
 
     # Sends the PAUSE request and sets @session_state to :ready.

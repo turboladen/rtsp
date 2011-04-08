@@ -15,7 +15,6 @@ has_yard: true
 
 dependencies:
   sdp: ~> 0.2.0
-  eventmachine: ~>0.12.10
 
 development_dependencies:
   bundler: ~> 1.0.0
