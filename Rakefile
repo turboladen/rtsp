@@ -32,7 +32,9 @@ end
 task :default => :spec
 
 require 'yard'
-YARD::Rake::YardocTask.new
+YARD::Rake::YardocTask.new do |t|
+  t.options = ['--verbose']
+end
 
 # Load all extra rake tasks
 Dir["#{File.dirname(__FILE__)}/tasks/*.rake"].each { |ext| load ext }
