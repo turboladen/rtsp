@@ -17,8 +17,16 @@ module RTSP
       str('unicast')
     end
 
+    rule(:source) do
+      str('source=') >> ip_address
+    end
+
     rule(:client_port) do
       str('client_port=') >> number.as(:rtp) >> dash >> number.as(:rtcp)
+    end
+
+    rule(:server_port) do
+      str('server_port=') >> number.as(:rtp) >> dash >> number.as(:rtcp)
     end
 
     rule(:interleaved) do
@@ -26,6 +34,12 @@ module RTSP
           number.as(:rtcp_channel)
     end
 
+    rule(:ip_address) do
+      match('[\d]').repeat(1,3) >> str('.') >>
+          match('[\d]').repeat(1,3) >> str('.') >>
+          match('[\d]').repeat(1,3) >> str('.') >>
+          match('[\d]').repeat(1,3)
+    end
     rule(:number)         { match('[\d]').repeat }
     rule(:forward_slash)  { match('[/]') }
     rule(:semi_colon)     { match('[;]') }
@@ -34,7 +48,9 @@ module RTSP
     rule(:header_field) do
       transport_specifier >>
           (semi_colon >> broadcast_type.as(:broadcast_type)).maybe >>
+          (semi_colon >> source.as(:source)).maybe >>
           (semi_colon >> client_port.as(:client_port)).maybe >>
+          (semi_colon >> server_port.as(:server_port)).maybe >>
           (semi_colon >> interleaved.as(:interleaved)).maybe
 
     end
