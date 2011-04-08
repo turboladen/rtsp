@@ -4,7 +4,8 @@ require './lib/rtsp/client'
 url = "rtsp://10.221.222.12/?deviceid=uuid:0ed8f1e9-0ce2-987c-4649-db3ae7aa3a04"
 
 cap_file = File.new("nsm_cap.rtsp", "wb")
-r = RTSP::Client.new url, capture_file: cap_file
+r = RTSP::Client.new url
+r.capturer.media_file = cap_file
 
 r.options
 r.describe

@@ -39,27 +39,10 @@ module RTSP
 
     # @param [String] rtsp_url URL to the resource to stream.  If no scheme is
     # given, "rtsp" is assumed.  If no port is given, 554 is assumed.
-=begin
-    def initialize(rtsp_url, args={})
-      @server_uri = build_resource_uri_from rtsp_url
-      @cseq = 1
-      reset_state
-      @timeout = args[:timeout] || 30
-      @socket = args[:socket] || TCPSocket.new(@server_uri.host, @server_uri.port)
-
-      @play_thread = nil
-      @capture_data = args[:capture_data] || true
-      @capture_file = args[:capture_file] || Tempfile.new(DEFAULT_CAPFILE_NAME)
-
-      @transport_request = {}
-      @transport_request[:client_port_request] = args[:client_port_request] || 9000
-      @transport_request[:protocol] = args[:protocol] || "RTP"
-      @transport_request[:profile] = args[:profile] || "AVP"
-      @transport_request[:broadcast_type_request] = args[:broadcast_type_request] || "unicast"
-    end
-=end
     # TODO: Use server_url everywhere; just use URI to ensure the port & rtspu.
     def initialize(server_url=nil)
+      Thread.abort_on_exception = true
+
       Struct.new("Connection", :server_url, :timeout, :socket,
         :do_capture, :interleave)
       @connection = Struct::Connection.new
@@ -73,8 +56,8 @@ module RTSP
       @connection.socket  ||= TCPSocket.new(@server_uri.host, @server_uri.port)
       @connection.do_capture ||= true
       @connection.interleave ||= false
-      @capturer.port ||= 9000
-      @capturer.protocol ||= :udp
+      @capturer.media_port ||= 9000
+      @capturer.transport_protocol ||= :udp
       @capturer.broadcast_type ||= :unicast
       @capturer.media_file ||= Tempfile.new(DEFAULT_CAPFILE_NAME)
 
@@ -174,7 +157,7 @@ module RTSP
 
     def request_transport
       value = "RTP/AVP;#{@capturer.broadcast_type};client_port="
-      value << "#{@capturer.port}-#{@capturer.port + 1}"
+      value << "#{@capturer.media_port}-#{@capturer.media_port + 1}\r\n"
     end
 
     # TODO: @session numbers are relevant to tracks, and a client can play multiple tracks at the same time.
@@ -186,7 +169,7 @@ module RTSP
     # @return [RTSP::Response] The response formatted as a Hash.
     def setup(track, additional_headers={})
       message = RTSP::Message.setup(track).with_headers({
-          cseq: @cseq, transport: request_transport})
+          cseq: @cseq, transport: request_transport })
       message.add_headers additional_headers
 
       request(message) do |response|
@@ -197,6 +180,13 @@ module RTSP
         @session = response.session
         parser = RTSP::TransportParser.new
         @transport = parser.parse response.transport
+
+        unless @transport[:transport_protocol].nil?
+          @capturer.transport_protocol = @transport[:transport_protocol]
+        end
+
+        @capturer.media_port = @transport[:client_port][:rtp].to_i
+        @capturer.broadcast_type = @transport[:broadcast_type]
       end
     end
 
@@ -211,16 +201,18 @@ module RTSP
       message.add_headers additional_headers
 
       request(message) do
-        @play_thread = Thread.new { start_capture }
+        if @play_thread.nil?
+          @play_thread = Thread.new { start_capture }
+        end
+
         @session_state = :playing
       end
     end
 
     # TODO: If playback over UDP doesn't result in any data coming in on the socket,
-    #       re-setup with RTP/AVP/TCP;unicast;interleaved=0-1
+    # re-setup with RTP/AVP/TCP;unicast;interleaved=0-1
     def start_capture
-      log "Capturing on port #{@transport[:client_port]}"
-      @capturer = RTSP::Capturer.new(:udp, @transport[:client_port], @capture_file)
+      log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
       @capturer.run
     end
 

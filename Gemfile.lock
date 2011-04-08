@@ -13,7 +13,7 @@ GEM
   specs:
     Saikuro (1.1.0)
     abstract (1.0.0)
-    activesupport (3.0.5)
+    activesupport (3.0.6)
     arrayfields (4.7.4)
     blankslate (2.1.2.4)
     builder (3.0.0)
@@ -37,6 +37,7 @@ GEM
     erubis (2.6.6)
       abstract (>= 1.0.0)
     eventmachine (0.12.10)
+    eventmachine (0.12.10-java)
     fattr (2.2.0)
     flay (1.4.2)
       ruby_parser (~> 2.0)
@@ -50,7 +51,7 @@ GEM
       json (>= 1.4.6)
     git (1.2.5)
     haml (3.0.25)
-    hirb (0.4.0)
+    hirb (0.4.3)
     i18n (0.5.0)
     infinity_test (1.0.2)
       notifiers (>= 1.1.0)
@@ -78,12 +79,12 @@ GEM
       roodi (>= 2.1.0)
       syntax
     notifiers (1.1.0)
-    ore-core (0.1.4)
+    ore-core (0.1.5)
     ore-tasks (0.3.0)
       ore-core (~> 0.1.0)
     parslet (1.1.1)
       blankslate (~> 2.0)
-    rails_best_practices (0.7.2)
+    rails_best_practices (0.7.5)
       activesupport
       colored (~> 1.2)
       erubis (~> 2.6.6)
@@ -117,13 +118,13 @@ GEM
     sdp (0.2.2)
       parslet (~> 1.1.0)
     sexp_processor (3.0.5)
-    simplecov (0.4.1)
-      simplecov-html (~> 0.4.3)
-    simplecov-html (0.4.3)
+    simplecov (0.4.2)
+      simplecov-html (~> 0.4.4)
+    simplecov-html (0.4.4)
     syntax (1.0.0)
     term-ansicolor (1.0.5)
     watchr (0.7)
-    yard (0.6.5)
+    yard (0.6.7)
 
 PLATFORMS
   java
