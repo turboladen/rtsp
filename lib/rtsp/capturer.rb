@@ -5,9 +5,10 @@ require_relative 'exception'
 
 module RTSP
 
-  # Objects of this type can be used with a RTSP::Client object in order to
+  # Objects of this type can be used with a +RTSP::Client+ object in order to
   # capture the RTP data transmitted to the client as a result of an RTSP
   # PLAY call.
+  #
   # In this version, objects of this type don't do much other than just capture
   # the data to a file; in later versions, objects of this type will be able
   # to provide a "sink" and allow for ensuring that the received  RTP packets
@@ -15,16 +16,31 @@ module RTSP
   # (objects of this type don't don't currently check RTP sequence numbers
   # on the data that's been received).
   class Capturer
+
+    # Name of the file the data will be captured to unless #rtp_file is set.
     DEFAULT_CAPFILE_NAME = "rtsp_capture.rtsp"
+
+    # Maximum number of bytes to receive on the socket.
     MAX_BYTES_TO_RECEIVE = 3000
 
+    # @param [File] rtp_file The file to capture the RTP data to.
+    # @return [File]
     attr_accessor :rtp_file
+
+    # @param [Fixnum] rtp_port The port on which to capture the RTP data.
+    # @return [Fixnum]
     attr_accessor :rtp_port
+
+    # @param [Symbol] transport_protocol +:udp+ or +:tcp+.
+    # @return [Symbol]
     attr_accessor :transport_protocol
+
+    # @param [Symbol] broadcast_type +:multicast+ or +:unicast+.
+    # @return [Symbol]
     attr_accessor :broadcast_type
 
     # @param [Symbol] transport_protocol The type of socket to use for capturing
-    #   the data. :udp or :tcp.
+    #   the data. +:udp+ or +:tcp+.
     # @param [Fixnum] rtp_port The port on which to capture RTP data.
     # @param [File] capture_file The file object to capture the RTP data to.
     def initialize(transport_protocol=:udp, rtp_port=9000, rtp_capture_file=nil)
