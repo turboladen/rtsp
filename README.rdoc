@@ -1,4 +1,4 @@
-= rtsp_client
+= rtsp
 
 * https://github.com/turboladen/rtsp
 
