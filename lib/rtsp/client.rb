@@ -3,12 +3,12 @@ require 'tempfile'
 require 'timeout'
 
 require_relative 'transport_parser'
-require File.expand_path(File.dirname(__FILE__) + '/capturer')
-require File.expand_path(File.dirname(__FILE__) + '/exception')
-require File.expand_path(File.dirname(__FILE__) + '/global')
-require File.expand_path(File.dirname(__FILE__) + '/helpers')
-require File.expand_path(File.dirname(__FILE__) + '/message')
-require File.expand_path(File.dirname(__FILE__) + '/response')
+require_relative 'capturer'
+require_relative 'exception'
+require_relative 'global'
+require_relative 'helpers'
+require_relative 'message'
+require_relative 'response'
 
 module RTSP
 
@@ -26,9 +26,13 @@ module RTSP
     attr_reader :supported_methods
     attr_accessor :tracks
     attr_accessor :connection
+
+    # Use to get/set an object for capturing received data.
+    # @param [RTSP::Capturer]
+    # @return [RTSP::Capturer]
     attr_accessor :capturer
 
-    # TODO: Break Stream out in to its own class.
+    # @todo Break Stream out in to its own class.
     # See RFC section A.1.
     attr_reader :session_state
 
@@ -37,9 +41,15 @@ module RTSP
       yield self if block_given?
     end
 
-    # @param [String] rtsp_url URL to the resource to stream.  If no scheme is
-    # given, "rtsp" is assumed.  If no port is given, 554 is assumed.
-    # TODO: Use server_url everywhere; just use URI to ensure the port & rtspu.
+    # @param [String] server_url URL to the resource to stream.  If no scheme is
+    #   given, "rtsp" is assumed.  If no port is given, 554 is assumed.
+    # @yield [Struct::Connection, RTSP::Capturer]
+    # @yieldparam [Struct::Connection] server_url=
+    # @yieldparam [Struct::Connection] timeout=
+    # @yieldparam [Struct::Connection] socket=
+    # @yieldparam [Struct::Connection] do_capture=
+    # @yieldparam [Struct::Connection] interleave=
+    # @todo Use server_url everywhere; just use URI to ensure the port & rtspu.
     def initialize(server_url=nil)
       Thread.abort_on_exception = true
 
@@ -102,9 +112,9 @@ module RTSP
       response
     end
 
-    # Sends an OPTIONS message to the server specified by @server_uri.  Sets
-    # @supported_methods based on the list of supported methods returned in the
-    # Public headers.
+    # Sends an OPTIONS message to the server specified by +@server_uri+.  Sets
+    # +@supported_methods+ based on the list of supported methods returned in
+    # the Public headers.
     #
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
@@ -118,11 +128,11 @@ module RTSP
       end
     end
 
-    # TODO: get tracks, IP's, ports, multicast/unicast
     # Sends the DESCRIBE request, then extracts the SDP description into
-    # @session_description, extracts the session @start_time and @stop_time,
-    # @content_base, media_control_tracks, and aggregate_control_track.
+    # +@session_description+, extracts the session +@start_time+ and +@stop_time+,
+    # +@content_base+, media_control_tracks, and aggregate_control_track.
     #
+    # @todo get tracks, IP's, ports, multicast/unicast
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def describe additional_headers={}
@@ -142,9 +152,9 @@ module RTSP
     end
 
     # @param [String] request_url The URL to post the presentation or media
-    # object to.
+    #   object to.
     # @param [SDP::Description] description The SDP description to send to the
-    # server.
+    #   server.
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     def announce(request_url, description, additional_headers={})
@@ -160,10 +170,11 @@ module RTSP
       value << "#{@capturer.media_port}-#{@capturer.media_port + 1}\r\n"
     end
 
-    # TODO: @session numbers are relevant to tracks, and a client can play multiple tracks at the same time.
-    # Sends the SETUP request, then sets @session to the value returned in the
-    # Session header from the server, then sets the @session_state to :ready.
+    # Sends the SETUP request, then sets +@session+ to the value returned in the
+    # Session header from the server, then sets the +@session_state+ to :ready.
     #
+    # @todo +@session+ numbers are relevant to tracks, and a client can play
+    #   multiple tracks at the same time.
     # @param [String] track
     # @param [Hash] additional_headers
     # @return [RTSP::Response] The response formatted as a Hash.
@@ -190,7 +201,7 @@ module RTSP
       end
     end
 
-    # Sends the PLAY request and sets @session_state to :playing.
+    # Sends the PLAY request and sets +@session_state+ to :playing.
     #
     # @param [String] track
     # @param [Hash] additional_headers
@@ -209,14 +220,14 @@ module RTSP
       end
     end
 
-    # TODO: If playback over UDP doesn't result in any data coming in on the socket,
-    # re-setup with RTP/AVP/TCP;unicast;interleaved=0-1
+    # @todo If playback over UDP doesn't result in any data coming in on the
+    #   socket, re-setup with RTP/AVP/TCP;unicast;interleaved=0-1.
     def start_capture
       log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
       @capturer.run
     end
 
-    # Sends the PAUSE request and sets @session_state to :ready.
+    # Sends the PAUSE request and sets +@session_state+ to :ready.
     #
     # @param [String] track A track or presentation URL to pause.
     # @param [Hash] additional_headers
@@ -285,7 +296,7 @@ module RTSP
       request(message)
     end
 
-    # Sends the RECORD request and sets @session_state to :recording.
+    # Sends the RECORD request and sets +@session_state+ to :recording.
     #
     # @param [String] track
     # @param [Hash] additional_headers
@@ -299,8 +310,8 @@ module RTSP
     end
 
     # Executes the Request with the arguments passed in, yields the response to
-    # the calling block, checks the cseq response and the session response,
-    # then increments @cseq by 1.  Handles any exceptions raised during the
+    # the calling block, checks the CSeq response and the session response,
+    # then increments +@cseq+ by 1.  Handles any exceptions raised during the
     # Request.
     #
     # @param [Hash] new_args
@@ -335,7 +346,7 @@ module RTSP
       response
     end
 
-    # Ensures that @session is set before continuing on.
+    # Ensures that +@session+ is set before continuing on.
     #
     # @raise [RTSP::Exception] Raises if @session isn't set.
     # @return Returns whatever the block returns.
@@ -375,7 +386,7 @@ module RTSP
     end
 
     # Compares the sequence number passed in to the current client sequence
-    # number (@cseq) and raises if they're not equal.  If that's the case, the
+    # number (+@cseq+) and raises if they're not equal.  If that's the case, the
     # server responded to a different request.
     #
     # @param [Fixnum] server_cseq Sequence number returned by the server.
@@ -388,8 +399,8 @@ module RTSP
     end
 
     # Compares the session number passed in to the current client session
-    # number (@session) and raises if they're not equal.  If that's the case, the
-    # server responded to a different request.
+    # number (+@session+) and raises if they're not equal.  If that's the case,
+    # the server responded to a different request.
     #
     # @param [Fixnum] server_session Session number returned by the server.
     # @raise [RTSP::Exception]
@@ -404,7 +415,7 @@ module RTSP
     # and puts them to an Array.
     #
     # @param [String] method_list The string returned from the server containing
-    # the list of methods it supports.
+    #   the list of methods it supports.
     # @return [Array<Symbol>] The list of methods as symbols.
     def extract_supported_methods_from method_list
       method_list.downcase.split(', ').map { |m| m.to_sym }
