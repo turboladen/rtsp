@@ -7,9 +7,15 @@ module RTSP
   # This class is responsible for building a single RTSP message that can be
   # used by both clients and servers.
   #
-  # If you need to add a new message type, you can simply add to the supported
+  # Only message types defined in {RFC 2326}[http://tools.ietf.org/html/rfc2326]
+  # are implemented, however if you need to add a new message type (perhaps for
+  # some custom server implementation?), you can simply add to the supported
   # list by:
-  #    RTSP::Message.message_types << :my_new_type
+  #    RTSP::Message.message_types << :barrel_roll
+  #
+  # You can then build it like a standard message:
+  #   message = RTSP::Message.barrel_roll("192.168.1.10").with_headers({
+  #   cseq: 123, content_type: "video/x-m4v" })
   class Message
     include RTSP::Helpers
 
@@ -91,6 +97,17 @@ module RTSP
       end
     end
 
+    # Use when creating a new Message to add headers you want.
+    #
+    # @example Simple header
+    #   RTSP::Message.options("192.168.1.10").with_headers({ cseq: @cseq })
+    # @example Multi-word header
+    #   RTSP::Message.options("192.168.1.10").with_headers({ user_agent:
+    #   'My RTSP Client 1.0' })   # => "OPTIONS 192.168.1.10 RTSP 1.0\r\n
+    #                             #     CSeq: 1\r\n
+    #                             #     User-Agent: My RTSP Client 1.0\r\n"
+    # @param [Hash] new_headers The headers to add to the Request.  The Hash
+    #   key will be capitalized; if
     def with_headers(new_headers)
       add_headers new_headers
 
