@@ -1,24 +1,39 @@
-require_relative 'exception'
 require 'tempfile'
 require 'socket'
 
+require_relative 'exception'
+
 module RTSP
+
+  # Objects of this type can be used with a RTSP::Client object in order to
+  # capture the RTP data transmitted to the client as a result of an RTSP
+  # PLAY call.
+  # In this version, objects of this type don't do much other than just capture
+  # the data to a file; in later versions, objects of this type will be able
+  # to provide a "sink" and allow for ensuring that the received  RTP packets
+  # will  be reassembled in the correct order, as they're written to file
+  # (objects of this type don't don't currently check RTP sequence numbers
+  # on the data that's been received).
   class Capturer
     DEFAULT_CAPFILE_NAME = "rtsp_capture.rtsp"
     MAX_BYTES_TO_RECEIVE = 3000
 
-    attr_accessor :media_file
-    attr_accessor :media_port
+    attr_accessor :rtp_file
+    attr_accessor :rtp_port
     attr_accessor :transport_protocol
     attr_accessor :broadcast_type
 
-    # @param [Symbol] protocol :udp or :tcp
-    def initialize(transport_protocol=:udp, rtp_port=9000, capture_file=nil)
+    # @param [Symbol] transport_protocol The type of socket to use for capturing
+    #   the data. :udp or :tcp.
+    # @param [Fixnum] rtp_port The port on which to capture RTP data.
+    # @param [File] capture_file The file object to capture the RTP data to.
+    def initialize(transport_protocol=:udp, rtp_port=9000, rtp_capture_file=nil)
       @transport_protocol = transport_protocol
-      @media_port = rtp_port
-      @media_file = capture_file || Tempfile.new(DEFAULT_CAPFILE_NAME)
+      @rtp_port = rtp_port
+      @rtp_file = rtp_capture_file || Tempfile.new(DEFAULT_CAPFILE_NAME)
     end
 
+    # Starts capturing data on +@rtp_port+ and writes it to +@rtp_file+.
     def run
       if @transport_protocol == :udp
         server = init_udp_server
@@ -30,23 +45,30 @@ module RTSP
 
       loop do
         data = server.recvfrom(MAX_BYTES_TO_RECEIVE).first
-        puts data.size
-        @media_file.write data
+        RTSP::Client.log data.size
+        @rtp_file.write data
       end
     end
 
+    # Sets up to receive data on a UDP socket, using +@rtp_port+.
+    #
+    # @return [UDPSocket]
     def init_udp_server
       server = UDPSocket.open
-      #opt = [1].pack("i")
-      #@server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, opt)
-      server.bind('0.0.0.0', @media_port)
-      RTSP::Client.log "UDP server setup to receive on port #{@media_port}"
+      server.bind('0.0.0.0', @rtp_port)
+      RTSP::Client.log "UDP server setup to receive on port #{@rtp_port}"
 
       server
     end
 
+    # Sets up to receive data on a TCP socket, using +@rtp_port+.
+    #
+    # @return [TCPSocket]
     def init_tcp_server
-      server = TCPSocket.new('0.0.0.0', @media_port)
+      server = TCPSocket.new('0.0.0.0', @rtp_port)
+      RTSP::Client.log "TCP server setup to receive on port #{@rtp_port}"
+
+      server
     end
   end
 end
