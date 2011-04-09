@@ -2,7 +2,7 @@ require_relative '../ext/logger'
 
 module RTSP
   module Global
-    DEFAULT_PORT = 554
+    DEFAULT_RTSP_PORT = 554
     DEFAULT_VERSION = '1.0'
 
     # Sets whether to log RTSP requests & responses.
