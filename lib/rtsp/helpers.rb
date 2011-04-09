@@ -1,5 +1,6 @@
 require 'uri'
-require File.expand_path(File.dirname(__FILE__) + '/global')
+require_relative 'global'
+require_relative 'exception'
 
 module RTSP
   module Helpers
@@ -20,7 +21,7 @@ module RTSP
         resource_uri
 
       else
-        raise "url must be a String."
+        raise RTSP::Exception, "url must be a String."
       end
     end
   end
