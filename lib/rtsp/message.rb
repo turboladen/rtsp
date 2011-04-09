@@ -1,6 +1,6 @@
-require File.expand_path(File.dirname(__FILE__) + '/helpers')
-require File.expand_path(File.dirname(__FILE__) + '/exception')
-require File.expand_path(File.dirname(__FILE__) + '/version')
+require_relative 'helpers'
+require_relative 'exception'
+require_relative 'version'
 
 module RTSP
 
@@ -16,7 +16,8 @@ module RTSP
     RTSP_ACCEPT_TYPE = "application/sdp"
     RTSP_DEFAULT_NPT             = "0.000-"
     RTSP_DEFAULT_SEQUENCE_NUMBER = 1
-    USER_AGENT                   = "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
+    USER_AGENT                   =
+        "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
 
     @message_types = [
         :announce,
@@ -118,6 +119,7 @@ module RTSP
       add_body value
     end
 
+    # @return [String] The message as a String.
     def to_s
       message.to_s
     end
@@ -126,6 +128,9 @@ module RTSP
     # PRIVATES
     private
 
+    # Builds the request message to send to the server/client.
+    #
+    # @return [String]
     def message
       message = "#{@method_type.to_s.upcase} #{@request_uri} RTSP/#{@version}\r\n"
       message << headers_to_s(@headers)

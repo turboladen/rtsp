@@ -1,12 +1,11 @@
 require 'parslet'
 
 module RTSP
+
+  # Used for parsing the Transport header--mainly as the response from the
+  # SETUP request.  The values from this are used to determine what to use for
+  # other requests.
   class TransportParser < Parslet::Parser
-
-    def initialize
-      super
-    end
-
     rule(:transport_specifier) do
       match('[A-Z]').repeat(3).as(:streaming_protocol) >> forward_slash >>
           match('[A-Z]').repeat(3).as(:profile) >>
@@ -43,6 +42,7 @@ module RTSP
           match('[\d]').repeat(1,3) >> str('.') >>
           match('[\d]').repeat(1,3)
     end
+
     rule(:number)         { match('[\d]').repeat }
     rule(:forward_slash)  { match('[/]') }
     rule(:semi_colon)     { match('[;]') }

@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'sdp'
-
-require File.expand_path(File.dirname(__FILE__) + '/exception')
+require_relative 'exception'
 
 module RTSP
 
@@ -27,10 +26,15 @@ module RTSP
       @body = parse_body(body)
     end
 
+    # @return [String] The unparsed response as a String.
     def to_s
       @raw_response
     end
 
+    # Custom redefine to make sure all the dynamically created instance
+    # variables are displayed when this method is called.
+    #
+    # @return [String]
     def inspect
       me = "#<#{self.class.name}:#{self.__id__} "
       self.instance_variables.each { |v| me << "#{v}=#{instance_variable_get(v).inspect}, " }
@@ -58,7 +62,7 @@ module RTSP
     # code, response message, response version, and creates a snake-case
     # accessor with that value set.
     #
-    # @param [String] head
+    # @param [String] head The section of headers from the response text.
     def parse_head head
       lines = head.split "\r\n"
 
@@ -80,9 +84,12 @@ module RTSP
     end
 
     # Reads through each line of the RTSP response body and parses it if
-    # needed.
+    # needed.  Returns a SDP::Description if the Content-Type is
+    # 'application/sdp', otherwise returns the String that was passed in, but
+    # with line feeds removed.
     #
     # @param [String] body
+    # @return [SDP::Description,String]
     def parse_body body
       if body =~ /^(\r\n|\n)/
         body.gsub!(/^(\r\n|\n)/, '')
