@@ -54,25 +54,25 @@ module RTSP
       Thread.abort_on_exception = true
 
       Struct.new("Connection", :server_url, :timeout, :socket,
-        :do_capture, :interleave)
+          :do_capture, :interleave)
       @connection = Struct::Connection.new
-      @capturer = RTSP::Capturer.new
+      @capturer   = RTSP::Capturer.new
 
       yield(connection, capturer) if block_given?
 
-      @connection.server_url = server_url || @connection.server_url
-      @server_uri = build_resource_uri_from(@connection.server_url)
-      @connection.timeout ||= 30
-      @connection.socket  ||= TCPSocket.new(@server_uri.host, @server_uri.port)
-      @connection.do_capture ||= true
-      @connection.interleave ||= false
-      @capturer.media_port ||= 9000
+      @connection.server_url       = server_url || @connection.server_url
+      @server_uri                  = build_resource_uri_from(@connection.server_url)
+      @connection.timeout          ||= 30
+      @connection.socket           ||= TCPSocket.new(@server_uri.host, @server_uri.port)
+      @connection.do_capture       ||= true
+      @connection.interleave       ||= false
+      @capturer.media_port         ||= 9000
       @capturer.transport_protocol ||= :udp
-      @capturer.broadcast_type ||= :unicast
-      @capturer.media_file ||= Tempfile.new(DEFAULT_CAPFILE_NAME)
+      @capturer.broadcast_type     ||= :unicast
+      @capturer.media_file         ||= Tempfile.new(DEFAULT_CAPFILE_NAME)
 
       @play_thread = nil
-      @cseq = 1
+      @cseq        = 1
       reset_state
     end
 
@@ -120,7 +120,7 @@ module RTSP
     # @return [RTSP::Response]
     def options(additional_headers={})
       message = RTSP::Message.options(@server_uri.to_s).with_headers({
-        cseq: @cseq })
+          cseq: @cseq })
       message.add_headers additional_headers
 
       request(message) do |response|
@@ -137,17 +137,17 @@ module RTSP
     # @return [RTSP::Response]
     def describe additional_headers={}
       message = RTSP::Message.describe(@server_uri.to_s).with_headers({
-        cseq: @cseq })
+          cseq: @cseq })
       message.add_headers additional_headers
 
       request(message) do |response|
-        @session_description =  response.body
+        @session_description = response.body
         #@session_start_time =   response.body.start_time
         #@session_stop_time =    response.body.stop_time
         @content_base = build_resource_uri_from response.content_base
 
-        @media_control_tracks =     media_control_tracks
-        @aggregate_control_track =  aggregate_control_track
+        @media_control_tracks    = media_control_tracks
+        @aggregate_control_track = aggregate_control_track
       end
     end
 
@@ -165,6 +165,10 @@ module RTSP
       request(message)
     end
 
+    # Builds the Transport header fields string based on info used in setting up
+    # the Client instance.
+    #
+    # @return [String] The String to use wit the Transport header.
     def request_transport
       value = "RTP/AVP;#{@capturer.broadcast_type};client_port="
       value << "#{@capturer.media_port}-#{@capturer.media_port + 1}\r\n"
@@ -188,15 +192,15 @@ module RTSP
           @session_state = :ready
         end
 
-        @session = response.session
-        parser = RTSP::TransportParser.new
+        @session   = response.session
+        parser     = RTSP::TransportParser.new
         @transport = parser.parse response.transport
 
         unless @transport[:transport_protocol].nil?
           @capturer.transport_protocol = @transport[:transport_protocol]
         end
 
-        @capturer.media_port = @transport[:client_port][:rtp].to_i
+        @capturer.media_port     = @transport[:client_port][:rtp].to_i
         @capturer.broadcast_type = @transport[:broadcast_type]
       end
     end
@@ -263,7 +267,7 @@ module RTSP
 
     def reset_state
       @session_state = :init
-      @session = 0
+      @session       = 0
     end
 
     # Sends the GET_PARAMETERS request.
