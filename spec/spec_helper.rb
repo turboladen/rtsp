@@ -4,17 +4,9 @@ SimpleCov.start do
   add_filter "/spec/"
 end
 
-begin
-  require 'rspec'
-rescue LoadError
-  require 'rubygems' unless ENV['NO_RUBYGEMS']
-  gem 'rspec'
-  require 'rspec'
-end
-
+require 'rspec'
 $:.unshift(File.dirname(__FILE__) + '/../lib')
 require 'rtsp'
-require 'rspec'
 
 OPTIONS_RESPONSE = %Q{ RTSP/1.0 200 OK\r\n
 CSeq: 1\r\n
