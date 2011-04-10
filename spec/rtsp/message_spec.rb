@@ -10,7 +10,7 @@ describe "RTSP::Message" do
   it "raises if the header type isn't a Symbol" do
     message = RTSP::Message.options(@stream)
     lambda { message.header "hi", "everyone"
-    }.should raise_error RTSP::Exception
+      }.should raise_error RTSP::Exception
   end
 
   context "builds an OPTIONS string" do
@@ -121,7 +121,6 @@ describe "RTSP::Message" do
 
   context "builds a SETUP string" do
     it "with default sequence, transport, client_port, and routing values" do
-      pending "decision on if Transport should be left out of Message."
       message = RTSP::Message.setup(@stream)
 
       message.to_s.should match /^SETUP rtsp/
@@ -339,39 +338,45 @@ describe "RTSP::Message" do
     end
   end
 
-  context "#headers_to_s turns a Hash into an String of header strings" do
+  context "#to_s turns a Hash into an String of header strings" do
     it "single header, non-hyphenated name, hash value" do
-      pending "completion of refactoring Message"
-      header = { :range => { :npt => "0.000-" } }
-      request = build_request_with header
+      message = RTSP::Message.play(@stream).with_headers({
+          range: { npt: "0.000-" }
+      })
 
-      string = request.headers_to_s(header)
+      string = message.to_s
       string.is_a?(String).should be_true
       string.should include "Range: npt=0.000-"
     end
 
     it "single header, hyphenated, non-hash value" do
-      pending "completion of refactoring Message"
-      header = { :if_modified_since => "Sat, 29 Oct 1994 19:43:31 GMT" }
-      request = build_request_with header
+      message = RTSP::Message.play(@stream).with_headers({
+          :if_modified_since => "Sat, 29 Oct 1994 19:43:31 GMT"
+      })
 
-      string = request.headers_to_s(header)
+      string = message.to_s
       string.is_a?(String).should be_true
       string.should include "If-Modified-Since: Sat, 29 Oct 1994 19:43:31 GMT"
     end
 
     it "two headers, mixed hyphenated, array & hash values" do
-      pending "completion of refactoring Message"
-      headers = {
-        :cache_control => ["no-cache", { :max_age => 12345 }],
-        :content_type => ['application/sdp', 'application/x-rtsp-mh']
-      }
-      request = build_request_with headers
+      message = RTSP::Message.redirect(@stream).with_headers({
+          :cache_control => ["no-cache", { :max_age => 12345 }],
+          :content_type => ['application/sdp', 'application/x-rtsp-mh']
+      })
 
-      string = request.headers_to_s(headers)
+      string = message.to_s
       string.is_a?(String).should be_true
       string.should include "Cache-Control: no-cache;max_age=12345"
       string.should include "Content-Type: application/sdp, application/x-rtsp-mh"
+    end
+  end
+
+  describe "#with_headers" do
+    it "returns an RTSP::Message" do
+      message = RTSP::Message.options(@stream)
+      result = message.with_headers({ test: "test" })
+      result.class.should == RTSP::Message
     end
   end
 

@@ -97,7 +97,8 @@ module RTSP
       end
     end
 
-    # Use when creating a new Message to add headers you want.
+    # Use to message-chain with one of the method types; used when creating a
+    # new Message to add headers you want.
     #
     # @example Simple header
     #   RTSP::Message.options("192.168.1.10").with_headers({ cseq: @cseq })
@@ -107,7 +108,8 @@ module RTSP
     #                             #     CSeq: 1\r\n
     #                             #     User-Agent: My RTSP Client 1.0\r\n"
     # @param [Hash] new_headers The headers to add to the Request.  The Hash
-    #   key will be capitalized; if
+    #   key of each will be converted from snake_case to Rtsp-Style.
+    # @return [RTSP::Message]
     def with_headers(new_headers)
       add_headers new_headers
 
@@ -118,6 +120,12 @@ module RTSP
       @headers.merge! new_headers
     end
 
+    # Use when creating a new Message to add body you want.
+    #
+    # @example Simple header
+    #   RTSP::Message.options("192.168.1.10").with_body("The body!")
+    # @param [Hash] new_headers The headers to add to the Request.  The Hash
+    #   key will be capitalized; if
     def with_body(new_body)
       add_body new_body
 
