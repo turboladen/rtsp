@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../spec_helper'
+require_relative '../spec_helper'
 require 'rtsp/transport_parser'
 
 describe RTSP::TransportParser do

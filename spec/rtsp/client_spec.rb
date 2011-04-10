@@ -1,5 +1,5 @@
 require 'sdp'
-require File.dirname(__FILE__) + '/../spec_helper'
+require_relative '../spec_helper'
 require 'rtsp/client'
 require 'support/fake_rtsp_server'
 
