@@ -14,9 +14,9 @@ describe "RTSP::Message" do
   end
 
   it "adds a User-Agent header to every method" do
-    RTSP::Message.instance_variable_get(:@method_types).each do |method|
-      message = RTSP::Message.send(method)
-      message.to_s.should include "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
+    RTSP::Message.instance_variable_get(:@message_types).each do |method|
+      message = RTSP::Message.send(method, @stream)
+      message.to_s.should include "User-Agent: RubyRTSP/"
     end
   end
 

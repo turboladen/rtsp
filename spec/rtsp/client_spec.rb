@@ -7,9 +7,13 @@ describe RTSP::Client do
   def setup_client_at(url)
     fake_rtsp_server = FakeRTSPServer.new
     mock_logger = double 'MockLogger', :send => nil
-    client = RTSP::Client.new(url, :socket => fake_rtsp_server)
+
+    client = RTSP::Client.new(url) do |connection|
+      connection.socket = fake_rtsp_server
+    end
+
     RTSP::Client.reset_config!
-    RTSP::Client.configure { |config| config.log = false }
+    #RTSP::Client.configure { |config| config.log = false }
     client.logger = mock_logger
 
     client
@@ -18,7 +22,9 @@ describe RTSP::Client do
   describe "#initialize" do
     before :each do
       mock_socket = double 'MockSocket'
-      @client = RTSP::Client.new "rtsp://localhost", :socket => mock_socket
+      @client = RTSP::Client.new("rtsp://localhost") do |connection|
+        connection.socket = mock_socket
+      end
     end
 
     it "sets @cseq to 1" do
@@ -46,7 +52,10 @@ describe RTSP::Client do
 
     before :each do
       mock_socket = double 'MockSocket'
-      @client = RTSP::Client.new "rtsp://localhost", :socket => mock_socket
+
+      @client = RTSP::Client.new("rtsp://localhost") do |connection|
+        connection.socket = mock_socket
+      end
     end
 
     describe "log" do
@@ -194,6 +203,7 @@ describe RTSP::Client do
     end
 
     it "changes the session_state to :playing" do
+      @client.setup("rtsp://localhost/some_track")
       @client.play("rtsp://localhost/some_track")
       @client.session_state.should == :playing
     end
@@ -290,18 +300,6 @@ describe RTSP::Client do
       @client.session_state.should == :ready
       @client.record("rtsp://localhost/some_track")
       @client.session_state.should == :recording
-    end
-  end
-
-  describe "#parse_transport_from" do
-    it "extracts the transport header info" do
-      transport_line = "RTP/AVP;unicast;destination=10.221.222.186;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701\r"
-      @client = setup_client_at "rtsp://localhost"
-      transport = @client.parse_transport_from(transport_line)
-      transport[:protocol].should == 'RTP'
-      transport[:profile].should == 'AVP'
-      transport[:network_type].should == :unicast
-      transport[:destination].should == "10.221.222.186"
     end
   end
 

@@ -66,10 +66,10 @@ module RTSP
       @connection.socket           ||= TCPSocket.new(@server_uri.host, @server_uri.port)
       @connection.do_capture       ||= true
       @connection.interleave       ||= false
-      @capturer.media_port         ||= 9000
+      @capturer.rtp_port         ||= 9000
       @capturer.transport_protocol ||= :udp
       @capturer.broadcast_type     ||= :unicast
-      @capturer.media_file         ||= Tempfile.new(DEFAULT_CAPFILE_NAME)
+      @capturer.rtp_file         ||= Tempfile.new(DEFAULT_CAPFILE_NAME)
 
       @play_thread = nil
       @cseq        = 1
@@ -171,7 +171,7 @@ module RTSP
     # @return [String] The String to use wit the Transport header.
     def request_transport
       value = "RTP/AVP;#{@capturer.broadcast_type};client_port="
-      value << "#{@capturer.media_port}-#{@capturer.media_port + 1}\r\n"
+      value << "#{@capturer.rtp_port}-#{@capturer.rtp_port + 1}\r\n"
     end
 
     # Sends the SETUP request, then sets +@session+ to the value returned in the
@@ -200,7 +200,7 @@ module RTSP
           @capturer.transport_protocol = @transport[:transport_protocol]
         end
 
-        @capturer.media_port     = @transport[:client_port][:rtp].to_i
+        @capturer.rtp_port     = @transport[:client_port][:rtp].to_i
         @capturer.broadcast_type = @transport[:broadcast_type]
       end
     end
@@ -210,25 +210,29 @@ module RTSP
     # @param [String] track
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
+    # @todo If playback over UDP doesn't result in any data coming in on the
+    #   socket, re-setup with RTP/AVP/TCP;unicast;interleaved=0-1.
     def play(track, additional_headers={})
       message = RTSP::Message.play(track).with_headers({
           cseq: @cseq, session: @session })
       message.add_headers additional_headers
 
       request(message) do
+        unless @session_state == :ready
+          raise RTSP::Error, "Session not set up yet.  Run #setup first."
+        end
+
         if @play_thread.nil?
-          @play_thread = Thread.new { start_capture }
+          puts "transport #{@transport}"
+          log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
+
+          @play_thread = Thread.new do
+            @capturer.run
+          end
         end
 
         @session_state = :playing
       end
-    end
-
-    # @todo If playback over UDP doesn't result in any data coming in on the
-    #   socket, re-setup with RTP/AVP/TCP;unicast;interleaved=0-1.
-    def start_capture
-      log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
-      @capturer.run
     end
 
     # Sends the PAUSE request and sets +@session_state+ to :ready.
