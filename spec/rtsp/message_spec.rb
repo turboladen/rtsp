@@ -393,4 +393,22 @@ describe "RTSP::Message" do
       message.to_s.should match /Content-Length: #{new_body.size}\r\n/
     end
   end
+
+  describe "#respond_to?" do
+    it "returns true to each method in the list of supported method types" do
+      RTSP::Message.instance_variable_get(:@message_types).each do |m|
+        RTSP::Message.respond_to?(m).should be_true
+      end
+    end
+
+    it "returns false to a method that's not in the list of supported methods" do
+      RTSP::Message.respond_to?(:meow).should be_false
+    end
+  end
+
+  describe "#method_missing" do
+    it "returns " do
+      lambda { RTSP::Message.meow }.should raise_error NoMethodError
+    end
+  end
 end
