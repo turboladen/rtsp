@@ -37,7 +37,11 @@ module RTSP
     # @return [String]
     def inspect
       me = "#<#{self.class.name}:#{self.__id__} "
-      self.instance_variables.each { |v| me << "#{v}=#{instance_variable_get(v).inspect}, " }
+
+      self.instance_variables.each do |variable|
+        me << "#{variable}=#{instance_variable_get(variable).inspect}, "
+      end
+
       me.sub!(/, $/, "")
       me << ">"
 
