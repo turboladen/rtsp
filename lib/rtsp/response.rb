@@ -62,6 +62,17 @@ module RTSP
       [head, body]
     end
 
+    # Pulls out the RTSP version, response code, and response message (AKA the
+    # status line info) into instance variables.
+    #
+    # @param [String] line The String containing the status line info.
+    def extract_status_line(line)
+      line =~ /RTSP\/(\d\.\d) (\d\d\d) ([^\r\n]+)/
+      @rtsp_version = $1
+      @code         = $2.to_i
+      @message      = $3
+    end
+
     # Reads through each header line of the RTSP response, extracts the response
     # code, response message, response version, and creates a snake-case
     # accessor with that value set.
@@ -72,10 +83,7 @@ module RTSP
 
       lines.each_with_index do |line, i|
         if i == 0
-          line =~ /RTSP\/(\d\.\d) (\d\d\d) ([^\r\n]+)/
-          @rtsp_version = $1
-          @code = $2.to_i
-          @message = $3
+          extract_status_line(line)
           next
         end
         
