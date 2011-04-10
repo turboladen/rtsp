@@ -71,6 +71,10 @@ module RTSP
       @rtsp_version = $1
       @code         = $2.to_i
       @message      = $3
+
+      if @rtsp_version.nil?
+        raise RTSP::Error, "Status line corrupted: #{line}"
+      end
     end
 
     # Reads through each header line of the RTSP response, extracts the response

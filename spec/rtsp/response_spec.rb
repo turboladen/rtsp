@@ -13,7 +13,20 @@ describe RTSP::Response do
   end
 
   describe "#parse_head" do
-    pending
+    it "raises when RTSP version is corrupted" do
+      response = RTSP::Response.new OPTIONS_RESPONSE
+      lambda { response.parse_head "RTSP/ 200 OK\r\n" }.should raise_error RTSP::Error
+    end
+
+    it "raises when the response code is corrupted" do
+      response = RTSP::Response.new OPTIONS_RESPONSE
+      lambda { response.parse_head "RTSP/1.0 2 OK\r\n" }.should raise_error RTSP::Error
+    end
+
+    it "raises when the response message is corrupted" do
+      response = RTSP::Response.new OPTIONS_RESPONSE
+      lambda { response.parse_head "RTSP/1.0 200 \r\n" }.should raise_error RTSP::Error
+    end
   end
 
   describe "#parse_body" do
@@ -39,10 +52,6 @@ describe RTSP::Response do
     it "begins with <# and ends with >" do
       @response.inspect.should match /^#<.*>$/
     end
-  end
-
-  describe "create_reader" do
-    pending
   end
 
   context "options" do
@@ -204,7 +213,7 @@ describe RTSP::Response do
     it "splits responses with headers and no body" do
       response = RTSP::Response.new OPTIONS_RESPONSE
       head_and_body = response.split_head_and_body_from OPTIONS_RESPONSE
-      head_and_body.first.should == %Q{ RTSP/1.0 200 OK\r\n
+      head_and_body.first.should == %Q{RTSP/1.0 200 OK\r\n
 CSeq: 1\r\n
 Date: Fri, Jan 28 2011 01:14:42 GMT\r\n
 Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r\n

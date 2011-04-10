@@ -8,7 +8,7 @@ require 'rspec'
 $:.unshift(File.dirname(__FILE__) + '/../lib')
 require 'rtsp'
 
-OPTIONS_RESPONSE = %Q{ RTSP/1.0 200 OK\r\n
+OPTIONS_RESPONSE = %Q{RTSP/1.0 200 OK\r\n
 CSeq: 1\r\n
 Date: Fri, Jan 28 2011 01:14:42 GMT\r\n
 Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r\n
