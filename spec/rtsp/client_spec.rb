@@ -13,7 +13,7 @@ describe RTSP::Client do
     end
 
     RTSP::Client.reset_config!
-    #RTSP::Client.configure { |config| config.log = false }
+    RTSP::Client.configure { |config| config.log = false }
     client.logger = mock_logger
 
     client
@@ -227,7 +227,6 @@ describe RTSP::Client do
     end
 
     it "changes the session_state from :recording to :ready" do
-      pending
       @client.record("rtsp://localhost/some_track")
       @client.pause("rtsp://localhost/some_track")
       @client.session_state.should == :ready
