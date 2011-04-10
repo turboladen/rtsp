@@ -101,8 +101,7 @@ module RTSP
 
     # Reads through each line of the RTSP response body and parses it if
     # needed.  Returns a SDP::Description if the Content-Type is
-    # 'application/sdp', otherwise returns the String that was passed in, but
-    # with line feeds removed.
+    # 'application/sdp', otherwise returns the String that was passed in.
     #
     # @param [String] body
     # @return [SDP::Description,String]
@@ -113,6 +112,8 @@ module RTSP
 
       if @content_type == "application/sdp"
         SDP.parse body
+      else
+        body
       end
     end
 

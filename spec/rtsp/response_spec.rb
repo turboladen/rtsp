@@ -30,7 +30,25 @@ describe RTSP::Response do
   end
 
   describe "#parse_body" do
-    pending
+    it "returns an SDP::Description when @content_type is 'application/sdp" do
+      response = RTSP::Response.new DESCRIBE_RESPONSE
+      sdp = SDP::Description.new
+      sdp.username = "me"
+      sdp.id = 12345
+      sdp.version = 12345
+      sdp.network_type = "IN"
+      sdp.address_type = "IP4"
+      body = response.parse_body sdp.to_s
+      body.class.should == SDP::Description
+    end
+
+    it "returns the text that was passed to it but with line feeds removed" do
+      response = RTSP::Response.new OPTIONS_RESPONSE
+      string = "hi\r\nguys\r\n\r\n"
+      body = response.parse_body string
+      body.class.should == String
+      body.should == string
+    end
   end
 
   describe "#to_s" do
