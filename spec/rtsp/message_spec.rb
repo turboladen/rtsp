@@ -13,6 +13,13 @@ describe "RTSP::Message" do
       }.should raise_error RTSP::Error
   end
 
+  it "adds a User-Agent header to every method" do
+    RTSP::Message.instance_variable_get(:@method_types).each do |method|
+      message = RTSP::Message.send(method)
+      message.to_s.should include "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
+    end
+  end
+
   context "builds an OPTIONS string" do
     it "with default sequence number" do
       message = RTSP::Message.options(@stream)
@@ -120,13 +127,12 @@ describe "RTSP::Message" do
   end
 
   context "builds a SETUP string" do
-    it "with default sequence, transport, client_port, and routing values" do
+    it "with default sequence, client_port, and routing values" do
       message = RTSP::Message.setup(@stream)
 
       message.to_s.should match /^SETUP rtsp/
       message.to_s.should include "SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
-      message.to_s.should include "Transport: RTP/AVP;unicast;client_port=9000-9001\r\n"
       message.to_s.should match /\r\n\r\n$/
     end
 
