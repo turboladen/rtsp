@@ -264,7 +264,10 @@ module RTSP
 
       request(message) do
         reset_state
-        @play_thread.exit if @play_thread
+        if @play_thread
+          @capturer.rtp_file.close
+          @play_thread.exit
+        end
       end
     end
 
