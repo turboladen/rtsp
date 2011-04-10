@@ -223,7 +223,6 @@ module RTSP
         end
 
         if @play_thread.nil?
-          puts "transport #{@transport}"
           log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
 
           @play_thread = Thread.new do
