@@ -10,7 +10,7 @@ describe "RTSP::Message" do
   it "raises if the header type isn't a Symbol" do
     message = RTSP::Message.options(@stream)
     lambda { message.header "hi", "everyone"
-      }.should raise_error RTSP::Exception
+      }.should raise_error RTSP::Error
   end
 
   context "builds an OPTIONS string" do

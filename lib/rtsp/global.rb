@@ -39,7 +39,7 @@ module RTSP
       logger.send(log_level, message) if log?
     end
 
-    # Use to disable the raising of +RTSP::Exception+s.
+    # Use to disable the raising of +RTSP::Error+s.
     attr_writer :raise_errors
 
     # @return [Boolean] true if set to raise errors; false if not.

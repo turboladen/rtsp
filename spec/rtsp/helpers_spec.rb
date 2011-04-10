@@ -46,7 +46,7 @@ describe RTSP::Helpers do
       it "raises if not given a String" do
         lambda do
           @my_object.build_resource_uri_from URI.parse "rtsp://64.202.98.91"
-        end.should raise_exception RTSP::Exception
+        end.should raise_exception RTSP::Error
       end
     end
   end

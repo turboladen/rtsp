@@ -1,7 +1,7 @@
 require 'tempfile'
 require 'socket'
 
-require_relative 'exception'
+require_relative 'error'
 
 module RTSP
 
@@ -49,15 +49,26 @@ module RTSP
       @rtp_file = rtp_capture_file || Tempfile.new(DEFAULT_CAPFILE_NAME)
     end
 
-    # Starts capturing data on +@rtp_port+ and writes it to +@rtp_file+.
-    def run
+    # Initializes a server of the correct socket type.
+    #
+    # @return [UDPSocket, TCPSocket]
+    # @raise [RTSP::Error] If +@transport_protocol was not set to :udp or
+    #   :tcp.
+    def init_server
       if @transport_protocol == :udp
         server = init_udp_server
       elsif @transport_protocol == :tcp
         server = init_tcp_server
       else
-        raise RTSP::Exception, "Unknown streaming_protocol requested: #{@transport_protocol}"
+        raise RTSP::Error, "Unknown streaming_protocol requested: #{@transport_protocol}"
       end
+
+      server
+    end
+
+    # Starts capturing data on +@rtp_port+ and writes it to +@rtp_file+.
+    def run
+      server = init_server
 
       loop do
         data = server.recvfrom(MAX_BYTES_TO_RECEIVE).first

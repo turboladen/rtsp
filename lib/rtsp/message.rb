@@ -1,5 +1,5 @@
 require_relative 'helpers'
-require_relative 'exception'
+require_relative 'error'
 require_relative 'version'
 
 module RTSP
@@ -93,7 +93,7 @@ module RTSP
       if type.is_a? Symbol
         headers[type] = value
       else
-        raise RTSP::Exception, "Header type must be a Symbol (i.e. :cseq)."
+        raise RTSP::Error, "Header type must be a Symbol (i.e. :cseq)."
       end
     end
 

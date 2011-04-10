@@ -45,7 +45,7 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
     "lib/rtsp.rb",
     "lib/rtsp/capturer.rb",
     "lib/rtsp/client.rb",
-    "lib/rtsp/exception.rb",
+    "lib/rtsp/error.rb",
     "lib/rtsp/global.rb",
     "lib/rtsp/helpers.rb",
     "lib/rtsp/message.rb",

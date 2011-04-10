@@ -1,6 +1,6 @@
 require 'uri'
 require_relative 'global'
-require_relative 'exception'
+require_relative 'error'
 
 module RTSP
   module Helpers
@@ -21,7 +21,7 @@ module RTSP
         resource_uri
 
       else
-        raise RTSP::Exception, "url must be a String."
+        raise RTSP::Error, "url must be a String."
       end
     end
   end

@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'sdp'
-require_relative 'exception'
+require_relative 'error'
 
 module RTSP
 
@@ -16,7 +16,7 @@ module RTSP
     # server/client.
     def initialize(raw_response)
       if raw_response.nil? || raw_response.empty?
-        raise RTSP::Exception, "#{self.class} received nil string--this shouldn't happen."
+        raise RTSP::Error, "#{self.class} received nil string--this shouldn't happen."
       end
 
       @raw_response = raw_response

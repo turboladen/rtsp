@@ -4,7 +4,7 @@ require 'timeout'
 
 require_relative 'transport_parser'
 require_relative 'capturer'
-require_relative 'exception'
+require_relative 'error'
 require_relative 'global'
 require_relative 'helpers'
 require_relative 'message'
@@ -100,7 +100,7 @@ module RTSP
           RTSP::Response.new socket_data.first
         end
       rescue Timeout::Error
-        raise RTSP::Exception, "Request took more than #{@connection.timeout} seconds to send."
+        raise RTSP::Error, "Request took more than #{@connection.timeout} seconds to send."
       end
 
       RTSP::Client.log "Received response:"
@@ -330,15 +330,15 @@ module RTSP
             reset_state
           end
 
-          raise RTSP::Exception, "#{response.code}: #{response.message}"
+          raise RTSP::Error, "#{response.code}: #{response.message}"
         else
-          raise RTSP::Exception, "Unknown Response code: #{response.code}"
+          raise RTSP::Error, "Unknown Response code: #{response.code}"
         end
 
         unless [:options, :describe, :teardown].include? message.method_type
           ensure_session
         end
-      rescue RTSP::Exception => ex
+      rescue RTSP::Error => ex
         RTSP::Client.log "Got exception: #{ex.message}"
         ex.backtrace.each { |b| RTSP::Client.log b }
       end
@@ -348,11 +348,11 @@ module RTSP
 
     # Ensures that +@session+ is set before continuing on.
     #
-    # @raise [RTSP::Exception] Raises if @session isn't set.
+    # @raise [RTSP::Error] Raises if @session isn't set.
     # @return Returns whatever the block returns.
     def ensure_session
       unless @session > 0
-        raise RTSP::Exception, "Session number not retrieved from server yet.  Run SETUP first."
+        raise RTSP::Error, "Session number not retrieved from server yet.  Run SETUP first."
       end
     end
 
@@ -390,11 +390,11 @@ module RTSP
     # server responded to a different request.
     #
     # @param [Fixnum] server_cseq Sequence number returned by the server.
-    # @raise [RTSP::Exception]
+    # @raise [RTSP::Error]
     def compare_sequence_number server_cseq
       if @cseq != server_cseq
         message = "Sequence number mismatch.  Client: #{@cseq}, Server: #{server_cseq}"
-        raise RTSP::Exception, message
+        raise RTSP::Error, message
       end
     end
 
@@ -403,11 +403,11 @@ module RTSP
     # the server responded to a different request.
     #
     # @param [Fixnum] server_session Session number returned by the server.
-    # @raise [RTSP::Exception]
+    # @raise [RTSP::Error]
     def compare_session_number server_session
       if @session != server_session
         message = "Session number mismatch.  Client: #{@session}, Server: #{server_session}"
-        raise RTSP::Exception, message
+        raise RTSP::Error, message
       end
     end
 

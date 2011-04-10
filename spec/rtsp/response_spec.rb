@@ -4,11 +4,11 @@ require 'rtsp/response'
 describe RTSP::Response do
   describe "#initialize" do
     it "expects a non-nil string on" do
-      lambda { RTSP::Response.new(nil) }.should raise_exception RTSP::Exception
+      lambda { RTSP::Response.new(nil) }.should raise_exception RTSP::Error
     end
 
     it "expects a non-empty string on" do
-      lambda { RTSP::Response.new("") }.should raise_exception RTSP::Exception
+      lambda { RTSP::Response.new("") }.should raise_exception RTSP::Error
     end
   end
 
