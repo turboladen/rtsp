@@ -75,7 +75,7 @@ The uber-quick get started:
   client.pause(client.aggregate_control_track)
   client.session_state    # => :ready
 
-  # Wait while the video is pause
+  # Wait while the video is paused
   sleep 2
 
   client.teardown(client.aggregate_control_track)
