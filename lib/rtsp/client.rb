@@ -66,10 +66,10 @@ module RTSP
       @connection.socket           ||= TCPSocket.new(@server_uri.host, @server_uri.port)
       @connection.do_capture       ||= true
       @connection.interleave       ||= false
-      @capturer.rtp_port         ||= 9000
-      @capturer.transport_protocol ||= :udp
+      @capturer.rtp_port           ||= 9000
+      @capturer.transport_protocol ||= :UDP
       @capturer.broadcast_type     ||= :unicast
-      @capturer.rtp_file         ||= Tempfile.new(DEFAULT_CAPFILE_NAME)
+      @capturer.rtp_file           ||= Tempfile.new(DEFAULT_CAPFILE_NAME)
 
       @play_thread = nil
       @cseq        = 1
@@ -271,6 +271,8 @@ module RTSP
       end
     end
 
+    # Sets state related variables back to their starting values;
+    # +@session_state+ is set to +:init+; +@session+ is set to 0.
     def reset_state
       @session_state = :init
       @session       = 0
@@ -336,7 +338,7 @@ module RTSP
         if response.code.to_s =~ /2../
           yield response if block_given?
         elsif response.code.to_s =~ /(4|5)../
-          if (defined? response.connection) && response.connection == 'Closed'
+          if (defined? response.connection) && response.connection == 'Close'
             reset_state
           end
 
@@ -386,9 +388,14 @@ module RTSP
     # track value.
     def media_control_tracks
       tracks = []
-      @session_description.media_sections.each do |media_section|
-        media_section[:attributes].each do |a|
-          tracks << "#{@content_base}#{a[:value]}" if a[:attribute] == "control"
+
+      if @session_description.nil?
+        tracks << ""
+      else
+        @session_description.media_sections.each do |media_section|
+          media_section[:attributes].each do |a|
+            tracks << "#{@content_base}#{a[:value]}" if a[:attribute] == "control"
+          end
         end
       end
 
