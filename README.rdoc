@@ -26,7 +26,7 @@ The uber-quick get started:
 
   RTSP::Client.log?                # => true
   RTSP::Client.log = false
-  client = RTSP::Client.new "64.202.98.91/sa.sdp" do |connection, capturer|
+  client = RTSP::Client.new "rtsp://64.202.98.91/sa.sdp" do |connection, capturer|
     connection.timeout = 5
     capturer.rtp_port = 8554
     capturer.rtp_file = File.open("captured_stuff.rtp", "wb")
