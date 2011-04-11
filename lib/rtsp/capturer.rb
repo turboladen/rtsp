@@ -31,7 +31,7 @@ module RTSP
     # @return [Fixnum]
     attr_accessor :rtp_port
 
-    # @param [Symbol] transport_protocol +:udp+ or +:tcp+.
+    # @param [Symbol] transport_protocol +:UDP+ or +:TCP+.
     # @return [Symbol]
     attr_accessor :transport_protocol
 
@@ -40,10 +40,10 @@ module RTSP
     attr_accessor :broadcast_type
 
     # @param [Symbol] transport_protocol The type of socket to use for capturing
-    #   the data. +:udp+ or +:tcp+.
+    #   the data. +:UDP+ or +:TCP+.
     # @param [Fixnum] rtp_port The port on which to capture RTP data.
     # @param [File] capture_file The file object to capture the RTP data to.
-    def initialize(transport_protocol=:udp, rtp_port=9000, rtp_capture_file=nil)
+    def initialize(transport_protocol=:UDP, rtp_port=9000, rtp_capture_file=nil)
       @transport_protocol = transport_protocol
       @rtp_port = rtp_port
       @rtp_file = rtp_capture_file || Tempfile.new(DEFAULT_CAPFILE_NAME)
@@ -52,10 +52,10 @@ module RTSP
     # Initializes a server of the correct socket type.
     #
     # @return [UDPSocket, TCPSocket]
-    # @raise [RTSP::Error] If +@transport_protocol was not set to :udp or
-    #   :tcp.
+    # @raise [RTSP::Error] If +@transport_protocol was not set to +:UDP+ or
+    #   +:TCP+.
     def init_server
-      if @transport_protocol == :udp
+      if @transport_protocol == :UDP
         server = init_udp_server
       elsif @transport_protocol == :tcp
         server = init_tcp_server
