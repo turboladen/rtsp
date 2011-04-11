@@ -82,6 +82,9 @@ The uber-quick get started:
   client.session            # => 0
   client.session_state      # => :init
 
+  # Check the streamed file's contents
+  puts client.capturer.rtp_file     # => (Lots of data)
+
 == REQUIREMENTS:
 
 * (Tested) Rubies
