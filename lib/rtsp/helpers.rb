@@ -9,7 +9,7 @@ module RTSP
     # Takes the URL given and turns it into a URI.  This allows for enforcing
     # values for each part of the URI.
     #
-    # @param [String] The URL to turn in to a URI.
+    # @param [String] url The URL to turn in to a URI.
     # @return [URI]
     def build_resource_uri_from url
       if url.is_a? String
