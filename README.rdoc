@@ -16,13 +16,16 @@ SDP: http://tools.ietf.org/html/rfc4566
 
 == FEATURES/PROBLEMS:
 
-* All standard RTSP methods supported
-* Captures RTP data to a file, but doesn't ensure RTP sequencing before putting to file
-* Currently, only unicast
+* All standard RTSP methods supported.
+* Captures RTP data to a file, but doesn't ensure RTP sequencing before putting to file.
+* One client object can only handle 1 stream; use a client per stream until this functionality
+gets implemented.
+* Only handles unicast, UDP streams.
+* RTSP exceptions are all +RTSP::Error+s; this will change.
 
 == SYNOPSIS:
 
-The uber-quick get started:
+The quick get started:
 
   RTSP::Client.log?                # => true
   RTSP::Client.log = false
