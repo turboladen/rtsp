@@ -12,7 +12,46 @@ require_relative 'response'
 
 module RTSP
 
-  # Allows for pulling streams from an RTSP server.
+  # This is the main interface to an RTSP server.  A client object uses a couple
+  # main objects for configuration: an +RTSP::Capturer+ and a Connection Struct.
+  # Use the capturer to configure how to capture the data which is the RTP
+  # stream provided by the RTSP server.  Use the connection object to control
+  # the connection to the server.
+  #
+  # You can initialize your client object using a block:
+  #   client = RTSP::Client.new("rtsp://192.168.1.10") do |connection, capturer|
+  #     connection.timeout = 5
+  #     capturer.rtp_file = File.open("my_file.rtp", "wb")
+  #   end
+  #
+  # ...or, without the block:
+  #   client = RTSP::Client.new("rtsp://192.168.1.10")
+  #   client.connection.timeout = 5
+  #   client.capturer.rtp_file = File.open("my_file.rtp", "wb")
+  #
+  # After setting up the client object, call RTSP methods, Ruby style:
+  #   client.options
+  #
+  # Remember that, unlike HTTP, RTSP is state-based (and thus the ability to
+  # call certain methods depends on calling other methods first).  Your client
+  # object tells you the current RTSP state that it's in:
+  #   client.options
+  #   client.session_state            # => :init
+  #   client.describe
+  #   client.session_state            # => :init
+  #   client.setup(client.media_control_tracks.first)
+  #   client.session_state            # => :ready
+  #   client.play(client.aggregate_control_track)
+  #   client.session_state            # => :playing
+  #   client.pause(client.aggregate_control_track)
+  #   client.session_state            # => :ready
+  #   client.teardown(client.aggregate_control_track)
+  #   client.session_state            # => :init
+  #
+  # To enable/disable logging for clients, class methods:
+  #   RTSP::Client.log?           # => true
+  #   RTSP::Client.log = false
+  # @todo Break Stream out in to its own class.
   class Client
     include RTSP::Helpers
     extend RTSP::Global
@@ -20,11 +59,23 @@ module RTSP
     DEFAULT_CAPFILE_NAME = "ruby_rtsp_capture.rtsp"
     MAX_BYTES_TO_RECEIVE = 3000
 
+    # @return [URI] The URI that points to the RTSP server's resource.
     attr_reader :server_uri
+
+    # @return [Fixnum] Also known as the "sequence" number, this starts at 1 and
+    #   increments after every request to the server.  It is reset after
+    #   calling #teardown.
     attr_reader :cseq
+
+    # @return [Fixnum] A session is only established after calling #setup;
+    #   otherwise returns nil.
     attr_reader :session
+
+    # @return [Array<Symbol>] Only populated after calling #options; otherwise
+    #   returns nil.
     attr_reader :supported_methods
-    attr_accessor :tracks
+
+    # @return [Struct::Connection]
     attr_accessor :connection
 
     # Use to get/set an object for capturing received data.
@@ -32,11 +83,11 @@ module RTSP
     # @return [RTSP::Capturer]
     attr_accessor :capturer
 
-    # @todo Break Stream out in to its own class.
-    # See RFC section A.1.
+    # @return [Symbol] See {RFC section A.1.}[http://tools.ietf.org/html/rfc2326#page-76]
     attr_reader :session_state
 
-    # Use to configure options for all clients.  See RTSP::Global for the options.
+    # Use to configure options for all clients.
+    # @see RTSP::Global
     def self.configure
       yield self if block_given?
     end
@@ -89,6 +140,8 @@ module RTSP
     #
     # @param [RTSP::Message] message
     # @return [RTSP::Response]
+    # @raise [RTSP::Error] If the timeout value is reached and the server hasn't
+    #   responded.
     def send_message message
       RTSP::Client.log "Sending #{message.method_type.upcase} to #{message.request_uri}"
       message.to_s.each_line { |line| RTSP::Client.log line.strip }
@@ -212,6 +265,8 @@ module RTSP
     # @return [RTSP::Response]
     # @todo If playback over UDP doesn't result in any data coming in on the
     #   socket, re-setup with RTP/AVP/TCP;unicast;interleaved=0-1.
+    # @raise [RTSP::Error] If #play is called but the session hasn't yet been
+    #   set up via #setup.
     def play(track, additional_headers={})
       message = RTSP::Message.play(track).with_headers({
           cseq: @cseq, session: @session })
@@ -329,6 +384,7 @@ module RTSP
     # @param [Hash] new_args
     # @yield [RTSP::Response]
     # @return [RTSP::Response]
+    # @raise [RTSP::Error] All 4xx & 5xx response codes & their messages.
     def request message
       response = send_message message
       #compare_sequence_number response.cseq
@@ -402,7 +458,8 @@ module RTSP
     # server responded to a different request.
     #
     # @param [Fixnum] server_cseq Sequence number returned by the server.
-    # @raise [RTSP::Error]
+    # @raise [RTSP::Error] If the server returns a CSeq value that's different
+    #   from what the client sent.
     def compare_sequence_number server_cseq
       if @cseq != server_cseq
         message = "Sequence number mismatch.  Client: #{@cseq}, Server: #{server_cseq}"
@@ -415,7 +472,8 @@ module RTSP
     # the server responded to a different request.
     #
     # @param [Fixnum] server_session Session number returned by the server.
-    # @raise [RTSP::Error]
+    # @raise [RTSP::Error] If the server returns a Session value that's different
+    #   from what the client sent.
     def compare_session_number server_session
       if @session != server_session
         message = "Session number mismatch.  Client: #{@session}, Server: #{server_session}"
