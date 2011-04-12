@@ -223,7 +223,7 @@ module RTSP
         end
 
         if @play_thread.nil?
-          log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
+          RTSP::Client.log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
 
           @play_thread = Thread.new do
             @capturer.run
@@ -330,29 +330,24 @@ module RTSP
     # @yield [RTSP::Response]
     # @return [RTSP::Response]
     def request message
-      begin
-        response = send_message message
-        compare_sequence_number response.cseq
-        @cseq += 1
+      response = send_message message
+      #compare_sequence_number response.cseq
+      @cseq += 1
 
-        if response.code.to_s =~ /2../
-          yield response if block_given?
-        elsif response.code.to_s =~ /(4|5)../
-          if (defined? response.connection) && response.connection == 'Close'
-            reset_state
-          end
-
-          raise RTSP::Error, "#{response.code}: #{response.message}"
-        else
-          raise RTSP::Error, "Unknown Response code: #{response.code}"
+      if response.code.to_s =~ /2../
+        yield response if block_given?
+      elsif response.code.to_s =~ /(4|5)../
+        if (defined? response.connection) && response.connection == 'Close'
+          reset_state
         end
 
-        unless [:options, :describe, :teardown].include? message.method_type
-          ensure_session
-        end
-      rescue RTSP::Error => ex
-        RTSP::Client.log "Got exception: #{ex.message}"
-        ex.backtrace.each { |b| RTSP::Client.log b }
+        raise RTSP::Error, "#{response.code}: #{response.message}"
+      else
+        raise RTSP::Error, "Unknown Response code: #{response.code}"
+      end
+
+      unless [:options, :describe, :teardown].include? message.method_type
+        ensure_session
       end
 
       response
