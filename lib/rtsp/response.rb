@@ -53,11 +53,11 @@ module RTSP
     #
     # @param [String] raw_response
     # @return [Array<String>] 2-element Array containing the head and body of
-    # the response.
+    #   the response.  Body will be nil if there wasn't one in the response.
     def split_head_and_body_from raw_response
       head_and_body = raw_response.split("\r\n\r\n", 2)
       head = head_and_body.first
-      body = head_and_body.last == head ? "" : head_and_body.last
+      body = head_and_body.last == head ? nil : head_and_body.last
 
       [head, body]
     end
