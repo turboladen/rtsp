@@ -83,6 +83,7 @@ module RTSP
     def init_udp_server
       server = UDPSocket.open
       server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, true)
+      server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEPORT, true)
       server.bind('0.0.0.0', @rtp_port)
       RTSP::Client.log "UDP server setup to receive on port #{@rtp_port}"
 
@@ -95,6 +96,7 @@ module RTSP
     def init_tcp_server
       server = TCPSocket.new('0.0.0.0', @rtp_port)
       server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, true)
+      server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEPORT, true)
       RTSP::Client.log "TCP server setup to receive on port #{@rtp_port}"
 
       server
