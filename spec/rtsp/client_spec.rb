@@ -164,6 +164,7 @@ describe RTSP::Client do
     it "returns a Response" do
       client = setup_client_at "rtsp://localhost"
       sdp = SDP::Description.new
+      client.setup("rtsp://localhost/another_track")
       response = client.announce("rtsp://localhost/another_track", sdp)
       response.is_a?(RTSP::Response).should be_true
     end
@@ -209,6 +210,7 @@ describe RTSP::Client do
     end
 
     it "returns a Response" do
+      @client.setup("rtsp://localhost/some_track")
       response = @client.play("rtsp://localhost/some_track")
       response.is_a?(RTSP::Response).should be_true
     end
