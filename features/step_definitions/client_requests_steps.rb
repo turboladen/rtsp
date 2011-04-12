@@ -1,12 +1,19 @@
 Given /^a known RTSP server$/ do
   @server_url = "rtsp://64.202.98.91:554/sa.sdp"
+  @client = RTSP::Client.new(@server_url) do |connection|
+    connection.socket = @fake_server
+    connection.timeout = 3
+  end
 end
 
 When /^I make a "([^"]*)" request$/ do |method|
+=begin
   @response = RTSP::Request.execute({
       :method => method.to_sym,
       :resource_url => @server_url }
   )
+=end
+  @response = @client.send(method.to_sym)
 end
 
 When /^I make a "([^"]*)" request with headers:$/ do |method, headers_table|
@@ -18,20 +25,22 @@ When /^I make a "([^"]*)" request with headers:$/ do |method, headers_table|
     headers[header_type] = hash["value"]
   end
 
+=begin
   @response = RTSP::Request.execute({
       :method => method.to_sym,
       :headers => headers,
       :resource_url => @server_url }
   )
+=end
+  @response = @client.send(method.to_sym, headers)
 end
 
 Then /^I should receive an RTSP response to that OPTIONS request$/ do
   @response.is_a?(RTSP::Response).should be_true
   @response.code.should == 200
   @response.message.should == "OK"
-  @response.server.should == "DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )"
   @response.cseq.should == 1
-  @response.public.should == "DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, OPTIONS, ANNOUNCE, RECORD"
+  @response.public.should == "DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE"
   @response.body.should be_nil
 end
 

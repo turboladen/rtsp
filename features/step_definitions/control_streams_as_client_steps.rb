@@ -1,15 +1,16 @@
 Given /^an RTSP server at "([^"]*)" and port (\d+)$/ do |ip_address, port|
   @rtp_port = port.to_i
-  @client = RTSP::Client.new ip_address
-  @client.setup :port => @rtp_port
+  @client = RTSP::Client.new(ip_address) do |connection, capturer|
+    capturer.rtp_port = @rtp_port
+  end
 end
 
 Given /^an RTSP server at "([^"]*)" and port (\d+) and URL "([^"]*)"$/ do |ip_address, port, path|
   uri = "rtsp://#{ip_address}:#{port}#{path}"
   @rtp_port = port
-  @client = RTSP::Client.new uri
-  #@client.setup( { :port => @rtp_port.to_i, :stream_path => path })
-  @client.setup( { :port => @rtp_port.to_i })
+  @client = RTSP::Client.new(uri) do |connection, capturer|
+    capturer.rtp_port = @rtp_port
+  end
 end
 
 When /^I play a stream from that server$/ do
@@ -21,28 +22,10 @@ Then /^I should not receive any errors$/ do
 end
 
 Then /^I should receive data on the same port$/ do
-  socket = UDPSocket.new
-  socket.bind("0.0.0.0", @rtp_port)
-
-  begin
-    status = Timeout::timeout(5) do
-      while data = socket.recvfrom(102400)[0]
-        puts "marker size:#{data.size}"
-        puts "data: #{data}" if data =~ /\r\n/
-      end
-    end
-
-    data.should_not be_nil
-  rescue Timeout::Error
-    # Blind rescue
-  ensure
-    socket.close
-    @client.teardown
-  end
+  @client.capturer.rtp_file.should_not be_empty
 end
 
 Given /^I know what the describe response looks like$/ do
-  #@response_text = DESCRIBE_RESPONSE
   @response_text = @fake_server.describe
 end
 

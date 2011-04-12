@@ -4,13 +4,17 @@ end
 
 Given /^I have set up a stream$/ do
   @url = "rtsp://fake-rtsp-server/some_path"
-  @client = RTSP::Client.new @url, :socket => @fake_server
+  @client = RTSP::Client.new(@url) do |connection|
+    connection.socket = @fake_server
+    connection.timeout = 3
+  end
   @client.setup @url
   @client.session_state.should == :ready
 end
 
 Given /^I have started (playing|recording) a stream$/ do |method|
   if method == "playing"
+    @client.setup @url
     @client.play @url
   elsif method == "recording"
     @client.record @url
@@ -21,7 +25,10 @@ end
 When /^I issue an "([^"]*)" request with "([^"]*)"$/ do |request_type, params|
   unless @client
     url = "rtsp://fake-rtsp-server/some_path"
-    @client = RTSP::Client.new url, :socket => @fake_server
+    @client = RTSP::Client.new(url) do |connection|
+      connection.socket = @fake_server
+      connection.timeout = 3
+    end
   end
 
   @initial_state = @client.session_state
