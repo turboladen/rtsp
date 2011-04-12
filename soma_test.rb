@@ -1,6 +1,6 @@
 require './lib/rtsp/client'
 
-#RTSP::Client.log = false
+RTSP::Client.log = false
 
 cap_file = File.new("soma_cap.rtsp", "wb")
 url = "rtsp://64.202.98.91/sa.sdp"
@@ -34,3 +34,6 @@ client.play aggregate_track
 sleep 5
 #client[aggregate_track].play
 client.teardown aggregate_track
+
+
+

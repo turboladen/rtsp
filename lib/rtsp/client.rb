@@ -419,7 +419,9 @@ module RTSP
         raise RTSP::Error, "Unknown Response code: #{response.code}"
       end
 
-      unless [:options, :describe, :teardown].include? message.method_type
+      dont_ensure_list = [:options, :describe, :teardown, :set_parameter,
+          :get_parameter]
+      unless dont_ensure_list.include? message.method_type
         ensure_session
       end
 
