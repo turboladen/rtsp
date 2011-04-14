@@ -23,13 +23,13 @@ describe "RTSP::Message" do
   context "builds an OPTIONS string" do
     it "with default sequence number" do
       message = RTSP::Message.options(@stream)
-      message.to_s.should == "OPTIONS rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\nCSeq: 1\r\nUser-Agent: RubyRTSP/0.1.0 (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r\n\r\n"
+      message.to_s.should == "OPTIONS rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\nCSeq: 1\r\nUser-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r\n\r\n"
     end
 
     it "with new sequence number" do
       message = RTSP::Message.options(@stream)
       message.header :cseq, 2345
-      message.to_s.should == "OPTIONS rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\nCSeq: 2345\r\nUser-Agent: RubyRTSP/0.1.0 (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r\n\r\n"
+      message.to_s.should == "OPTIONS rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\nCSeq: 2345\r\nUser-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r\n\r\n"
     end
   end
 
