@@ -1,3 +1,13 @@
+=== 0.1.1 / 2011-04-14
+
+* Fixed bugs:
+  * gh-1: No longer use Socket::SO_REUSEADDR or Socket::SO_REUSEPORT.
+  * gh-2: rtsp_client now requires the installed rtsp/client.
+* Capturer#run's log message now says what it's logging.
+* Updated README.rdoc:
+  * ...to clarify that REDIRECT isn't yet supported.
+  * ...with brief usage on bin/rtsp_client.
+
 === 0.1.0 / 2011-04-12
 
 * Happy birthday!
