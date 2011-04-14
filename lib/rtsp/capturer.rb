@@ -47,6 +47,7 @@ module RTSP
       @transport_protocol = transport_protocol
       @rtp_port = rtp_port
       @rtp_file = rtp_capture_file || Tempfile.new(DEFAULT_CAPFILE_NAME)
+      @run = false
     end
 
     # Initializes a server of the correct socket type.
@@ -68,13 +69,29 @@ module RTSP
 
     # Starts capturing data on +@rtp_port+ and writes it to +@rtp_file+.
     def run
-      server = init_server
+      @server = init_server
+      @run = true
 
-      loop do
-        data = server.recvfrom(MAX_BYTES_TO_RECEIVE).first
-        RTSP::Client.log data.size
+      RTSP::Client.log "Starting #{self.class} on port #{@rtp_port}..."
+      while @run
+        data = @server.recvfrom(MAX_BYTES_TO_RECEIVE).first
+        RTSP::Client.log "#{self.class} received data with size: #{data.size}"
         @rtp_file.write data
       end
+    end
+
+    # Returns if the run loop is in action.
+    #
+    # @return [Boolean] true if the run loop is running.
+    def running?
+      @run
+    end
+
+    # Breaks out of the run loop.
+    def stop
+      RTSP::Client.log "Stopping #{self.class} on port #{@rtp_port}..."
+      @run = false
+      @server.close
     end
 
     # Sets up to receive data on a UDP socket, using +@rtp_port+.
@@ -82,8 +99,6 @@ module RTSP
     # @return [UDPSocket]
     def init_udp_server
       server = UDPSocket.open
-      server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, true)
-      server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEPORT, true)
       server.bind('0.0.0.0', @rtp_port)
       RTSP::Client.log "UDP server setup to receive on port #{@rtp_port}"
 
@@ -95,8 +110,6 @@ module RTSP
     # @return [TCPSocket]
     def init_tcp_server
       server = TCPSocket.new('0.0.0.0', @rtp_port)
-      server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, true)
-      server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEPORT, true)
       RTSP::Client.log "TCP server setup to receive on port #{@rtp_port}"
 
       server
