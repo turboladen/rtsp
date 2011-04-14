@@ -203,6 +203,10 @@ describe RTSP::Client do
       @client = setup_client_at "rtsp://localhost"
     end
 
+    after :each do
+      @client.teardown "rtsp://localhost"
+    end
+
     it "changes the session_state to :playing" do
       @client.setup("rtsp://localhost/some_track")
       @client.play("rtsp://localhost/some_track")
@@ -220,6 +224,10 @@ describe RTSP::Client do
     before :each do
       @client = setup_client_at "rtsp://localhost"
       @client.setup("rtsp://localhost/some_track")
+    end
+
+    after :each do
+      @client.teardown "rtsp://localhost"
     end
 
     it "changes the session_state from :playing to :ready" do
