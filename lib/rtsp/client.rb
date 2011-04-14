@@ -292,8 +292,10 @@ module RTSP
         if @play_thread.nil?
           RTSP::Client.log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
 
-          @play_thread = Thread.new do
-            @capturer.run
+          unless @capturer.running?
+            @play_thread = Thread.new do
+              @capturer.run
+            end
           end
         end
 
@@ -333,7 +335,9 @@ module RTSP
 
       request(message) do
         reset_state
+
         if @play_thread
+          @capturer.stop
           @capturer.rtp_file.close
           @play_thread.exit
         end
