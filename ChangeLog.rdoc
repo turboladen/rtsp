@@ -4,6 +4,9 @@
   * gh-1: No longer use Socket::SO_REUSEADDR or Socket::SO_REUSEPORT.
   * gh-2: rtsp_client now requires the installed rtsp/client.
 * Capturer#run's log message now says what it's logging.
+* bin/rtsp_client:
+  * Fixed bad description for --stream.
+  * Added --version.
 * Updated README.rdoc:
   * ...to clarify that REDIRECT isn't yet supported.
   * ...with brief usage on bin/rtsp_client.

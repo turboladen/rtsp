@@ -46,7 +46,7 @@ optparse = OptionParser.new do |opts|
 
   #----------------------------------------------------------------------------
   # Stream
-  opts.on('--stream [URL]', "Show available tracks from the given URL.") do |url|
+  opts.on('--stream [URL]', "Pull the first media stream from the given URL.") do |url|
     if url.nil?
       puts "Must pass in a URL."
       exit
@@ -110,6 +110,13 @@ optparse = OptionParser.new do |opts|
       puts ex.backtrace
       puts ex.message
     end
+  end
+
+  #----------------------------------------------------------------------------
+  # Help
+  opts.on('--version', "The version of the Ruby RTSP gem used for this.") do
+    puts RTSP::VERSION
+    exit
   end
 
   #----------------------------------------------------------------------------
