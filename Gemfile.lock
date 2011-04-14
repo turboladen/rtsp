@@ -3,8 +3,8 @@ PATH
   specs:
     rtsp (0.1.0)
       rtsp
-      sdp (~> 0.2.2)
       sdp (~> 0.2.0)
+      sdp (~> 0.2.2)
 
 GEM
   remote: http://rubygems.org/
