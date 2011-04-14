@@ -4,7 +4,6 @@ require 'rubygems'
 require 'tempfile'
 require 'optparse'
 
-$:.unshift File.expand_path(File.dirname(__FILE__) + '/../lib/')
 require 'rtsp/client'
 
 optparse = OptionParser.new do |opts|
