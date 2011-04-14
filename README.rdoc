@@ -25,7 +25,7 @@ gets implemented.
 
 == SYNOPSIS:
 
-The quick get started:
+=== Basic Usage
 
   RTSP::Client.log?                # => true
   RTSP::Client.log = false
@@ -87,6 +87,31 @@ The quick get started:
 
   # Check the streamed file's contents
   puts client.capturer.rtp_file     # => (Lots of data)
+
+=== CLI App
+
+RTSP also provides a +rtsp_client+ executable that allows a little talking to
+an RTSP server.
+
+Knowing which tracks are available on the server can help you determine which
+tracks to use in your programmatic use of an RTSP::Client object to try to
+play.  Show the available aggregate control track and media control tracks:
+
+  $ rtsp_client --show-tracks rtsp://64.202.98.91/sa.sdp
+
+Or if you want the entire SDP description from the server:
+
+  $ rtsp_client --describe rtsp://64.202.98.91/sa.sdp
+
+And then, of course, pull a stream (this assumes you SETUP the first media
+track and call play on the aggregate track):
+
+  $ rtsp_client --stream rtsp://64.202.98.91/sa.sdp
+
+As usual, get help by:
+
+  $ rtsp_client --help
+
 
 == REQUIREMENTS:
 
