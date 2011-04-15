@@ -120,12 +120,16 @@ As usual, get help by:
 * RubyGems
   * sdp, '~> 0.2.2'
 * RubyGems (development)
-  * ore-core, '~> 0.1.0'
-  * jeweler, '~> 1.5.0'
-  * ore-tasks, '~> 0.3.0'
-  * yard, '~> 0.6.0'
-  * metric_fu
+  * bundler, '~> 1.0.0'
   * code_statistics, '~> 0.2.13'
+  * metric_fu, '>= 2.0.0'
+  * ore, '~> 0.7.2'
+  * ore-core, '~> 0.1.0'
+  * ore-tasks, '~> 0.3.0'
+  * rake, '~> 0.8.7'
+  * rspec, '~> 2.5.0'
+  * simplecov, '>= 0.4.0'
+  * yard, '~> 0.6.0'
 
 == INSTALL:
 

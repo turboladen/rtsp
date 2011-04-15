@@ -1,4 +1,0 @@
-
-Thanks for installing rtsp.  We hope you get some good streaming out of it!
-
-Take a look at the README to help get you started.

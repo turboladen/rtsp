@@ -30,7 +30,6 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
     "Gemfile",
     "Gemfile.lock",
     "LICENSE.rdoc",
-    "PostInstall.txt",
     "README.rdoc",
     "Rakefile",
     "bin/rtsp_client",
@@ -42,7 +41,6 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
     "features/step_definitions/control_streams_as_client_steps.rb",
     "features/support/env.rb",
     "features/support/hooks.rb",
-    "gemspec.yml",
     "lib/ext/logger.rb",
     "lib/rtsp.rb",
     "lib/rtsp/capturer.rb",
@@ -54,10 +52,7 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
     "lib/rtsp/response.rb",
     "lib/rtsp/transport_parser.rb",
     "lib/rtsp/version.rb",
-    "nsm_test.rb",
     "rtsp.gemspec",
-    "sarix_test.rb",
-    "soma_test.rb",
     "spec/.rspec",
     "spec/rtsp/client_spec.rb",
     "spec/rtsp/helpers_spec.rb",
@@ -78,6 +73,7 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
   s.rubygems_version = %q{1.7.2}
   s.summary = %q{Library to allow RTSP streaming from RTSP-enabled devices.}
   s.test_files = [
+    "spec/rtsp_spec.rb",
     "spec/rtsp/client_spec.rb",
     "spec/rtsp/helpers_spec.rb",
     "spec/rtsp/message_spec.rb",
@@ -112,7 +108,6 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
       s.add_dependency(%q<rspec>, ["~> 2.5.0"])
       s.add_dependency(%q<simplecov>, [">= 0.4.0"])
       s.add_dependency(%q<yard>, ["~> 0.6.0"])
-      s.add_dependency(%q<rtsp>, [">= 0"])
       s.add_dependency(%q<sdp>, ["~> 0.2.2"])
     end
   else
@@ -126,7 +121,6 @@ RTSP: http://www.ietf.org/rfc/rfc2326.txt}
     s.add_dependency(%q<rspec>, ["~> 2.5.0"])
     s.add_dependency(%q<simplecov>, [">= 0.4.0"])
     s.add_dependency(%q<yard>, ["~> 0.6.0"])
-    s.add_dependency(%q<rtsp>, [">= 0"])
     s.add_dependency(%q<sdp>, ["~> 0.2.2"])
   end
 end
