@@ -15,7 +15,7 @@ has_yard: true
 executables: 'rtsp_client'
 
 dependencies:
-  sdp: ~> 0.2.0
+  sdp: ~> 0.2.2
 
 development_dependencies:
   bundler: ~> 1.0.0
