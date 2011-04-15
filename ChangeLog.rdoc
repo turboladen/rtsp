@@ -1,3 +1,7 @@
+=== 0.1.2 / 2011-04-14
+
+* Manually released; the gemspec that Ore created didn't install bin/rtsp_client.
+
 === 0.1.1 / 2011-04-14
 
 * Fixed bugs:
