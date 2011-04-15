@@ -3,8 +3,6 @@
 require 'tempfile'
 require 'optparse'
 
-require 'rtsp/client'
-
 optparse = OptionParser.new do |opts|
   opts.banner = "Usage: #{__FILE__} [options] url"
 
