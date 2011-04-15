@@ -8,6 +8,7 @@ gem 'sdp', '~> 0.2.2'
 gem 'simplecov', '>= 0.4.0', :require => false, :group => :test
 
 group :development do
+  gem 'bundler',    '~> 1.0.0'
   gem 'code_statistics', '~> 0.2.13'
   gem 'cucumber'
   gem 'jeweler',    '~> 1.5.0'
