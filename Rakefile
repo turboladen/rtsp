@@ -17,10 +17,6 @@ rescue Bundler::BundlerError => e
   exit e.status_code
 end
 
-require 'ore/specification'
-require 'jeweler'
-Jeweler::Tasks.new(Ore::Specification.new)
-
 require 'ore/tasks'
 Ore::Tasks.new
 

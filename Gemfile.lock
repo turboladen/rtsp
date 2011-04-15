@@ -2,8 +2,6 @@ PATH
   remote: .
   specs:
     rtsp (0.1.1)
-      rtsp
-      sdp (~> 0.2.0)
       sdp (~> 0.2.2)
 
 GEM
@@ -45,14 +43,9 @@ GEM
       json (>= 1.4.6)
     gherkin (2.3.5-java)
       json (>= 1.4.6)
-    git (1.2.5)
     haml (3.0.25)
     hirb (0.4.3)
     i18n (0.5.0)
-    jeweler (1.5.2)
-      bundler (~> 1.0.0)
-      git (>= 1.2.5)
-      rake
     json (1.5.1)
     json (1.5.1-java)
     json_pure (1.5.1)
@@ -129,7 +122,6 @@ DEPENDENCIES
   bundler (~> 1.0.0)
   code_statistics (~> 0.2.13)
   cucumber
-  jeweler (~> 1.5.0)
   metric_fu (>= 2.0.0)
   ore (~> 0.7.2)
   ore-core (~> 0.1.5)
