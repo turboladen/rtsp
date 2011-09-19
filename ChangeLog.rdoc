@@ -1,3 +1,11 @@
+=== 0.1.3 / 2011-09-19
+
+* Improvements:
+  * gh-4: Remove dependency on ore en lieu of standard gem commands.
+  * Participate in http://test.rubygems.org!
+* Fixed bugs:
+  * gh-5: Fixed 'Bad file descriptor' bug when capturing to file.
+
 === 0.1.2 / 2011-04-14
 
 * Manually released; the gemspec that Ore created didn't install bin/rtsp_client.
