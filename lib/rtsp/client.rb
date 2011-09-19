@@ -105,8 +105,11 @@ module RTSP
     def initialize(server_url=nil)
       Thread.abort_on_exception = true
 
-      Struct.new("Connection", :server_url, :timeout, :socket,
+      unless defined? Struct::Connection
+        Struct.new("Connection", :server_url, :timeout, :socket,
           :do_capture, :interleave)
+      end
+
       @connection = Struct::Connection.new
       @capturer   = RTSP::Capturer.new
 
