@@ -10,11 +10,11 @@ describe "RTSP::Message" do
   it "raises if the header type isn't a Symbol" do
     message = RTSP::Message.options(@stream)
     lambda { message.header "hi", "everyone"
-      }.should raise_error RTSP::Error
+    }.should raise_error RTSP::Error
   end
 
-  it "adds a User-Agent header to every method" do
-    RTSP::Message.instance_variable_get(:@message_types).each do |method|
+  RTSP::Message.instance_variable_get(:@message_types).each do |method|
+    it "adds a User-Agent header to the #{method} method" do
       message = RTSP::Message.send(method, @stream)
       message.to_s.should include "User-Agent: RubyRTSP/"
     end
@@ -56,7 +56,7 @@ describe "RTSP::Message" do
     it "with new sequence and accept values" do
       message = RTSP::Message.describe(@stream).with_headers({
         accept: 'application/sdp, application/rtsl',
-        cseq:  2345 })
+        cseq: 2345 })
 
       message.to_s.should match /^DESCRIBE rtsp:/
       message.to_s.should include "DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
@@ -81,7 +81,7 @@ describe "RTSP::Message" do
     it "with passed-in session and content type but no body" do
       message = RTSP::Message.announce(@stream).with_headers({
         session: 123456789,
-        content_type: 'application/sdp, application/rtsl'})
+        content_type: 'application/sdp, application/rtsl' })
 
       message.to_s.should match /^ANNOUNCE rtsp:/
       message.to_s.should include "ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
@@ -95,7 +95,7 @@ describe "RTSP::Message" do
       message = RTSP::Message.announce(@stream).with_headers({
         session: 123456789,
         content_type: 'application/sdp, application/rtsl',
-        cseq: 2345})
+        cseq: 2345 })
 
       message.to_s.should match /^ANNOUNCE rtsp:/
       message.to_s.should include "ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
@@ -347,7 +347,7 @@ describe "RTSP::Message" do
   context "#to_s turns a Hash into an String of header strings" do
     it "single header, non-hyphenated name, hash value" do
       message = RTSP::Message.play(@stream).with_headers({
-          range: { npt: "0.000-" }
+        range: { npt: "0.000-" }
       })
 
       string = message.to_s
@@ -357,7 +357,7 @@ describe "RTSP::Message" do
 
     it "single header, hyphenated, non-hash value" do
       message = RTSP::Message.play(@stream).with_headers({
-          :if_modified_since => "Sat, 29 Oct 1994 19:43:31 GMT"
+        :if_modified_since => "Sat, 29 Oct 1994 19:43:31 GMT"
       })
 
       string = message.to_s
@@ -367,8 +367,8 @@ describe "RTSP::Message" do
 
     it "two headers, mixed hyphenated, array & hash values" do
       message = RTSP::Message.redirect(@stream).with_headers({
-          :cache_control => ["no-cache", { :max_age => 12345 }],
-          :content_type => ['application/sdp', 'application/x-rtsp-mh']
+        :cache_control => ["no-cache", { :max_age => 12345 }],
+        :content_type => ['application/sdp', 'application/x-rtsp-mh']
       })
 
       string = message.to_s
