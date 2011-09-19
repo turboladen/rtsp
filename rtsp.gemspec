@@ -38,7 +38,7 @@ For more information see: http://www.ietf.org/rfc/rfc2326.txt}
   s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
   s.add_development_dependency(%q<code_statistics>, ["~> 0.2.13"])
   s.add_development_dependency(%q<metric_fu>, [">= 2.0.0"])
-  s.add_development_dependency(%q<rspec>, ["~> 2.5.0"])
+  s.add_development_dependency(%q<rspec>, [">= 2.5.0"])
   s.add_development_dependency(%q<simplecov>, [">= 0.4.0"])
   s.add_development_dependency(%q<yard>, [">= 0.6.0"])
 end
