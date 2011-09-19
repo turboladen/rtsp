@@ -1,4 +1,3 @@
-require 'rubygems' if RUBY_VERSION < "1.9.0"
 require 'rake'
 
 begin
@@ -16,9 +15,6 @@ rescue Bundler::BundlerError => e
   STDERR.puts "Run `bundle install` to install missing gems."
   exit e.status_code
 end
-
-require 'ore/tasks'
-Ore::Tasks.new
 
 require 'rspec/core/rake_task'
 RSpec::Core::RakeTask.new(:spec) do |t|
