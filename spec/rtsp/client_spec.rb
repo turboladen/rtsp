@@ -19,6 +19,11 @@ describe RTSP::Client do
     client
   end
 
+  before do
+    RTSP::Capturer.any_instance.stub(:run)
+    RTSP::Capturer.any_instance.stub(:stop)
+  end
+
   describe "#initialize" do
     before :each do
       mock_socket = double 'MockSocket'
