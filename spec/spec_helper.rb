@@ -68,3 +68,14 @@ Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )\r\n
 Cseq: \r\n
 Connection: Close\r\n
 \r\n}
+
+
+# Define #describe so when RTSP::Message calls #method_missing, RSpec doesn't
+# get in the way (and cause tests to fail).
+module RTSP
+  class Message
+    def self.describe request_uri
+      self.new(:describe, request_uri)
+    end
+  end
+end
