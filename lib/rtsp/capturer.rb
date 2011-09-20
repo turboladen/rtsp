@@ -23,6 +23,9 @@ module RTSP
     # Maximum number of bytes to receive on the socket.
     MAX_BYTES_TO_RECEIVE = 3000
 
+    # Maximum times to retry using the next greatest port number.
+    MAX_PORT_NUMBER_RETRIES = 50
+
     # @param [File] rtp_file The file to capture the RTP data to.
     # @return [File]
     attr_accessor :rtp_file
@@ -55,11 +58,11 @@ module RTSP
     # @return [UDPSocket, TCPSocket]
     # @raise [RTSP::Error] If +@transport_protocol was not set to +:UDP+ or
     #   +:TCP+.
-    def init_server
-      if @transport_protocol == :UDP
-        server = init_udp_server
-      elsif @transport_protocol == :tcp
-        server = init_tcp_server
+    def init_server(protocol, port=9000)
+      if protocol == :UDP
+        server = init_udp_server(port)
+      elsif protocol == :TCP
+        server = init_tcp_server(port)
       else
         raise RTSP::Error, "Unknown streaming_protocol requested: #{@transport_protocol}"
       end
@@ -68,51 +71,98 @@ module RTSP
     end
 
     # Starts capturing data on +@rtp_port+ and writes it to +@rtp_file+.
+    # @todo Allow to yield received data.
     def run
-      @server = init_server
+      @server = init_server(@transport_protocol, @rtp_port)
       @run = true
+      log "Starting #{self.class} on port #{@rtp_port}..."
 
-      RTSP::Client.log "Starting #{self.class} on port #{@rtp_port}..."
       while @run
         data = @server.recvfrom(MAX_BYTES_TO_RECEIVE).first
-        RTSP::Client.log "#{self.class} received data with size: #{data.size}"
+        log "received data with size: #{data.size}"
         @rtp_file.write data
       end
+
+    ensure
+      @server.close unless @server.nil?
     end
 
     # Returns if the run loop is in action.
     #
     # @return [Boolean] true if the run loop is running.
     def running?
-      @run
+      @server.nil? ? @run : (@run || @server.closed?)
     end
 
     # Breaks out of the run loop.
     def stop
-      RTSP::Client.log "Stopping #{self.class} on port #{@rtp_port}..."
+      log "Stopping #{self.class} on port #{@rtp_port}..."
       @run = false
-      @server.close
+
+      until !running?
+        sleep 0.01
+      end
     end
 
     # Sets up to receive data on a UDP socket, using +@rtp_port+.
     #
+    # @param [Fixnum] port Port number to listen for RTP data on.
     # @return [UDPSocket]
-    def init_udp_server
-      server = UDPSocket.open
-      server.bind('0.0.0.0', @rtp_port)
-      RTSP::Client.log "UDP server setup to receive on port #{@rtp_port}"
+    def init_udp_server(port)
+      port_retries = 0
+
+      begin
+        server = UDPSocket.open
+        server.bind('0.0.0.0', port)
+      rescue Errno::EADDRINUSE
+        log "RTP port #{port} in use, trying #{port + 1}..."
+        port += 1
+        port_retries += 1
+        retry until port_retries == MAX_PORT_NUMBER_RETRIES + 1
+        port = 9000
+        raise
+      end
+
+      @rtp_port = port
+      log "UDP server setup to receive on port #{@rtp_port}"
 
       server
     end
 
     # Sets up to receive data on a TCP socket, using +@rtp_port+.
     #
+    # @param [Fixnum] port Port number to listen for RTP data on.
     # @return [TCPSocket]
-    def init_tcp_server
-      server = TCPSocket.new('0.0.0.0', @rtp_port)
-      RTSP::Client.log "TCP server setup to receive on port #{@rtp_port}"
+    def init_tcp_server(port)
+      port_retries = 0
+
+      begin
+        server = TCPServer.new(port)
+      rescue Errno::EADDRINUSE
+        log "RTP port #{port} in use, trying #{port + 1}..."
+        port += 1
+        port_retries += 1
+        retry until port_retries == MAX_PORT_NUMBER_RETRIES + 1
+        port = 9000
+        raise
+      end
+
+      @rtp_port = port
+      log "TCP server setup to receive on port #{@rtp_port}"
 
       server
+    end
+
+    # PRIVATES!
+    private
+
+    # Quick wrapper for when not using RTSP::Client (i.e. during tests).
+    #
+    # @param [String] message The String to log.
+    def log(message)
+      if defined? RTSP::Client
+        RTSP::Client.log "<#{self.class}> #{message}"
+      end
     end
   end
 end
