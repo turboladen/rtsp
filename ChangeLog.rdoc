@@ -1,3 +1,7 @@
+=== 0.2.1 / 2011-09-20
+
+* `gem test rtsp` is failing; added rtsp.gemspec to list of files in the spec.
+
 === 0.2.0 / 2011-09-19
 
 * Changed RTSP::Capturer init_*_server methods to take params in order to reduce

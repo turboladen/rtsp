@@ -23,7 +23,7 @@ For more information see: http://www.ietf.org/rfc/rfc2326.txt}
       "README.rdoc"
   ]
   s.files = Dir.glob("{lib,bin,tasks}/**/*") +
-    %w(.gemtest) +
+    %w(.gemtest rtsp.gemspec) +
     %w(Gemfile ChangeLog.rdoc LICENSE.rdoc README.rdoc Rakefile)
   s.homepage = %q{http://rubygems.org/gems/rtsp}
   s.licenses = ["MIT"]
