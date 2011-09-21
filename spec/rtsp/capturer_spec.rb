@@ -68,19 +68,23 @@ describe RTSP::Capturer do
   end
 
   describe "#init_server" do
+    before { @capturer = RTSP::Capturer.new }
+
     after :each do
       @capturer.stop
     end
 
     it "creates a UDPSocket when initialized with :UDP" do
-      @capturer = RTSP::Capturer.new
       @capturer.init_server(:UDP).should be_a UDPSocket
     end
 
     it "creates a TCPSocket when initialized with :TCP" do
       TCPServer.new('0.0.0.0', 9000)
-      @capturer = RTSP::Capturer.new
       @capturer.init_server(:TCP).should be_a TCPSocket
+    end
+
+    it "raises an RTSP::Error when some other protocol is given" do
+      expect { @capturer.init_server(:BOBO) }.to raise_error RTSP::Error
     end
   end
 
