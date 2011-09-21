@@ -21,7 +21,7 @@ describe RTSP do
     RTSP.const_defined?('VERSION').should be_true
   end
 
-  it "has version 0.2.0" do
-    RTSP::VERSION.should == '0.2.0'
+  it "has version 0.2.1" do
+    RTSP::VERSION.should == '0.2.1'
   end
 end
