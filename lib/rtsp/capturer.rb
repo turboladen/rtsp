@@ -50,7 +50,9 @@ module RTSP
       @transport_protocol = transport_protocol
       @rtp_port = rtp_port
       @rtp_file = rtp_capture_file || Tempfile.new(DEFAULT_CAPFILE_NAME)
-      @run = false
+      @listener = nil
+      @file_builder = nil
+      @queue = Queue.new
     end
 
     # Initializes a server of the correct socket type.
@@ -73,35 +75,77 @@ module RTSP
     # Starts capturing data on +@rtp_port+ and writes it to +@rtp_file+.
     # @todo Allow to yield received data.
     def run
-      @server = init_server(@transport_protocol, @rtp_port)
-      @run = true
       log "Starting #{self.class} on port #{@rtp_port}..."
 
-      while @run
-        data = @server.recvfrom(MAX_BYTES_TO_RECEIVE).first
-        log "received data with size: #{data.size}"
-        @rtp_file.write data
+      start_file_builder
+      start_listener
+    end
+
+    def start_file_builder
+      return @file_builder if @file_builder and @file_builder.alive?
+
+      @file_builder = Thread.start(@rtp_file) do |rtp_file|
+        new_data = ""
+
+        loop do
+          rtp_file.write @queue.pop until @queue.empty?
+        end
       end
 
-    ensure
-      @server.close unless @server.nil?
+      @file_builder.abort_on_exception = true
+    end
+
+    def start_listener
+      return @listener if @listener and @listener.alive?
+
+
+      @listener = Thread.start do
+        server = init_server(@transport_protocol, @rtp_port)
+
+        loop do
+          data = server.recvfrom(MAX_BYTES_TO_RECEIVE).first
+          log "received data with size: #{data.size}"
+          @queue << data
+        end
+      end
+
+      @listener.abort_on_exception = true
+    end
+
+    def listening?
+      if @listener then @listener.alive? else false end
+    end
+
+    def file_building?
+      if @file_builder then @file_builder.alive? else false end
     end
 
     # Returns if the run loop is in action.
     #
     # @return [Boolean] true if the run loop is running.
     def running?
-      @server.nil? ? @run : (@run || @server.closed?)
+      listening? || file_building?
     end
 
     # Breaks out of the run loop.
     def stop
       log "Stopping #{self.class} on port #{@rtp_port}..."
-      @run = false
+      stop_listener
+      log "listening? #{listening?}"
+      stop_file_builder
+      log "file building? #{file_building?}"
+      log "running? #{running?}"
+      @queue = Queue.new
+    end
 
-      until !running?
-        sleep 0.01
-      end
+    def stop_listener
+      @listener.kill if @listener
+      @listener = nil
+    end
+
+    def stop_file_builder
+      @file_builder.kill if @file_builder
+      @file_builder = nil
     end
 
     # Sets up to receive data on a UDP socket, using +@rtp_port+.
