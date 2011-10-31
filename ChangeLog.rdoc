@@ -1,3 +1,9 @@
+=== 0.2.2 / 2011-10-31
+
+* Added a queue for listening and building the RTP file from the received data.
+* Fixed bugs:
+  * gh-6: .gemspec was missing +parslet+ dependency. Thanks [tindron].
+  
 === 0.2.1 / 2011-09-20
 
 * `gem test rtsp` is failing; added rtsp.gemspec to list of files in the spec.
