@@ -33,6 +33,7 @@ For more information see: http://www.ietf.org/rfc/rfc2326.txt}
   s.summary = %q{Library to allow RTSP streaming from RTSP-enabled devices.}
   s.test_files = Dir.glob("{spec,features}/**/*")
 
+  s.add_runtime_dependency(%q<parslet>, ["~> 1.1.0"])
   s.add_runtime_dependency(%q<sdp>, ["~> 0.2.2"])
 
   s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
