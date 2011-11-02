@@ -83,6 +83,8 @@ module RTSP
     # Starts the +@file_builder+ thread that pops data off of the Queue that
     # #start_listener pushed data on to.  It then takes that data and writes it
     # to +@rtp_file+.
+    #
+    # @return [Thread] The file_builder thread (+@file_builder+)
     def start_file_builder
       return @file_builder if @file_builder and @file_builder.alive?
 
@@ -98,9 +100,10 @@ module RTSP
     # Starts the +@listener+ thread that starts up the server, then takes the
     # data received from the server and pushes it on to the +@queue+ so
     # the +@file_builder+ thread can deal with it.
+    #
+    # @return [Thread] The listener thread (+@listener+).
     def start_listener
       return @listener if @listener and @listener.alive?
-
 
       @listener = Thread.start do
         server = init_server(@transport_protocol, @rtp_port)
@@ -184,7 +187,7 @@ module RTSP
     # Sets up to receive data on a TCP socket, using +@rtp_port+.
     #
     # @param [Fixnum] port Port number to listen for RTP data on.
-    # @return [TCPSocket]
+    # @return [TCPServer]
     def init_tcp_server(port)
       port_retries = 0
 
