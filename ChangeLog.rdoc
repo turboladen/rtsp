@@ -2,7 +2,7 @@
 
 * Added a queue for listening and building the RTP file from the received data.
 * Fixed bugs:
-  * gh-6: .gemspec was missing +parslet+ dependency. Thanks tindron[http://github.com/tindron].
+  * gh-6: .gemspec was missing +parslet+ dependency. Thanks [tindron[http://github.com/tindron]].
   
 === 0.2.1 / 2011-09-20
 
