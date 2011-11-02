@@ -64,11 +64,11 @@ describe RTSP::Response do
     end
 
     it "contains the class name and object ID first" do
-      @response.inspect.should match /^#<RTSP::Response:\d+/
+      @response.inspect.should match(/^#<RTSP::Response:\d+/)n
     end
 
     it "begins with <# and ends with >" do
-      @response.inspect.should match /^#<.*>$/
+      @response.inspect.should match(/^#<.*>$/)
     end
   end
 
