@@ -12,9 +12,9 @@ module RTSP
   # In this version, objects of this type don't do much other than just capture
   # the data to a file; in later versions, objects of this type will be able
   # to provide a "sink" and allow for ensuring that the received  RTP packets
-  # will  be reassembled in the correct order, as they're written to file
-  # (objects of this type don't don't currently check RTP sequence numbers
-  # on the data that's been received).
+  # will be reassembled in the correct order, as they're written to file
+  # (objects of this type don't don't currently allow for checking RTP sequence
+  # numbers on the data that's been received).
   class Capturer
 
     # Name of the file the data will be captured to unless #rtp_file is set.
@@ -72,8 +72,7 @@ module RTSP
       server
     end
 
-    # Starts capturing data on +@rtp_port+ and writes it to +@rtp_file+.
-    # @todo Allow to yield received data.
+    # Simply calls #start_file_builder and #start_listener.
     def run
       log "Starting #{self.class} on port #{@rtp_port}..."
 
@@ -81,12 +80,13 @@ module RTSP
       start_listener
     end
 
+    # Starts the +@file_builder+ thread that pops data off of the Queue that
+    # #start_listener pushed data on to.  It then takes that data and writes it
+    # to +@rtp_file+.
     def start_file_builder
       return @file_builder if @file_builder and @file_builder.alive?
 
       @file_builder = Thread.start(@rtp_file) do |rtp_file|
-        new_data = ""
-
         loop do
           rtp_file.write @queue.pop until @queue.empty?
         end
@@ -95,6 +95,9 @@ module RTSP
       @file_builder.abort_on_exception = true
     end
 
+    # Starts the +@listener+ thread that starts up the server, then takes the
+    # data received from the server and pushes it on to the +@queue+ so
+    # the +@file_builder+ thread can deal with it.
     def start_listener
       return @listener if @listener and @listener.alive?
 
@@ -112,15 +115,18 @@ module RTSP
       @listener.abort_on_exception = true
     end
 
+    # @return [Boolean] true if the +@listener+ thread is running; false if not.
     def listening?
       if @listener then @listener.alive? else false end
     end
 
+    # @return [Boolean] true if the +@file_builder+ thread is running; false if
+    #   not.
     def file_building?
       if @file_builder then @file_builder.alive? else false end
     end
 
-    # Returns if the run loop is in action.
+    # Returns if the #run loop is in action.
     #
     # @return [Boolean] true if the run loop is running.
     def running?
@@ -138,11 +144,13 @@ module RTSP
       @queue = Queue.new
     end
 
+    # Kills the +@listener+ thread and sets the variable to nil.
     def stop_listener
       @listener.kill if @listener
       @listener = nil
     end
 
+    # Kills the +@file_builder+ thread and sets the variable to nil.
     def stop_file_builder
       @file_builder.kill if @file_builder
       @file_builder = nil
