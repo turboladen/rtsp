@@ -77,7 +77,7 @@ describe RTSP::Capturer do
       end
     end
 
-    context "TDP" do
+    context "TCP" do
       it "calls #init_tcp_server with port 9000" do
         subject.should_receive(:init_tcp_server).with(9000)
         subject.init_server(:TCP)
@@ -90,95 +90,6 @@ describe RTSP::Capturer do
 
     it "raises an RTSP::Error when some other protocol is given" do
       expect { subject.init_server(:BOBO) }.to raise_error RTSP::Error
-    end
-  end
-
-  describe "#run" do
-=begin
-    context "default capturer settings" do
-      before do
-        @capturer = RTSP::Capturer.new
-        @receiver_thread = Thread.start(@capturer) { |capturer| capturer.run }
-
-        @client = UDPSocket.open
-        @sender_thread = Thread.start(@client) do |client|
-          loop do
-            client.send "x", 0, 'localhost', @capturer.rtp_port
-          end
-        end
-
-        sleep 0.1
-      end
-
-      after do
-        @sender_thread.exit
-        @receiver_thread.exit
-      end
-
-      it "gets access to a UDPSocket via @server" do
-        @capturer.instance_variable_get(:@server).should be_a UDPSocket
-      end
-
-      it "sets @run to true" do
-        @capturer.instance_variable_get(:@run).should be_true
-      end
-
-      it "receives data and writes to @rtp_file" do
-        @capturer.rtp_file.size.should > 0
-      end
-
-      it "closes the @server after issuing a #stop" do
-        @capturer.instance_variable_get(:@server).should_not be_closed
-        @capturer.stop
-        sleep 0.1
-        @capturer.instance_variable_get(:@server).should be_closed
-      end
-    end
-=end
-    it "calls #start_file_builder and #start_listener" do
-      subject.should_receive(:start_listener)
-      subject.should_receive(:start_file_builder)
-      subject.run
-    end
-  end
-
-  describe "#running?" do
-    it "returns false before issuing #run" do
-      subject.running?.should be_false
-    end
-
-    it "returns true after running" do
-      cap_thread = Thread.new(subject) { |capturer| capturer.run }
-      sleep 0.1
-      subject.running?.should be_true
-      cap_thread.exit
-    end
-
-    it "returns false after running, then stopping" do
-      cap_thread = Thread.new(subject) { |capturer| capturer.run }
-      sleep 0.1
-      subject.running?.should be_true
-      subject.stop
-      subject.running?.should be_false
-      cap_thread.exit
-    end
-  end
-
-  describe "#stop" do
-    context "not running yet" do
-      it "sets @run to false" do
-        subject.stop
-        subject.instance_variable_get(:@run).should == false
-      end
-    end
-
-    context "running" do
-      it "sets @run to false" do
-        Thread.new(subject) { |c| c.run }
-        sleep 0.1
-        subject.stop
-        subject.instance_variable_get(:@run).should == false
-      end
     end
   end
 
@@ -196,9 +107,8 @@ describe RTSP::Capturer do
 
     it "retries MAX_PORT_NUMBER_RETRIES to get a port" do
       @sockets = use_udp_ports 9000...(9000 + RTSP::Capturer::MAX_PORT_NUMBER_RETRIES)
-      #@sockets.each { |s| puts "meow: #{s.addr[1]}" }
-
       subject.init_udp_server(subject.rtp_port)
+
       subject.rtp_port.should == 9000 + RTSP::Capturer::MAX_PORT_NUMBER_RETRIES
     end
 
@@ -219,18 +129,130 @@ describe RTSP::Capturer do
   end
 
   describe "#init_tcp_server" do
-    before do
-      @capturer = RTSP::Capturer.new(:TCP)
-      @server = @capturer.init_tcp_server(@capturer.rtp_port)
-    end
-
     it "returns a TCPSocket" do
-      @server.should be_a TCPSocket
+      subject.init_tcp_server(3456).should be_a TCPSocket
     end
 
     it "uses port a port between 9000 and 9000 + MAX_PORT_NUMBER_RETRIES" do
-      @capturer.rtp_port.should >= 9000
-      @capturer.rtp_port.should <= 9000 + RTSP::Capturer::MAX_PORT_NUMBER_RETRIES
+      subject.init_tcp_server(9000)
+      subject.rtp_port.should >= 9000
+      subject.rtp_port.should <= 9000 + RTSP::Capturer::MAX_PORT_NUMBER_RETRIES
+    end
+  end
+
+  describe "#run" do
+    after(:each) { subject.stop }
+
+    it "calls #start_file_builder and #start_listener" do
+      subject.should_receive(:start_listener)
+      subject.should_receive(:start_file_builder)
+      subject.run
+    end
+  end
+
+  describe "#running?" do
+    after(:each) { subject.stop }
+
+    it "returns false before issuing #run" do
+      subject.running?.should be_false
+    end
+
+    it "returns true after running" do
+      subject.run
+      subject.running?.should be_true
+    end
+
+    it "returns false after running then stopping" do
+      subject.run
+      subject.running?.should be_true
+      subject.stop
+      subject.running?.should be_false
+    end
+  end
+
+  describe "#stop" do
+    it "calls #stop_listener" do
+      subject.should_receive(:stop_listener)
+      subject.stop
+    end
+
+    it "calls #stop_file_builder" do
+      subject.should_receive(:stop_file_builder)
+      subject.stop
+    end
+
+    it "sets @queue back to a new Queue" do
+      queue = subject.instance_variable_get(:@queue)
+      subject.stop
+      subject.instance_variable_get(:@queue).should_not equal queue
+      subject.instance_variable_get(:@queue).should_not be_nil
+    end
+  end
+
+  [
+    {
+      start_method: "start_file_builder",
+      stop_method: "stop_file_builder",
+      ivar: "@file_builder"
+    },
+      {
+        start_method: "start_listener",
+        stop_method: "stop_listener",
+        ivar: "@listener"
+      }
+  ].each do |method_set|
+    describe "##{method_set[:start_method]}" do
+      before(:each) do
+        rtp_file = double "rtp_file"
+        rtp_file.stub(:write)
+        subject.rtp_file = rtp_file
+
+        server = double "A Server"
+        server.stub_chain(:recvfrom, :first).and_return("not nil")
+        subject.stub(:init_server).and_return(server)
+      end
+
+      after(:each) { subject.send(method_set[:stop_method].to_sym) }
+
+      it "starts the #{method_set[:ivar]} thread" do
+        subject.send(method_set[:start_method])
+        subject.instance_variable_get(method_set[:ivar].to_sym).should be_a Thread
+      end
+
+      it "returns the same #{method_set[:ivar]} if already started" do
+        subject.send(method_set[:start_method])
+        original_ivar = subject.instance_variable_get(method_set[:ivar].to_sym)
+        new_ivar = subject.send method_set[:start_method].to_sym
+        original_ivar.should equal new_ivar
+      end
+
+      if method_set[:start_method] == "start_listener"
+        it "pushes data on to the @queue" do
+          subject.start_listener
+          subject.instance_variable_get(:@queue).pop.should == "not nil"
+        end
+      end
+    end
+
+    describe "##{method_set[:stop_method]}" do
+      context "#{method_set[:ivar]} thread is running" do
+        before { subject.send(method_set[:start_method]) }
+
+        it "kills the thread" do
+          original_ivar = subject.instance_variable_get(method_set[:ivar].to_sym)
+          original_ivar.should_receive(:kill)
+          subject.send(method_set[:stop_method])
+        end
+      end
+
+      context "#{method_set[:ivar]} thread isn't running" do
+        it "doesn't try to kill the thread" do
+          allow_message_expectations_on_nil
+          original_ivar = subject.instance_variable_get(method_set[:ivar].to_sym)
+          original_ivar.should_not_receive(:kill)
+          subject.send(method_set[:stop_method])
+        end
+      end
     end
   end
 end
