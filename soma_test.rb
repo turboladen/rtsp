@@ -1,11 +1,13 @@
 require './lib/rtsp/client'
 
-RTSP::Client.log = false
+#RTSP::Client.log = false
+RTSP::Client.log = true
 
 cap_file = File.new("soma_cap.rtsp", "wb")
 url = "rtsp://64.202.98.91/sa.sdp"
 client = RTSP::Client.new(url)
-client.capturer.media_file = cap_file
+
+client.capturer.rtp_file = cap_file
 # client = RTSP::Client.new(url) do |client, capturer|
 #   description = SDP.parse(open("http://test/description.sdp"))
 #   client.timeout = 30
