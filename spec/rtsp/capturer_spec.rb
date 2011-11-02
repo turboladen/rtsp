@@ -28,18 +28,16 @@ describe RTSP::Capturer do
 
   describe "#initialize" do
     context "with default parameters" do
-      before { @capturer = RTSP::Capturer.new }
-
       it "uses UDP" do
-        @capturer.instance_variable_get(:@transport_protocol).should == :UDP
+        subject.instance_variable_get(:@transport_protocol).should == :UDP
       end
 
       it "uses port 9000" do
-        @capturer.instance_variable_get(:@rtp_port).should == 9000
+        subject.instance_variable_get(:@rtp_port).should == 9000
       end
 
       it "creates a new Tempfile" do
-        @capturer.instance_variable_get(:@rtp_file).should be_a Tempfile
+        subject.instance_variable_get(:@rtp_file).should be_a Tempfile
       end
     end
 
@@ -68,27 +66,35 @@ describe RTSP::Capturer do
   end
 
   describe "#init_server" do
-    before { @capturer = RTSP::Capturer.new }
+    context "UDP" do
+      it "calls #init_udp_server with port 9000" do
+        subject.should_receive(:init_udp_server).with(9000)
+        subject.init_server(:UDP)
+      end
 
-    after :each do
-      @capturer.stop
+      it "returns a UDPSocket" do
+        subject.init_server(:UDP).should be_a(UDPSocket)
+      end
     end
 
-    it "creates a UDPSocket when initialized with :UDP" do
-      @capturer.init_server(:UDP).should be_a UDPSocket
-    end
+    context "TDP" do
+      it "calls #init_tcp_server with port 9000" do
+        subject.should_receive(:init_tcp_server).with(9000)
+        subject.init_server(:TCP)
+      end
 
-    it "creates a TCPSocket when initialized with :TCP" do
-      TCPServer.new('0.0.0.0', 9000)
-      @capturer.init_server(:TCP).should be_a TCPSocket
+      it "returns a TCPServer" do
+        subject.init_server(:TCP).should be_a(TCPServer)
+      end
     end
 
     it "raises an RTSP::Error when some other protocol is given" do
-      expect { @capturer.init_server(:BOBO) }.to raise_error RTSP::Error
+      expect { subject.init_server(:BOBO) }.to raise_error RTSP::Error
     end
   end
 
   describe "#run" do
+=begin
     context "default capturer settings" do
       before do
         @capturer = RTSP::Capturer.new
@@ -128,48 +134,50 @@ describe RTSP::Capturer do
         @capturer.instance_variable_get(:@server).should be_closed
       end
     end
+=end
+    it "calls #start_file_builder and #start_listener" do
+      subject.should_receive(:start_listener)
+      subject.should_receive(:start_file_builder)
+      subject.run
+    end
   end
 
   describe "#running?" do
-    before { @capturer = RTSP::Capturer.new }
-
     it "returns false before issuing #run" do
-      @capturer.running?.should be_false
+      subject.running?.should be_false
     end
 
     it "returns true after running" do
-      cap_thread = Thread.new(@capturer) { |capturer| capturer.run }
+      cap_thread = Thread.new(subject) { |capturer| capturer.run }
       sleep 0.1
-      @capturer.running?.should be_true
+      subject.running?.should be_true
       cap_thread.exit
     end
 
     it "returns false after running, then stopping" do
-      cap_thread = Thread.new(@capturer) { |capturer| capturer.run }
+      cap_thread = Thread.new(subject) { |capturer| capturer.run }
       sleep 0.1
-      @capturer.running?.should be_true
-      @capturer.stop
-      @capturer.running?.should be_false
+      subject.running?.should be_true
+      subject.stop
+      subject.running?.should be_false
       cap_thread.exit
     end
   end
 
   describe "#stop" do
-    before { @capturer = RTSP::Capturer.new }
-
     context "not running yet" do
       it "sets @run to false" do
-        @capturer.stop
-        @capturer.instance_variable_get(:@run).should == false
+        subject.stop
+        subject.instance_variable_get(:@run).should == false
       end
     end
 
     context "running" do
       it "sets @run to false" do
-        Thread.new(@capturer) { |c| c.run }
+        Thread.new(subject) { |c| c.run }
         sleep 0.1
-        @capturer.stop
-        @capturer.instance_variable_get(:@run).should == false
+        subject.stop
+        subject.instance_variable_get(:@run).should == false
       end
     end
   end
@@ -182,8 +190,7 @@ describe RTSP::Capturer do
     end
 
     it "returns a UDPSocket" do
-      capturer = RTSP::Capturer.new
-      server = capturer.init_udp_server(capturer.rtp_port)
+      server = subject.init_udp_server(subject.rtp_port)
       server.should be_a UDPSocket
     end
 
@@ -191,25 +198,22 @@ describe RTSP::Capturer do
       @sockets = use_udp_ports 9000...(9000 + RTSP::Capturer::MAX_PORT_NUMBER_RETRIES)
       #@sockets.each { |s| puts "meow: #{s.addr[1]}" }
 
-      capturer = RTSP::Capturer.new
-      capturer.init_udp_server(capturer.rtp_port)
-      capturer.rtp_port.should == 9000 + RTSP::Capturer::MAX_PORT_NUMBER_RETRIES
+      subject.init_udp_server(subject.rtp_port)
+      subject.rtp_port.should == 9000 + RTSP::Capturer::MAX_PORT_NUMBER_RETRIES
     end
 
     context "when no available ports, it retries MAX_PORT_NUMBER_RETRIES times, then" do
       before do
         @sockets = use_udp_ports 9000..(9000 + RTSP::Capturer::MAX_PORT_NUMBER_RETRIES)
-
-        @capturer = RTSP::Capturer.new
       end
 
       it "retries MAX_PORT_NUMBER_RETRIES times then raises" do
-        expect { @capturer.init_udp_server(@capturer.rtp_port) }.to raise_error Errno::EADDRINUSE
+        expect { subject.init_udp_server(subject.rtp_port) }.to raise_error Errno::EADDRINUSE
       end
 
       it "sets @rtp_port back to 9000 after trying all" do
-        expect { @capturer.init_udp_server(@capturer.rtp_port) }.to raise_error Errno::EADDRINUSE
-        @capturer.rtp_port.should == 9000
+        expect { subject.init_udp_server(subject.rtp_port) }.to raise_error Errno::EADDRINUSE
+        subject.rtp_port.should == 9000
       end
     end
   end
