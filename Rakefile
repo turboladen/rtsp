@@ -1,30 +1,20 @@
-require 'rake'
-
-begin
-  require 'bundler'
-rescue LoadError => e
-  STDERR.puts e.message
-  STDERR.puts "Run `gem install bundler` to install Bundler."
-  exit e.status_code
-end
-
-begin
-  Bundler.setup(:development)
-rescue Bundler::BundlerError => e
-  STDERR.puts e.message
-  STDERR.puts "Run `bundle install` to install missing gems."
-  exit e.status_code
-end
-
+require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
+require 'yard'
+
 RSpec::Core::RakeTask.new(:spec) do |t|
-  t.ruby_opts = "-w"
   t.rspec_opts = ['--format', 'documentation', '--color']
+end
+
+namespace :spec do
+  RSpec::Core::RakeTask.new(:warnings) do |t|
+    t.ruby_opts = "-w"
+    t.rspec_opts = ['--format', 'documentation', '--color']
+  end
 end
 task :default => :spec
 task :test => :spec       # for `gem test`
 
-require 'yard'
 YARD::Rake::YardocTask.new do |t|
   t.options = ['--verbose']
 end
