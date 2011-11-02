@@ -36,21 +36,21 @@ describe "RTSP::Message" do
   context "builds a DESCRIBE string" do
     it "with default sequence and accept values" do
       message = RTSP::Message.describe(@stream)
-      message.to_s.should match /^DESCRIBE rtsp:/
+      message.to_s.should match(/^DESCRIBE rtsp:/)
       message.to_s.should include "DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
       message.to_s.should include "Accept: application/sdp\r\n"
-      message.to_s.should match /\r\n\r\n$/
+      message.to_s.should match(/\r\n\r\n$/)
     end
 
     it "with default sequence value" do
       message = RTSP::Message.describe(@stream).with_headers({
         accept: 'application/sdp, application/rtsl' })
-      message.to_s.should match /^DESCRIBE rtsp:/
+      message.to_s.should match(/^DESCRIBE rtsp:/)
       message.to_s.should include "DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
       message.to_s.should include "Accept: application/sdp, application/rtsl\r\n"
-      message.to_s.should match /\r\n\r\n$/
+      message.to_s.should match(/\r\n\r\n$/)
     end
 
     it "with new sequence and accept values" do
@@ -58,11 +58,11 @@ describe "RTSP::Message" do
         accept: 'application/sdp, application/rtsl',
         cseq: 2345 })
 
-      message.to_s.should match /^DESCRIBE rtsp:/
+      message.to_s.should match(/^DESCRIBE rtsp:/)
       message.to_s.should include "DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 2345\r\n"
       message.to_s.should include "Accept: application/sdp, application/rtsl\r\n"
-      message.to_s.should match /\r\n\r\n$/
+      message.to_s.should match(/\r\n\r\n$/)
     end
   end
 
@@ -70,12 +70,12 @@ describe "RTSP::Message" do
     it "with default sequence, content type, but no body" do
       message = RTSP::Message.announce(@stream).with_headers({ session: 123456789 })
 
-      message.to_s.should match /^ANNOUNCE rtsp:/
+      message.to_s.should match(/^ANNOUNCE rtsp:/)
       message.to_s.should include "ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
       message.to_s.should include "Session: 123456789\r\n"
       message.to_s.should include "Content-Type: application/sdp\r\n"
-      message.to_s.should match /\r\n\r\n$/
+      message.to_s.should match(/\r\n\r\n$/)
     end
 
     it "with passed-in session and content type but no body" do
@@ -83,12 +83,12 @@ describe "RTSP::Message" do
         session: 123456789,
         content_type: 'application/sdp, application/rtsl' })
 
-      message.to_s.should match /^ANNOUNCE rtsp:/
+      message.to_s.should match(/^ANNOUNCE rtsp:/)
       message.to_s.should include "ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
       message.to_s.should include "Session: 123456789\r\n"
       message.to_s.should include "Content-Type: application/sdp, application/rtsl\r\n"
-      message.to_s.should match /\r\n\r\n$/
+      message.to_s.should match(/\r\n\r\n$/)
     end
 
     it "with passed-in sequence, session, content-type, but no body " do
@@ -97,12 +97,12 @@ describe "RTSP::Message" do
         content_type: 'application/sdp, application/rtsl',
         cseq: 2345 })
 
-      message.to_s.should match /^ANNOUNCE rtsp:/
+      message.to_s.should match(/^ANNOUNCE rtsp:/)
       message.to_s.should include "ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 2345\r\n"
       message.to_s.should include "Session: 123456789\r\n"
       message.to_s.should include "Content-Type: application/sdp, application/rtsl\r\n"
-      message.to_s.should match /\r\n\r\n$/
+      message.to_s.should match(/\r\n\r\n$/)
     end
 
     it "with passed-in sequence, session, content-type, and SDP body" do
@@ -116,13 +116,13 @@ describe "RTSP::Message" do
         cseq: 2345 })
       message.body = sdp.to_s
 
-      message.to_s.should match /^ANNOUNCE rtsp/
+      message.to_s.should match(/^ANNOUNCE rtsp/)
       message.to_s.should include "ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 2345\r\n"
       message.to_s.should include "Session: 123456789\r\n"
       message.to_s.should include "Content-Type: application/sdp\r\n"
       message.to_s.should include "Content-Length: 29\r\n"
-      message.to_s.should match /\r\n\r\nv=1\r\no=bobo     \r\ns=\r\nt= \r\n\r\n$/
+      message.to_s.should match(/\r\n\r\nv=1\r\no=bobo     \r\ns=\r\nt= \r\n\r\n$/)
     end
   end
 
@@ -130,21 +130,21 @@ describe "RTSP::Message" do
     it "with default sequence, client_port, and routing values" do
       message = RTSP::Message.setup(@stream)
 
-      message.to_s.should match /^SETUP rtsp/
+      message.to_s.should match(/^SETUP rtsp/)
       message.to_s.should include "SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
-      message.to_s.should match /\r\n\r\n$/
+      message.to_s.should match(/\r\n\r\n$/)
     end
 
     it "with default sequence, transport, and client_port values" do
       message = RTSP::Message.setup(@stream).with_headers({
         transport: ["RTP/AVP", "multicast", { :client_port => "9000-9001" }] })
 
-      message.to_s.should match /^SETUP rtsp/
+      message.to_s.should match(/^SETUP rtsp/)
       message.to_s.should include "SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
       message.to_s.should include "Transport: RTP/AVP;multicast;client_port=9000-9001\r\n"
-      message.to_s.should match /\r\n\r\n$/
+      message.to_s.should match(/\r\n\r\n$/)
     end
 
     it "with default transport, client_port, and routing values" do
@@ -152,11 +152,11 @@ describe "RTSP::Message" do
         transport: ["RTP/AVP", "multicast", { :client_port => "9000-9001" }],
         cseq: 2345 })
 
-      message.to_s.should match /^SETUP rtsp/
+      message.to_s.should match(/^SETUP rtsp/)
       message.to_s.should include "SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 2345\r\n"
       message.to_s.should include "Transport: RTP/AVP;multicast;client_port=9000-9001\r\n"
-      message.to_s.should match /\r\n\r\n$/
+      message.to_s.should match(/\r\n\r\n$/)
     end
   end
 
@@ -165,12 +165,12 @@ describe "RTSP::Message" do
       message = RTSP::Message.play(@stream).with_headers({
         session: 123456789 })
 
-      message.to_s.should match /^PLAY rtsp/
+      message.to_s.should match(/^PLAY rtsp/)
       message.to_s.should include "PLAY rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
       message.to_s.should include "Session: 123456789\r\n"
       message.to_s.should include "Range: npt=0.000-\r\n"
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
 
     it "with default sequence value" do
@@ -178,12 +178,12 @@ describe "RTSP::Message" do
         session: 123456789,
         range: { :npt => "0.000-1.234" } })
 
-      message.to_s.should match /^PLAY rtsp/
+      message.to_s.should match(/^PLAY rtsp/)
       message.to_s.should include "PLAY rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
       message.to_s.should include "Session: 123456789\r\n"
       message.to_s.should include "Range: npt=0.000-1.234\r\n"
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
   end
 
@@ -191,10 +191,10 @@ describe "RTSP::Message" do
     it "with required Request values" do
       message = RTSP::Message.pause(@stream)
 
-      message.to_s.should match /^PAUSE rtsp/
+      message.to_s.should match(/^PAUSE rtsp/)
       message.to_s.should include "PAUSE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
 
     it "with session and range headers" do
@@ -202,12 +202,12 @@ describe "RTSP::Message" do
         session: 123456789,
         range: { :npt => "0.000" } })
 
-      message.to_s.should match /^PAUSE rtsp/
+      message.to_s.should match(/^PAUSE rtsp/)
       message.to_s.should include "PAUSE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
       message.to_s.should include "Session: 123456789\r\n"
       message.to_s.should include "Range: npt=0.000\r\n"
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
   end
 
@@ -215,21 +215,21 @@ describe "RTSP::Message" do
     it "with required Request values" do
       message = RTSP::Message.teardown(@stream)
 
-      message.to_s.should match /^TEARDOWN rtsp/
+      message.to_s.should match(/^TEARDOWN rtsp/)
       message.to_s.should include "TEARDOWN rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
 
     it "with session and range headers" do
       message = RTSP::Message.teardown(@stream).with_headers({
         session: 123456789 })
 
-      message.to_s.should match /^TEARDOWN rtsp/
+      message.to_s.should match(/^TEARDOWN rtsp/)
       message.to_s.should include "TEARDOWN rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
       message.to_s.should include "Session: 123456789\r\n"
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
   end
 
@@ -237,10 +237,10 @@ describe "RTSP::Message" do
     it "with required Request values" do
       message = RTSP::Message.get_parameter(@stream)
 
-      message.to_s.should match /^GET_PARAMETER rtsp/
+      message.to_s.should match(/^GET_PARAMETER rtsp/)
       message.to_s.should include "GET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
 
     it "with cseq, content type, session headers, and text body" do
@@ -253,14 +253,14 @@ describe "RTSP::Message" do
 
       message.body = the_body
 
-      message.to_s.should match /^GET_PARAMETER rtsp/
+      message.to_s.should match(/^GET_PARAMETER rtsp/)
       message.to_s.should include "GET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 431\r\n"
       message.to_s.should include "Session: 123456789\r\n"
       message.to_s.should include "Content-Type: text/parameters\r\n"
       message.to_s.should include "Content-Length: #{the_body.length}\r\n"
       message.to_s.should include the_body
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
   end
 
@@ -268,10 +268,10 @@ describe "RTSP::Message" do
     it "with required Request values" do
       message = RTSP::Message.set_parameter(@stream)
 
-      message.to_s.should match /^SET_PARAMETER rtsp/
+      message.to_s.should match(/^SET_PARAMETER rtsp/)
       message.to_s.should include "SET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
 
     it "with cseq, content type, session headers, and text body" do
@@ -283,14 +283,14 @@ describe "RTSP::Message" do
         session: 123456789 })
       message.body = the_body
 
-      message.to_s.should match /^SET_PARAMETER rtsp/
+      message.to_s.should match(/^SET_PARAMETER rtsp/)
       message.to_s.should include "SET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 431\r\n"
       message.to_s.should include "Session: 123456789\r\n"
       message.to_s.should include "Content-Type: text/parameters\r\n"
       message.to_s.should include "Content-Length: #{the_body.length}\r\n"
       message.to_s.should include the_body
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
   end
 
@@ -298,10 +298,10 @@ describe "RTSP::Message" do
     it "with required Request values" do
       message = RTSP::Message.redirect(@stream)
 
-      message.to_s.should match /^REDIRECT rtsp/
+      message.to_s.should match(/^REDIRECT rtsp/)
       message.to_s.should include "REDIRECT rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
 
     it "with cseq, location, and range headers" do
@@ -310,12 +310,12 @@ describe "RTSP::Message" do
         location: "rtsp://bigserver.com:8001",
         range: { :clock => "19960213T143205Z-" } })
 
-      message.to_s.should match /^REDIRECT rtsp/
+      message.to_s.should match(/^REDIRECT rtsp/)
       message.to_s.should include "REDIRECT rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 732\r\n"
       message.to_s.should include "Location: rtsp://bigserver.com:8001\r\n"
       message.to_s.should include "Range: clock=19960213T143205Z-\r\n"
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
   end
 
@@ -323,10 +323,10 @@ describe "RTSP::Message" do
     it "with required Request values" do
       message = RTSP::Message.record(@stream)
 
-      message.to_s.should match /^RECORD rtsp/
+      message.to_s.should match(/^RECORD rtsp/)
       message.to_s.should include "RECORD rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
 
     it "with cseq, session, and conference headers" do
@@ -335,12 +335,12 @@ describe "RTSP::Message" do
         session: 12345678,
         conference: "128.16.64.19/32492374" })
 
-      message.to_s.should match /^RECORD rtsp/
+      message.to_s.should match(/^RECORD rtsp/)
       message.to_s.should include "RECORD rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 954\r\n"
       message.to_s.should include "Session: 12345678\r\n"
       message.to_s.should include "Conference: 128.16.64.19/32492374\r\n"
-      message.to_s.should match /\r\n\r\n/
+      message.to_s.should match(/\r\n\r\n/)
     end
   end
 
@@ -390,13 +390,13 @@ describe "RTSP::Message" do
     it "adds the passed-in text to the body of the message" do
       new_body = "1234567890"
       message = RTSP::Message.record("rtsp://localhost/track").with_body(new_body)
-      message.to_s.should match /\r\n\r\n#{new_body}$/
+      message.to_s.should match(/\r\n\r\n#{new_body}$/)
     end
 
     it "adds the Content-Length header to reflect the body" do
       new_body = "1234567890"
       message = RTSP::Message.record("rtsp://localhost/track").with_body(new_body)
-      message.to_s.should match /Content-Length: #{new_body.size}\r\n/
+      message.to_s.should match(/Content-Length: #{new_body.size}\r\n/)
     end
   end
 
