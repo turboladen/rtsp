@@ -5,12 +5,20 @@ PATH
       parslet (~> 1.1.0)
       sdp (~> 0.2.2)
 
+PATH
+  remote: ../rtp
+  specs:
+    rtp (0.1.0)
+      bindata
+      log_switch
+
 GEM
   remote: http://rubygems.org/
   specs:
     Saikuro (1.1.0)
     activesupport (3.1.1)
       multi_json (~> 1.0)
+    bindata (1.4.3)
     blankslate (2.1.2.4)
     chronic (0.3.0)
     churn (0.0.13)
@@ -33,6 +41,7 @@ GEM
     hirb (0.5.0)
     i18n (0.6.0)
     json_pure (1.6.1)
+    log_switch (0.1.4)
     main (4.7.1)
     metric_fu (2.1.1)
       Saikuro (>= 1.1.0)
@@ -57,6 +66,7 @@ GEM
       i18n
       progressbar
       sexp_processor
+    rake (0.9.2.2)
     rcov (0.9.11)
     rcov (0.9.11-java)
     reek (1.2.8)
@@ -96,7 +106,9 @@ DEPENDENCIES
   bundler (~> 1.0.0)
   code_statistics (~> 0.2.13)
   metric_fu (>= 2.0.0)
+  rake (>= 0.8.7)
   rspec (>= 2.5.0)
+  rtp!
   rtsp!
   simplecov (>= 0.4.0)
   yard (>= 0.6.0)

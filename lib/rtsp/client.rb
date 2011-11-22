@@ -1,9 +1,9 @@
 require 'socket'
 require 'tempfile'
 require 'timeout'
+require 'rtp/receiver'
 
 require_relative 'transport_parser'
-require_relative 'capturer'
 require_relative 'error'
 require_relative 'global'
 require_relative 'helpers'
@@ -13,7 +13,7 @@ require_relative 'response'
 module RTSP
 
   # This is the main interface to an RTSP server.  A client object uses a couple
-  # main objects for configuration: an +RTSP::Capturer+ and a Connection Struct.
+  # main objects for configuration: an +RTP::Receiver+ and a Connection Struct.
   # Use the capturer to configure how to capture the data which is the RTP
   # stream provided by the RTSP server.  Use the connection object to control
   # the connection to the server.
@@ -56,7 +56,6 @@ module RTSP
     include RTSP::Helpers
     extend RTSP::Global
 
-    DEFAULT_CAPFILE_NAME = "ruby_rtsp_capture.rtsp"
     MAX_BYTES_TO_RECEIVE = 3000
 
     # @return [URI] The URI that points to the RTSP server's resource.
@@ -80,8 +79,8 @@ module RTSP
     attr_accessor :connection
 
     # Use to get/set an object for capturing received data.
-    # @param [RTSP::Capturer]
-    # @return [RTSP::Capturer]
+    # @param [RTP::Receiver]
+    # @return [RTP::Receiver]
     attr_accessor :capturer
 
     # @return [Symbol] See {RFC section A.1.}[http://tools.ietf.org/html/rfc2326#page-76]
@@ -95,7 +94,7 @@ module RTSP
 
     # @param [String] server_url URL to the resource to stream.  If no scheme is
     #   given, "rtsp" is assumed.  If no port is given, 554 is assumed.
-    # @yield [Struct::Connection, RTSP::Capturer]
+    # @yield [Struct::Connection, RTP::Receiver]
     # @yieldparam [Struct::Connection] server_url=
     # @yieldparam [Struct::Connection] timeout=
     # @yieldparam [Struct::Connection] socket=
@@ -111,7 +110,7 @@ module RTSP
       end
 
       @connection = Struct::Connection.new
-      @capturer   = RTSP::Capturer.new
+      @capturer   = RTP::Receiver.new
 
       yield(connection, capturer) if block_given?
 
@@ -124,7 +123,7 @@ module RTSP
       @capturer.rtp_port           ||= 9000
       @capturer.transport_protocol ||= :UDP
       @capturer.broadcast_type     ||= :unicast
-      @capturer.rtp_file           ||= Tempfile.new(DEFAULT_CAPFILE_NAME)
+      @capturer.rtp_file           ||= Tempfile.new(RTP::Receiver::DEFAULT_CAPFILE_NAME)
 
       @play_thread = nil
       @cseq        = 1

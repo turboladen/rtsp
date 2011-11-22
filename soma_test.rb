@@ -33,7 +33,7 @@ client.setup media_track
 #client[media_track].setup
 #client.media_control_tracks.play
 client.play aggregate_track
-sleep 5
+sleep 15
 #client[aggregate_track].play
 client.teardown aggregate_track
 

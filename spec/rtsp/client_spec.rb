@@ -1,7 +1,7 @@
 require 'sdp'
 require_relative '../spec_helper'
 require 'rtsp/client'
-require 'support/fake_rtsp_server'
+require_relative '../support/fake_rtsp_server'
 
 describe RTSP::Client do
   def setup_client_at(url)
@@ -20,8 +20,8 @@ describe RTSP::Client do
   end
 
   before do
-    RTSP::Capturer.any_instance.stub(:run)
-    RTSP::Capturer.any_instance.stub(:stop)
+    RTP::Receiver.any_instance.stub(:run)
+    RTP::Receiver.any_instance.stub(:stop)
   end
 
   describe "#initialize" do
