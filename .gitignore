@@ -1,0 +1,9 @@
+.DS_Store
+.bundle/
+.idea/
+.yardoc/
+.loadpath
+.project
+coverage/
+doc/
+pkg/
