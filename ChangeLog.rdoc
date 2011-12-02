@@ -1,3 +1,7 @@
+
+* Laxed dependency requirement on parslet.
+* Bumped dependency requirement on sdp to ~> 0.2.6, due to parslet conflicts
+
 === 0.2.2 / 2011-11-02
 
 * Added a queue for listening and building the RTP file from the received data.

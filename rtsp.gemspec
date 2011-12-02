@@ -22,9 +22,8 @@ For more information see: http://www.ietf.org/rfc/rfc2326.txt}
       "LICENSE.rdoc",
       "README.rdoc"
   ]
-  s.files = Dir.glob("{lib,bin,tasks}/**/*") +
-    %w(.gemtest rtsp.gemspec) +
-    %w(Gemfile ChangeLog.rdoc LICENSE.rdoc README.rdoc Rakefile)
+  s.files = Dir.glob("{lib,bin,tasks}/**/*") + Dir.glob("*.rdoc") +
+    %w(.gemtest rtsp.gemspec Gemfile Rakefile)
   s.homepage = %q{http://rubygems.org/gems/rtsp}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
@@ -33,8 +32,8 @@ For more information see: http://www.ietf.org/rfc/rfc2326.txt}
   s.summary = %q{Library to allow RTSP streaming from RTSP-enabled devices.}
   s.test_files = Dir.glob("{spec,features}/**/*")
 
-  s.add_runtime_dependency(%q<parslet>, ["~> 1.1.0"])
-  s.add_runtime_dependency(%q<sdp>, ["~> 0.2.2"])
+  s.add_runtime_dependency(%q<parslet>, [">= 1.1.0"])
+  s.add_runtime_dependency(%q<sdp>, ["~> 0.2.6"])
 
   s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
   s.add_development_dependency(%q<code_statistics>, ["~> 0.2.13"])
