@@ -32,6 +32,7 @@ For more information see: http://www.ietf.org/rfc/rfc2326.txt}
 
   s.add_development_dependency(%q<bundler>)
   s.add_development_dependency(%q<code_statistics>, ["~> 0.2.13"])
+  s.add_development_dependency(%q<cucumber>, [">= 1.1.0"])
   s.add_development_dependency(%q<roodi>, [">= 2.1.0"])
   s.add_development_dependency(%q<rake>, [">= 0.8.7"])
   s.add_development_dependency(%q<rspec>, [">= 2.5.0"])
