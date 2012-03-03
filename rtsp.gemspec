@@ -27,6 +27,7 @@ For more information see: http://www.ietf.org/rfc/rfc2326.txt}
   s.test_files = Dir.glob("{spec,features}/**/*")
 
   s.add_runtime_dependency(%q<parslet>, [">= 1.1.0"])
+  s.add_runtime_dependency(%q<rtp>, [">= 0.0.1"])
   s.add_runtime_dependency(%q<sdp>, ["~> 0.2.6"])
 
   s.add_development_dependency(%q<bundler>)

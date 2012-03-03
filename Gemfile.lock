@@ -1,15 +1,9 @@
 PATH
-  remote: ../rtp
-  specs:
-    rtp (0.0.1)
-      bindata (~> 1.4)
-      log_switch (>= 0.2.0)
-
-PATH
   remote: .
   specs:
     rtsp (0.2.2)
       parslet (>= 1.1.0)
+      rtp (>= 0.0.1)
       sdp (~> 0.2.6)
 
 GEM
@@ -34,6 +28,9 @@ GEM
     rspec-expectations (2.8.0)
       diff-lcs (~> 1.1.2)
     rspec-mocks (2.8.0)
+    rtp (0.0.1)
+      bindata (~> 1.4)
+      log_switch (>= 0.2.0)
     ruby_parser (2.3.1)
       sexp_processor (~> 3.0)
     sdp (0.2.6)
@@ -55,7 +52,6 @@ DEPENDENCIES
   rake (>= 0.8.7)
   roodi (>= 2.1.0)
   rspec (>= 2.5.0)
-  rtp!
   rtsp!
   simplecov (>= 0.4.0)
   yard (>= 0.6.0)
