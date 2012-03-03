@@ -41,7 +41,7 @@ Then /^I should receive an RTSP response to that OPTIONS request$/ do
   @response.message.should == "OK"
   @response.cseq.should == 1
   @response.public.should == "DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE"
-  @response.body.should be_nil
+  @response.body.should be_empty
 end
 
 Then /^I should receive an RTSP response to that DESCRIBE request$/ do

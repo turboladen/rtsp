@@ -1,4 +1,7 @@
+=== 0.3.0 / 2012-03-02
 
+* Extracted RTP-esque functionality to an +rtp+ gem, on which this gem is now
+  dependent on version 0.0.1 of that.
 * Laxed dependency requirement on parslet.
 * Bumped dependency requirement on sdp to ~> 0.2.6, due to parslet conflicts
 
