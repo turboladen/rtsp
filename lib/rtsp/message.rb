@@ -138,8 +138,8 @@ module RTSP
     end
 
     # @param [String] value Content to send as the body of the message.
-    # Generally this will be a String of some sort, but could be binary data as
-    # well. Also, this adds the Content-Length header to the header list.
+    #   Generally this will be a String of some sort, but could be binary data as
+    #   well. Also, this adds the Content-Length header to the header list.
     def body= value
       add_body value
     end
@@ -248,8 +248,8 @@ module RTSP
     # Turns header values into a single string.
     #
     # @param [] values The header values to put to string.
-    # @param [String] separator The character to use to separate multiple values
-    # that define a header.
+    # @param [String] separator The character to use to separate multiple
+    #   values that define a header.
     # @return [String] The header values as a single string.
     def values_to_s(values, separator=";")
       result = values.inject("") do |values_string, (header_field, header_field_value)|
