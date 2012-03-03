@@ -16,7 +16,8 @@ module RTSP
     # server/client.
     def initialize(raw_response)
       if raw_response.nil? || raw_response.empty?
-        raise RTSP::Error, "#{self.class} received nil string--this shouldn't happen."
+        raise RTSP::Error,
+          "#{self.class} received nil string--this shouldn't happen."
       end
 
       @raw_response = raw_response
@@ -77,9 +78,9 @@ module RTSP
       end
     end
 
-    # Reads through each header line of the RTSP response, extracts the response
-    # code, response message, response version, and creates a snake-case
-    # accessor with that value set.
+    # Reads through each header line of the RTSP response, extracts the
+    # response code, response message, response version, and creates a
+    # snake-case accessor with that value set.
     #
     # @param [String] head The section of headers from the response text.
     def parse_head head
@@ -90,7 +91,7 @@ module RTSP
           extract_status_line(line)
           next
         end
-        
+
         if line.include? ": "
           header_and_value = line.strip.split(":", 2)
           header_name = header_and_value.first.downcase.gsub(/-/, "_")
@@ -119,8 +120,8 @@ module RTSP
 
     private
 
-    # Creates an attr_reader with the name given and sets it to the value that's
-    # given.
+    # Creates an attr_reader with the name given and sets it to the value
+    # that's given.
     #
     # @param [String] name
     # @param [String] value

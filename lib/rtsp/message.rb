@@ -201,7 +201,9 @@ module RTSP
     # @return [String]
     def headers_to_s headers
       header_string = headers.inject("") do |result, (key, value)|
-        header_name = key.to_s.split(/_/).map { |header| header.capitalize }.join('-')
+        header_name = key.to_s.split(/_/).map do |header|
+          header.capitalize
+        end.join('-')
 
         header_name = "CSeq" if header_name == "Cseq"
 
