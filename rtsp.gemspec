@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.name = "rtsp"
   s.version = RTSP::VERSION
 
-  s.homepage = %q{http://rubygems.org/gems/rtsp}
+  s.homepage = %q{https://github.com/turboladen/rtsp}
   s.authors = ["Steve Loveless, Mike Kirby", "Sujin Philip"]
   s.summary = %q{Library to allow RTSP streaming from RTSP-enabled devices.}
   s.description = %q{This library intends to follow the RTSP RFC document (2326)
