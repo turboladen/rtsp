@@ -10,7 +10,7 @@ call, but we'll get there.  ...eventually.
 
 For more information
 
-RTSP: http://www.ietf.org/rfc/rfc2326.txt
+RTSP: http://tools.ietf.org/html/rfc2326
 
 SDP: http://tools.ietf.org/html/rfc4566
 
