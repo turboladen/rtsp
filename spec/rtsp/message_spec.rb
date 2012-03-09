@@ -3,31 +3,31 @@ require_relative '../spec_helper'
 require 'rtsp/message'
 
 describe "RTSP::Message" do
-  before do
-    @stream = "rtsp://1.2.3.4/stream1"
-  end
+  let(:stream) { "rtsp://1.2.3.4/stream1" }
 
   it "raises if the header type isn't a Symbol" do
-    message = RTSP::Message.options(@stream)
-    lambda { message.header "hi", "everyone"
+    message = RTSP::Message.options(stream)
+
+    lambda {
+      message.header "hi", "everyone"
     }.should raise_error RTSP::Error
   end
 
   RTSP::Message.instance_variable_get(:@message_types).each do |method|
     it "adds a User-Agent header to the #{method} method" do
-      message = RTSP::Message.send(method, @stream)
+      message = RTSP::Message.send(method, stream)
       message.to_s.should include "User-Agent: RubyRTSP/"
     end
   end
 
   context "builds an OPTIONS string" do
     it "with default sequence number" do
-      message = RTSP::Message.options(@stream)
+      message = RTSP::Message.options(stream)
       message.to_s.should == "OPTIONS rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\nCSeq: 1\r\nUser-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r\n\r\n"
     end
 
     it "with new sequence number" do
-      message = RTSP::Message.options(@stream)
+      message = RTSP::Message.options(stream)
       message.header :cseq, 2345
       message.to_s.should == "OPTIONS rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\nCSeq: 2345\r\nUser-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r\n\r\n"
     end
@@ -35,7 +35,7 @@ describe "RTSP::Message" do
 
   context "builds a DESCRIBE string" do
     it "with default sequence and accept values" do
-      message = RTSP::Message.describe(@stream)
+      message = RTSP::Message.describe(stream)
       message.to_s.should match(/^DESCRIBE rtsp:/)
       message.to_s.should include "DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
       message.to_s.should include "CSeq: 1\r\n"
@@ -44,7 +44,7 @@ describe "RTSP::Message" do
     end
 
     it "with default sequence value" do
-      message = RTSP::Message.describe(@stream).with_headers({
+      message = RTSP::Message.describe(stream).with_headers({
         accept: 'application/sdp, application/rtsl' })
       message.to_s.should match(/^DESCRIBE rtsp:/)
       message.to_s.should include "DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
@@ -54,7 +54,7 @@ describe "RTSP::Message" do
     end
 
     it "with new sequence and accept values" do
-      message = RTSP::Message.describe(@stream).with_headers({
+      message = RTSP::Message.describe(stream).with_headers({
         accept: 'application/sdp, application/rtsl',
         cseq: 2345 })
 
@@ -68,7 +68,7 @@ describe "RTSP::Message" do
 
   context "builds a ANNOUNCE string" do
     it "with default sequence, content type, but no body" do
-      message = RTSP::Message.announce(@stream).with_headers({ session: 123456789 })
+      message = RTSP::Message.announce(stream).with_headers({ session: 123456789 })
 
       message.to_s.should match(/^ANNOUNCE rtsp:/)
       message.to_s.should include "ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
@@ -79,7 +79,7 @@ describe "RTSP::Message" do
     end
 
     it "with passed-in session and content type but no body" do
-      message = RTSP::Message.announce(@stream).with_headers({
+      message = RTSP::Message.announce(stream).with_headers({
         session: 123456789,
         content_type: 'application/sdp, application/rtsl' })
 
@@ -92,7 +92,7 @@ describe "RTSP::Message" do
     end
 
     it "with passed-in sequence, session, content-type, but no body " do
-      message = RTSP::Message.announce(@stream).with_headers({
+      message = RTSP::Message.announce(stream).with_headers({
         session: 123456789,
         content_type: 'application/sdp, application/rtsl',
         cseq: 2345 })
@@ -110,7 +110,7 @@ describe "RTSP::Message" do
       sdp.protocol_version = 1
       sdp.username = 'bobo'
 
-      message = RTSP::Message.announce(@stream).with_headers({
+      message = RTSP::Message.announce(stream).with_headers({
         session: 123456789,
         content_type: 'application/sdp',
         cseq: 2345 })
@@ -128,7 +128,7 @@ describe "RTSP::Message" do
 
   context "builds a SETUP string" do
     it "with default sequence, client_port, and routing values" do
-      message = RTSP::Message.setup(@stream)
+      message = RTSP::Message.setup(stream)
 
       message.to_s.should match(/^SETUP rtsp/)
       message.to_s.should include "SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
@@ -137,7 +137,7 @@ describe "RTSP::Message" do
     end
 
     it "with default sequence, transport, and client_port values" do
-      message = RTSP::Message.setup(@stream).with_headers({
+      message = RTSP::Message.setup(stream).with_headers({
         transport: ["RTP/AVP", "multicast", { :client_port => "9000-9001" }] })
 
       message.to_s.should match(/^SETUP rtsp/)
@@ -148,7 +148,7 @@ describe "RTSP::Message" do
     end
 
     it "with default transport, client_port, and routing values" do
-      message = RTSP::Message.setup(@stream).with_headers({
+      message = RTSP::Message.setup(stream).with_headers({
         transport: ["RTP/AVP", "multicast", { :client_port => "9000-9001" }],
         cseq: 2345 })
 
@@ -162,7 +162,7 @@ describe "RTSP::Message" do
 
   context "builds a PLAY string" do
     it "with default sequence and range values" do
-      message = RTSP::Message.play(@stream).with_headers({
+      message = RTSP::Message.play(stream).with_headers({
         session: 123456789 })
 
       message.to_s.should match(/^PLAY rtsp/)
@@ -174,7 +174,7 @@ describe "RTSP::Message" do
     end
 
     it "with default sequence value" do
-      message = RTSP::Message.play(@stream).with_headers({
+      message = RTSP::Message.play(stream).with_headers({
         session: 123456789,
         range: { :npt => "0.000-1.234" } })
 
@@ -189,7 +189,7 @@ describe "RTSP::Message" do
 
   context "builds a PAUSE string" do
     it "with required Request values" do
-      message = RTSP::Message.pause(@stream)
+      message = RTSP::Message.pause(stream)
 
       message.to_s.should match(/^PAUSE rtsp/)
       message.to_s.should include "PAUSE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
@@ -198,7 +198,7 @@ describe "RTSP::Message" do
     end
 
     it "with session and range headers" do
-      message = RTSP::Message.pause(@stream).with_headers({
+      message = RTSP::Message.pause(stream).with_headers({
         session: 123456789,
         range: { :npt => "0.000" } })
 
@@ -213,7 +213,7 @@ describe "RTSP::Message" do
 
   context "builds a TEARDOWN string" do
     it "with required Request values" do
-      message = RTSP::Message.teardown(@stream)
+      message = RTSP::Message.teardown(stream)
 
       message.to_s.should match(/^TEARDOWN rtsp/)
       message.to_s.should include "TEARDOWN rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
@@ -222,7 +222,7 @@ describe "RTSP::Message" do
     end
 
     it "with session and range headers" do
-      message = RTSP::Message.teardown(@stream).with_headers({
+      message = RTSP::Message.teardown(stream).with_headers({
         session: 123456789 })
 
       message.to_s.should match(/^TEARDOWN rtsp/)
@@ -235,7 +235,7 @@ describe "RTSP::Message" do
 
   context "builds a GET_PARAMETER string" do
     it "with required Request values" do
-      message = RTSP::Message.get_parameter(@stream)
+      message = RTSP::Message.get_parameter(stream)
 
       message.to_s.should match(/^GET_PARAMETER rtsp/)
       message.to_s.should include "GET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
@@ -246,7 +246,7 @@ describe "RTSP::Message" do
     it "with cseq, content type, session headers, and text body" do
       the_body = "packets_received\r\njitter\r\n"
 
-      message = RTSP::Message.get_parameter(@stream).with_headers({
+      message = RTSP::Message.get_parameter(stream).with_headers({
         cseq: 431,
         content_type: 'text/parameters',
         session: 123456789 })
@@ -266,7 +266,7 @@ describe "RTSP::Message" do
 
   context "builds a SET_PARAMETER string" do
     it "with required Request values" do
-      message = RTSP::Message.set_parameter(@stream)
+      message = RTSP::Message.set_parameter(stream)
 
       message.to_s.should match(/^SET_PARAMETER rtsp/)
       message.to_s.should include "SET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
@@ -277,7 +277,7 @@ describe "RTSP::Message" do
     it "with cseq, content type, session headers, and text body" do
       the_body = "barparam: barstuff\r\n"
 
-      message = RTSP::Message.set_parameter(@stream).with_headers({
+      message = RTSP::Message.set_parameter(stream).with_headers({
         cseq: 431,
         content_type: 'text/parameters',
         session: 123456789 })
@@ -296,7 +296,7 @@ describe "RTSP::Message" do
 
   context "builds a REDIRECT string" do
     it "with required Request values" do
-      message = RTSP::Message.redirect(@stream)
+      message = RTSP::Message.redirect(stream)
 
       message.to_s.should match(/^REDIRECT rtsp/)
       message.to_s.should include "REDIRECT rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
@@ -305,7 +305,7 @@ describe "RTSP::Message" do
     end
 
     it "with cseq, location, and range headers" do
-      message = RTSP::Message.redirect(@stream).with_headers({
+      message = RTSP::Message.redirect(stream).with_headers({
         cseq: 732,
         location: "rtsp://bigserver.com:8001",
         range: { :clock => "19960213T143205Z-" } })
@@ -321,7 +321,7 @@ describe "RTSP::Message" do
 
   context "builds a RECORD string" do
     it "with required Request values" do
-      message = RTSP::Message.record(@stream)
+      message = RTSP::Message.record(stream)
 
       message.to_s.should match(/^RECORD rtsp/)
       message.to_s.should include "RECORD rtsp://1.2.3.4:554/stream1 RTSP/1.0\r\n"
@@ -330,7 +330,7 @@ describe "RTSP::Message" do
     end
 
     it "with cseq, session, and conference headers" do
-      message = RTSP::Message.record(@stream).with_headers({
+      message = RTSP::Message.record(stream).with_headers({
         cseq: 954,
         session: 12345678,
         conference: "128.16.64.19/32492374" })
@@ -346,7 +346,7 @@ describe "RTSP::Message" do
 
   context "#to_s turns a Hash into an String of header strings" do
     it "single header, non-hyphenated name, hash value" do
-      message = RTSP::Message.play(@stream).with_headers({
+      message = RTSP::Message.play(stream).with_headers({
         range: { npt: "0.000-" }
       })
 
@@ -356,7 +356,7 @@ describe "RTSP::Message" do
     end
 
     it "single header, hyphenated, non-hash value" do
-      message = RTSP::Message.play(@stream).with_headers({
+      message = RTSP::Message.play(stream).with_headers({
         :if_modified_since => "Sat, 29 Oct 1994 19:43:31 GMT"
       })
 
@@ -366,7 +366,7 @@ describe "RTSP::Message" do
     end
 
     it "two headers, mixed hyphenated, array & hash values" do
-      message = RTSP::Message.redirect(@stream).with_headers({
+      message = RTSP::Message.redirect(stream).with_headers({
         :cache_control => ["no-cache", { :max_age => 12345 }],
         :content_type => ['application/sdp', 'application/x-rtsp-mh']
       })
@@ -380,7 +380,7 @@ describe "RTSP::Message" do
 
   describe "#with_headers" do
     it "returns an RTSP::Message" do
-      message = RTSP::Message.options(@stream)
+      message = RTSP::Message.options(stream)
       result = message.with_headers({ test: "test" })
       result.class.should == RTSP::Message
     end
