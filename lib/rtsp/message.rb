@@ -26,17 +26,17 @@ module RTSP
         "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
 
     @message_types = [
-        :announce,
-            :describe,
-            :get_parameter,
-            :options,
-            :play,
-            :pause,
-            :record,
-            :redirect,
-            :set_parameter,
-            :setup,
-            :teardown
+      :announce,
+      :describe,
+      :get_parameter,
+      :options,
+      :play,
+      :pause,
+      :record,
+      :redirect,
+      :set_parameter,
+      :setup,
+      :teardown
     ]
 
     # TODO: define #describe somewhere so I can actually test that method.
