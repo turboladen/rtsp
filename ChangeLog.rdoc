@@ -1,3 +1,19 @@
+=== 0.3.1 / 2012-03-08
+
+* gh-11: Transport header parser bolstering:
+  * values that should be caps, will parse OK as lowercase now.
+	* :broadcast_type now parses 'multicast'.
+	* :destination now returns the value of the destination instead of
+	  "destination=x.x.x.x"
+	* :source now returns the value of the source instead of "source=x.x.x.x"
+	* Added parsing for fields:
+		* ttl
+		* port
+		* ssrc
+		* channel
+		* address
+		* mode
+
 === 0.3.0 / 2012-03-02
 
 * Extracted RTP-esque functionality to an +rtp+ gem, on which this gem is now
