@@ -61,10 +61,10 @@ gets implemented.
   client.cseq                     # => 3
   
   response = client.setup(client.media_control_tracks.first)
-  response.session          # => 7098486223178290313
-  client.session            # => 7098486223178290313
-  client.cseq               # => 4
-  client.session_state      # => :ready
+  response.session[:session_id]   # => 7098486223178290313
+  client.session[:session_id]     # => 7098486223178290313
+  client.cseq                     # => 4
+  client.session_state            # => :ready
 
 
   response = client.play(client.aggregate_control_track)
@@ -82,8 +82,8 @@ gets implemented.
   sleep 2
 
   client.teardown(client.aggregate_control_track)
-  client.session            # => 0
-  client.session_state      # => :init
+  client.session[:session_id]   # => 0
+  client.session_state          # => :init
 
   # Check the streamed file's contents
   puts client.capturer.rtp_file     # => (Lots of data)
