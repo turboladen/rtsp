@@ -25,6 +25,7 @@ end
 When /^I issue an "([^"]*)" request with "([^"]*)"$/ do |request_type, params|
   unless @client
     url = "rtsp://fake-rtsp-server/some_path"
+
     @client = RTSP::Client.new(url) do |connection|
       connection.socket = @fake_server
       connection.timeout = 3
@@ -34,7 +35,12 @@ When /^I issue an "([^"]*)" request with "([^"]*)"$/ do |request_type, params|
   @initial_state = @client.session_state
   params = params.empty? ? {} : params
 
-  @client.send(request_type.to_sym, params)
+  if request_type == 'play'
+    @client.setup(url)
+    @client.play(params)
+  else
+    @client.send(request_type.to_sym, params)
+  end
 end
 
 Then /^the state stays the same$/ do

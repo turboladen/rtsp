@@ -37,3 +37,14 @@ a=rtpmap:96 MP4A-LATM/44100/2\r
 a=fmtp:96 cpresent=0;config=400027200000\r
 a=control:trackID=1\r
 \r\n}
+
+
+# Define #describe so when RTSP::Message calls #method_missing, RSpec doesn't
+# get in the way (and cause tests to fail).
+module RTSP
+  class Message
+    def self.describe request_uri
+      self.new(:describe, request_uri)
+    end
+  end
+end

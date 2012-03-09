@@ -2,7 +2,7 @@ Feature: Control stream from an RTSP server
   As an RTSP consumer
   I want to be able to control RTSP streams from a server
   So that I can view its contents as I desire
-  
+
   @wip
   Scenario: Play single stream
     Given an RTSP server at "10.221.222.235" and port 9010 and URL ""
