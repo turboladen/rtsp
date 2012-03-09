@@ -92,7 +92,17 @@ module RTSP
           next
         end
 
-        if line.include? ": "
+        if line.include? "Session: "
+          value = {}
+          line =~ /Session: (\d+)/
+          value[:session_id] = $1.to_i
+
+          if line =~ /timeout=(.+)/
+            value[:timeout] = $1.to_i
+          end
+
+          create_reader("session", value)
+        elsif line.include? ": "
           header_and_value = line.strip.split(":", 2)
           header_name = header_and_value.first.downcase.gsub(/-/, "_")
           create_reader(header_name, header_and_value[1].strip)
@@ -124,10 +134,12 @@ module RTSP
     # that's given.
     #
     # @param [String] name
-    # @param [String] value
+    # @param [String,Hash] value
     def create_reader(name, value)
       unless value.empty?
-        value = value =~ /^[0-9]*$/ ? value.to_i : value
+        if value.is_a? String
+          value = value =~ /^[0-9]*$/ ? value.to_i : value
+        end
       end
 
       instance_variable_set("@#{name}", value)

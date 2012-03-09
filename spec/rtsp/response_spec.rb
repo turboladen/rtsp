@@ -4,28 +4,59 @@ require 'rtsp/response'
 describe RTSP::Response do
   describe "#initialize" do
     it "expects a non-nil string on" do
-      lambda { RTSP::Response.new(nil) }.should raise_exception RTSP::Error
+      expect { RTSP::Response.new(nil) }.to raise_exception RTSP::Error
     end
 
     it "expects a non-empty string on" do
-      lambda { RTSP::Response.new("") }.should raise_exception RTSP::Error
+      expect { RTSP::Response.new("") }.to raise_exception RTSP::Error
     end
   end
 
   describe "#parse_head" do
+    let(:head) do
+      head = double "head"
+      head.stub(:split).and_return(['', session_line])
+      head.stub(:each_with_index).and_yield
+
+      head
+    end
+
+    context "Session header contains session-id and timeout" do
+      let(:session_line) { "Session: 118;timeout=49" }
+      subject { RTSP::Response.new SETUP_RESPONSE_WITH_SESSION_TIMEOUT }
+
+      it "creates a :session reader with value being a Hash with key/value" do
+        subject.stub(:extract_status_line)
+        subject.should_receive(:create_reader).with("session",
+          { session_id: 118, timeout: 49 })
+        subject.parse_head(head)
+      end
+    end
+
+    context "Session header contains just session-id" do
+      let(:session_line) { "Session: 118" }
+      subject { RTSP::Response.new SETUP_RESPONSE_WITH_SESSION_TIMEOUT }
+
+      it "creates a :session reader with value being a Hash with key/value" do
+        subject.stub(:extract_status_line)
+        subject.should_receive(:create_reader).with("session",
+          { session_id: 118 })
+        subject.parse_head(head)
+      end
+    end
+
+    subject { RTSP::Response.new OPTIONS_RESPONSE }
+
     it "raises when RTSP version is corrupted" do
-      response = RTSP::Response.new OPTIONS_RESPONSE
-      lambda { response.parse_head "RTSP/ 200 OK\r\n" }.should raise_error RTSP::Error
+      expect { subject.parse_head "RTSP/ 200 OK\r\n" }.to raise_error RTSP::Error
     end
 
     it "raises when the response code is corrupted" do
-      response = RTSP::Response.new OPTIONS_RESPONSE
-      lambda { response.parse_head "RTSP/1.0 2 OK\r\n" }.should raise_error RTSP::Error
+      expect { subject.parse_head "RTSP/1.0 2 OK\r\n" }.to raise_error RTSP::Error
     end
 
     it "raises when the response message is corrupted" do
-      response = RTSP::Response.new OPTIONS_RESPONSE
-      lambda { response.parse_head "RTSP/1.0 200 \r\n" }.should raise_error RTSP::Error
+      expect { subject.parse_head "RTSP/1.0 200 \r\n" }.to raise_error RTSP::Error
     end
   end
 
@@ -150,7 +181,7 @@ describe RTSP::Response do
     end
 
     it "returns the session" do
-      @response.session.should == 118
+      @response.session[:session_id].should == 118
     end
   end
 
@@ -176,7 +207,7 @@ describe RTSP::Response do
     end
 
     it "returns the session" do
-      @response.session.should == 118
+      @response.session[:session_id].should == 118
     end
 
     it "returns the rtp_info" do
@@ -231,44 +262,44 @@ describe RTSP::Response do
     it "splits responses with headers and no body" do
       response = RTSP::Response.new OPTIONS_RESPONSE
       head_and_body = response.split_head_and_body_from OPTIONS_RESPONSE
-      head_and_body.first.should == %Q{RTSP/1.0 200 OK\r\n
-CSeq: 1\r\n
-Date: Fri, Jan 28 2011 01:14:42 GMT\r\n
-Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r\n
+      head_and_body.first.should == %Q{RTSP/1.0 200 OK\r
+CSeq: 1\r
+Date: Fri, Jan 28 2011 01:14:42 GMT\r
+Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r
 }
     end
 
     it "splits responses with headers and body" do
       response = RTSP::Response.new DESCRIBE_RESPONSE
       head_and_body = response.split_head_and_body_from DESCRIBE_RESPONSE
-      head_and_body.first.should == %{RTSP/1.0 200 OK\r\n
-Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )\r\n
-Cseq: 1\r\n
-Cache-Control: no-cache\r\n
-Content-length: 406\r\n
-Date: Sun, 23 Jan 2011 00:36:45 GMT\r\n
-Expires: Sun, 23 Jan 2011 00:36:45 GMT\r\n
-Content-Type: application/sdp\r\n
-x-Accept-Retransmit: our-retransmit\r\n
-x-Accept-Dynamic-Rate: 1\r\n
-Content-Base: rtsp://64.202.98.91:554/gs.sdp/\r\n
-}
-      head_and_body.last.should == %{
-v=0
-o=- 545877020 467920391 IN IP4 127.0.0.1
-s=Groove Salad from SomaFM [aacPlus]
-i=Downtempo Ambient Groove
-c=IN IP4 0.0.0.0
-t=0 0
-a=x-qt-text-cmt:Orban Opticodec-PC
-a=x-qt-text-nam:Groove Salad from SomaFM [aacPlus]
-a=x-qt-text-inf:Downtempo Ambient Groove
-a=control:*
-m=audio 0 RTP/AVP 96
-b=AS:48
-a=rtpmap:96 MP4A-LATM/44100/2
-a=fmtp:96 cpresent=0;config=400027200000
-a=control:trackID=1
+      head_and_body.first.should == %{RTSP/1.0 200 OK\r
+Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )\r
+Cseq: 1\r
+Cache-Control: no-cache\r
+Content-length: 406\r
+Date: Sun, 23 Jan 2011 00:36:45 GMT\r
+Expires: Sun, 23 Jan 2011 00:36:45 GMT\r
+Content-Type: application/sdp\r
+x-Accept-Retransmit: our-retransmit\r
+x-Accept-Dynamic-Rate: 1\r
+Content-Base: rtsp://64.202.98.91:554/gs.sdp/}
+
+      head_and_body.last.should == %{\r
+v=0\r
+o=- 545877020 467920391 IN IP4 127.0.0.1\r
+s=Groove Salad from SomaFM [aacPlus]\r
+i=Downtempo Ambient Groove\r
+c=IN IP4 0.0.0.0\r
+t=0 0\r
+a=x-qt-text-cmt:Orban Opticodec-PC\r
+a=x-qt-text-nam:Groove Salad from SomaFM [aacPlus]\r
+a=x-qt-text-inf:Downtempo Ambient Groove\r
+a=control:*\r
+m=audio 0 RTP/AVP 96\r
+b=AS:48\r
+a=rtpmap:96 MP4A-LATM/44100/2\r
+a=fmtp:96 cpresent=0;config=400027200000\r
+a=control:trackID=1\r
 }
     end
   end

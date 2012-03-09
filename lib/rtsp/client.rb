@@ -283,7 +283,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-34 RFC 2326, Section 10.5.
     def play(track, additional_headers={})
       message = RTSP::Message.play(track).with_headers({
-          cseq: @cseq, session: @session })
+          cseq: @cseq, session: @session[:session_id] })
       message.add_headers additional_headers
 
       request(message) do
@@ -313,7 +313,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-36 RFC 2326, Section 10.6.
     def pause(track, additional_headers={})
       message = RTSP::Message.pause(track).with_headers({
-          cseq: @cseq, session: @session })
+          cseq: @cseq, session: @session[:session_id] })
       message.add_headers additional_headers
 
       request(message) do
@@ -332,7 +332,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-37 RFC 2326, Section 10.7.
     def teardown(track, additional_headers={})
       message = RTSP::Message.teardown(track).with_headers({
-          cseq: @cseq, session: @session })
+          cseq: @cseq, session: @session[:session_id] })
       message.add_headers additional_headers
 
       request(message) do
@@ -350,7 +350,7 @@ module RTSP
     # +@session_state+ is set to +:init+; +@session+ is set to 0.
     def reset_state
       @session_state = :init
-      @session       = 0
+      @session = {}
     end
 
     # Sends the GET_PARAMETERS request.
@@ -393,7 +393,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-39 RFC 2326, Section 10.11.
     def record(track, additional_headers={})
       message = RTSP::Message.record(track).with_headers({
-          cseq: @cseq, session: @session })
+          cseq: @cseq, session: @session[:session_id] })
       message.add_headers additional_headers
 
       request(message) { @session_state = :recording }
@@ -438,7 +438,7 @@ module RTSP
     #
     # @raise [RTSP::Error] Raises if @session isn't set.
     def ensure_session
-      unless @session > 0
+      if @session.empty? || @session[:session_id] <= 0
         raise RTSP::Error, "Session number not retrieved from server yet.  Run SETUP first."
       end
     end
@@ -500,8 +500,8 @@ module RTSP
     # @raise [RTSP::Error] If the server returns a Session value that's different
     #   from what the client sent.
     def compare_session_number server_session
-      if @session != server_session
-        message = "Session number mismatch.  Client: #{@session}, Server: #{server_session}"
+      if @session[:session_id] != server_session
+        message = "Session number mismatch.  Client: #{@session[:session_id]}, Server: #{server_session}"
         raise RTSP::Error, message
       end
     end

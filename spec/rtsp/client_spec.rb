@@ -181,9 +181,9 @@ describe RTSP::Client do
     end
 
     it "extracts the session number" do
-      @client.session.should be_zero
+      @client.session.should be_empty
       @client.setup("rtsp://localhost/some_track")
-      @client.session.should == 1234567890
+      @client.session[:session_id].should == 1234567890
     end
 
     it "changes the session_state to :ready" do
@@ -265,12 +265,12 @@ describe RTSP::Client do
       @client.session_state.should == :init
     end
 
-    it "changes the session back to 0" do
-      @client.session.should_not be_zero
+    it "changes the session_id back to 0" do
+      @client.session.should_not be_empty
       @client.teardown("rtsp://localhost/some_track")
-      @client.session.should be_zero
+      @client.session.should be_empty
     end
-    
+
     it "returns a Response" do
       response = @client.teardown("rtsp://localhost/some_track")
       response.is_a?(RTSP::Response).should be_true
