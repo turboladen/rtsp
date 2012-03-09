@@ -13,6 +13,9 @@
 		* channel
 		* address
 		* mode
+* gh-10: Session header now detects timeout value.  This means that where use
+  of the value extracted from this header used to be a simple Integer, now you
+	have a session Hash with :session_id and :timeout keys.
 
 === 0.3.0 / 2012-03-02
 
