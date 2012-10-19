@@ -1,4 +1,3 @@
-require 'gserver'
 require_relative 'request'
 require_relative 'stream_server'
 require_relative 'global'
@@ -178,7 +177,7 @@ module RTSP
     # @param [RTSP::Request] request
     # @return [Array<Array<String>>] Response headers and body.
     def redirect(request)
-      RTSP::Server.log "Received SET_PARAMETER request from #{request.remote_host}"
+      RTSP::Server.log "Received REDIRECT request from #{request.remote_host}"
       " Pending Implementation"
 
       [[]]

@@ -35,8 +35,8 @@ module RTSP
     end
 
     # @param [String] message The string to log.
-    def log(message)
-      logger.send(log_level, message) if log?
+    def log(message, level=log_level)
+      logger.send(level, message) if log?
     end
 
     # Use to disable the raising of +RTSP::Error+s.
