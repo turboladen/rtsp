@@ -28,8 +28,8 @@ module RTSP
 
     # Initializes the the Stream Server.
     #
-    # @param [Fixnum] port RTSP port.
     # @param [Fixnum] host IP interface to bind.
+    # @param [Fixnum] port RTSP port.
     def initialize(host, port=554)
       @session =  rand(99999999)
       @stream_server = RTSP::StreamServer.instance
