@@ -47,10 +47,11 @@ module RTSP
         friendly_name.unpack("H*").first + "00000000"].pack("H*")
     end
 
-    # Creates a streamer.
+    # Creates a RTP streamer using socat.
     #
     # @param [String] sid Session ID.
     # @param [String] transport_url Destination IP:port.
+    # @return [Fixnum] The port the streamer will stream on.
     def create_streamer(sid, transport_url)
       dest_ip, dest_port = transport_url.split ":"
       @rtcp_source_identifier ||= RTCP_SOURCE.pack("H*")
