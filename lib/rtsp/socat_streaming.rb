@@ -102,6 +102,8 @@ module RTSP
     # Returns the default stream description.
     #
     # @param[Boolean] multicast True if the description is for a multicast stream.
+    # @param [String] rtpmap Media type attribute.
+    # @param [String] fmtp Media format attribute.
     def description multicast=false, rtp_map="96 H264/90000", fmtp=nil
       fmtp ||= "96 packetization-mode=1;profile-level-id=428032;" +
         "sprop-parameter-sets=Z0KAMtoAgAMEwAQAAjKAAAr8gYAAAYhMAABMS0IvfjAA" +
