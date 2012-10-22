@@ -10,13 +10,13 @@ module RTSP
       "41414a4248513600000000"]
 
     # @return [Hash] Hash of session IDs and SOCAT commands.
-    attr_accessor   :sessions
+    attr_accessor :sessions
 
-    # @return [Hash] Hash of session IDs and pids
-    attr_reader   :pids
+    # @return [Hash] Hash of session IDs and pids.
+    attr_reader :pids
 
     # @return [Hash] Hash of session IDs and RTCP threads.
-    attr_reader   :rtcp_threads
+    attr_reader :rtcp_threads
 
     # @return [String] IP address of the source camera.
     attr_accessor :source_ip
@@ -27,16 +27,16 @@ module RTSP
     # @return [String] IP address of the interface of the RTSP streamer.
     attr_accessor :interface_ip
 
-    # @return [Fixnum] RTP timestamp of the source stream
+    # @return [Fixnum] RTP timestamp of the source stream.
     attr_accessor :rtp_timestamp
 
-    # @return [Fixnum] RTP sequence number of the source stream
+    # @return [Fixnum] RTP sequence number of the source stream.
     attr_accessor :rtp_sequence
 
     # @return [String] RTCP source identifier.
     attr_accessor :rtcp_source_identifier
 
-    # Generates a RTCP source ID
+    # Generates a RTCP source ID.
     #
     # @param [String] friendly_name Name to be used in the RTCP source ID.
     # @return [String] rtcp_source_id RTCP Source ID.
@@ -45,10 +45,10 @@ module RTSP
         friendly_name.unpack("H*").first + "00000000"].pack("H*")
     end
 
-    # Creates a streamer
+    # Creates a streamer.
     #
     # @param [String] sid Session ID.
-    # @param [String] transport_url Destination IP:port
+    # @param [String] transport_url Destination IP:port.
     def create_streamer(sid, transport_url)
       dest_ip, dest_port = transport_url.split ":"
       @rtcp_source_identifier ||= RTCP_SOURCE.pack("H*")
@@ -75,28 +75,6 @@ module RTSP
     BLOCK_SIZE = 2000
     BSD_OPTIONS = "setsockopt-int=0xffff:0x200:0x01"
 
-    # Returns the multicast IP on which the streamer will stream.
-    #
-    # @return [String] Multicast IP.
-    def mutlicast_ip
-      @interface_ip ||= find_best_interface_ipaddr @source_ip
-      multicast_ip = @interface_ip.split "."
-      multicast_ip[0] = "239"
-      multicast_ip.join "."
-    end
-
-    # Cleans up defunct child processes
-    def cleanup_defunct
-      loop do
-        begin
-          Process.wait 0
-        rescue Errno::ECHILD
-          sleep 10
-          retry
-        end
-      end
-    end
-
     # Start streaming for the requested session.
     #
     # @param [String] session ID.
@@ -115,6 +93,59 @@ module RTSP
         disconnect sid
         @rtcp_threads[sid].kill unless rtcp_threads[sid].nil?
         @rtcp_threads.delete sid
+      end
+    end
+
+    # Returns the default stream description.
+    #
+    # @param[Boolean] multicast True if the description is for a multicast stream.
+    def description multicast=false, rtp_map="96 H264/90000", fmtp=nil
+      fmtp ||= "96 packetization-mode=1;profile-level-id=428032;" +
+        "sprop-parameter-sets=Z0KAMtoAgAMEwAQAAjKAAAr8gYAAAYhMAABMS0IvfjAA" +
+        "ADEJgAAJiWhF78CA,aM48gA=="
+
+      <<EOF
+v=0\r
+o=- 1345481255966282 1 IN IP4 #{@interface_ip}\r
+s=Session streamed by "Streaming Server"\r
+i=stream1\r
+t=0 0\r
+a=tool:LIVE555 Streaming Media v2007.07.09\r
+a=type:broadcast\r
+a=control:*\r
+a=range:npt=0-\r
+a=x-qt-text-nam:Session streamed by "Streaming Server"\r
+a=x-qt-text-inf:stream1\r
+m=video 0 RTP/AVP 96\r
+c=IN IP4 #{multicast ? "#{@multicast_ip}/10" : "0.0.0.0"}\r
+a=rtpmap:#{rtp_map}\r
+a=fmtp:#{fmtp}\r
+a=label:1.1.1.1\r
+a=control:track1\r
+EOF
+    end
+
+    private
+
+    # Returns the multicast IP on which the streamer will stream.
+    #
+    # @return [String] Multicast IP.
+    def multicast_ip
+      @interface_ip ||= find_best_interface_ipaddr @source_ip
+      multicast_ip = @interface_ip.split "."
+      multicast_ip[0] = "239"
+      multicast_ip.join "."
+    end
+
+    # Cleans up defunct child processes
+    def cleanup_defunct
+      loop do
+        begin
+          Process.wait 0
+        rescue Errno::ECHILD
+          sleep 10
+          retry
+        end
       end
     end
 
@@ -148,33 +179,6 @@ module RTSP
       log "Tried to kill dead process: #{pid}"
     end
 
-    # Returns the default stream description.
-    #
-    # @param[Boolean] multicast True if the description is for a multicast stream.
-    def description multicast=false
-      <<EOF
-v=0\r
-o=- 1345481255966282 1 IN IP4 #{@interface_ip}\r
-s=Session streamed by "Streaming Server"\r
-i=stream1\r
-t=0 0\r
-a=tool:LIVE555 Streaming Media v2007.07.09\r
-a=type:broadcast\r
-a=control:*\r
-a=range:npt=0-\r
-a=x-qt-text-nam:Session streamed by "Streaming Server"\r
-a=x-qt-text-inf:stream1\r
-m=video 0 RTP/AVP 96\r
-c=IN IP4 #{multicast ? "#{@multicast_ip}/10" : "0.0.0.0"}\r
-a=rtpmap:96 H264/90000\r
-a=fmtp:96 packetization-mode=1;profile-level-id=428032;sprop-parameter-sets=Z0KAMtoAgAMEwAQAAjKAAAr8gYAAAYhMAABMS0IvfjAAADEJgAAJiWhF78CA,aM48gA==\r
-a=label:1.1.1.1\r
-a=control:track1\r
-EOF
-    end
-
-    private
-
     # Spawns an instance of Socat.
     #
     # @param [String] sid The session ID of the stream.
@@ -203,7 +207,7 @@ EOF
     end
 
     # Builds a socat stream command based on the source and target
-    # IP and ports of the RTP stream
+    # IP and ports of the RTP stream.
     #
     # @param [String] device_ip IP address of the remote device you want to
     #   talk to.
@@ -213,9 +217,9 @@ EOF
       bsd_options ||= ""
 
       "socat -b #{BLOCK_SIZE} UDP-RECV:#{@source_port},reuseaddr," +
-          "#{bsd_options}"+ SOCAT_OPTIONS + ",ip-add-membership=#{@source_ip}:" +
-          "#{@interface_ip} UDP:#{target_ip}:#{target_port},sourceport=#{server_port}," +
-          SOCAT_OPTIONS
+        "#{bsd_options}"+ SOCAT_OPTIONS + ",ip-add-membership=#{@source_ip}:" +
+        "#{@interface_ip} UDP:#{target_ip}:#{target_port},sourceport=#{server_port}," +
+        SOCAT_OPTIONS
     end
 
     # Attempts to find a random bindable port between 50000-65500

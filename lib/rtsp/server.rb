@@ -1,6 +1,7 @@
 require_relative 'request'
 require_relative 'stream_server'
 require_relative 'global'
+require 'socket'
 
 module RTSP
   SUPPORTED_VERSION = "1.0"
@@ -18,8 +19,8 @@ module RTSP
   class Server
     extend RTSP::Global
 
-    OPTIONS_LIST = ["OPTIONS", " DESCRIBE", " SETUP", " TEARDOWN", " PLAY",
-      " PAUSE", " GET_PARAMETER", " SET_PARAMETER"]
+    OPTIONS_LIST = %w(OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY,
+      PAUSE, GET_PARAMETER, SET_PARAMETER)
 
     attr_accessor :options_list
     attr_accessor :version
@@ -29,27 +30,40 @@ module RTSP
     #
     # @param [Fixnum] port RTSP port.
     # @param [Fixnum] host IP interface to bind.
-    def initialize(port=554, host)
-      @session = rand(100000) + 10000
+    def initialize(host, port=554)
+      @session =  rand(99999999)
       @stream_server = RTSP::StreamServer.instance
       @interface_ip = host
       @stream_server.interface_ip = host
       @tcp_server = TCPServer.new(host, port)
+      @udp_server = UDPSocket.new
+      @udp_server.bind(host, port)
     end
 
     # Starts accepting TCP connections
     def start
+      Thread.start { udp_listen }
+
       loop do
         client = @tcp_server.accept
-        #Thread.start do
+        Thread.start do
           begin
-            loop { break  if serve(client) == -1 }
+            loop { break if serve(client) == -1 }
           rescue EOFError
             # do nothing
           ensure
             client.close
           end
-        #end
+        end
+      end
+    end
+
+    # Listens on the UDP socket for RTSP requests.
+    def udp_listen
+      loop do
+        data, sender = @udp_server.recvfrom(200)
+        response = process_request(data, sender[3])
+        @udp_server.send(response, 0, sender[3], sender[1])
       end
     end
 
@@ -57,24 +71,34 @@ module RTSP
     #
     # @param [IO] io Request/response socket object.
     def serve io
-        request_str = ""
-        count = 0
+      request_str = ""
+      count = 0
 
-        begin
-          request_str << io.read_nonblock(200)
-        rescue Errno::EAGAIN
-          puts "."
-          return -1 if count > 50
-          count += 1
-          sleep 0.1
-          retry
-        end
+      begin
+        request_str << io.read_nonblock(200)
+      rescue Errno::EAGAIN
+        puts "."
+        return -1 if count > 50
+        count += 1
+        sleep 0.1
+        retry
+      end
 
-        /(?<action>.*) rtsp:\/\// =~ request_str
-        request = RTSP::Request.new(request_str, io.remote_address.ip_address)
-        response, body = send(action.downcase.to_sym, request)
-        response = add_headers(request, response, body)
-        io.send response, 0
+      response = process_request(request_str, io.remote_address.ip_address)
+      io.send(response, 0)
+    end
+
+    # Process an RTSP request
+    #
+    # @param [String] request_str RTSP request.
+    # @param [String] remote_address IP address of sender.
+    # @return [String] Response.
+    def process_request request_str, remote_address
+      /(?<action>.*) rtsp:\/\// =~ request_str
+      request = RTSP::Request.new(request_str, remote_address)
+      response, body = send(action.downcase.to_sym, request)
+
+      add_headers(request, response, body)
     end
 
     # Handles the options request.
@@ -106,7 +130,6 @@ module RTSP
     # @param [RTSP::Request] request
     # @return [Array<Array<String>>] Response headers and body.
     def announce(request)
-
       []
     end
 
@@ -119,12 +142,7 @@ module RTSP
       @session = @session.next
       server_port = @stream_server.create_streamer(@session, request.transport_url)
       response = []
-      port_specifier = request.transport.include?("unicast") ? "client_port" : "port"
-      transport = request.transport.split(port_specifier)
-      transport[0] << "destination=#{request.remote_host};"
-      transport[0] << "source=#{@stream_server.interface_ip};"
-      transport[1] = port_specifier + transport[1]
-      transport[1] << ";server_port=#{server_port}-#{server_port+1}"
+      transport = generate_transport(request, server_port)
       response << "Transport: #{transport.join}"
       response << "Session: #{@session}"
       response << "\r\n"
@@ -230,6 +248,23 @@ module RTSP
       RTSP::Server.log("Received request for #{method_name} (not implemented)", :warn)
 
       [[], "Not Implemented"]
+    end
+
+    private
+
+    # Generates the transport headers for the response.
+    #
+    # @param [RTSP::Request] Request object.
+    # @param [Fixnum] server_port Port on which the stream_server is streaming from.
+    def generate_transport request, server_port
+      port_specifier = request.transport.include?("unicast") ? "client_port" : "port"
+      transport = request.transport.split(port_specifier)
+      transport[0] << "destination=#{request.remote_host};"
+      transport[0] << "source=#{@stream_server.interface_ip};"
+      transport[1] = port_specifier + transport[1]
+      transport[1] << ";server_port=#{server_port}-#{server_port+1}"
+
+      transport
     end
   end
 end
