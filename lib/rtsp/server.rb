@@ -11,7 +11,7 @@ module RTSP
   # All you need is the multicast source RTP host and port.
   #
   # require 'rtsp/server'
-  # server = RTSP::Server.new 8554, "10.221.222.90"
+  # server = RTSP::Server.new "10.221.222.90", 8554
   # RTSP::StreamServer.instance.source_ip = "239.221.222.241"
   # RTSP::StreamServer.instance.source_port = 6780
   #
