@@ -137,6 +137,7 @@ EOF
       @interface_ip ||= find_best_interface_ipaddr @source_ip
       multicast_ip = @interface_ip.split "."
       multicast_ip[0] = "239"
+
       multicast_ip.join "."
     end
 
