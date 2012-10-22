@@ -12,15 +12,15 @@ module RTSP
   #
   # require 'rtsp/server'
   # server = RTSP::Server.new "10.221.222.90", 8554
-  # RTSP::StreamServer.instance.source_ip = "239.221.222.241"
-  # RTSP::StreamServer.instance.source_port = 6780
+  # RTSP::StreamServer.instance.source_ip << "239.221.222.241"
+  # RTSP::StreamServer.instance.source_port << 6780
   #
   # server.start
   class Server
     extend RTSP::Global
 
-    OPTIONS_LIST = %w(OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY,
-      PAUSE, GET_PARAMETER, SET_PARAMETER)
+    OPTIONS_LIST = %w(OPTIONS DESCRIBE SETUP TEARDOWN PLAY
+     PAUSE GET_PARAMETER SET_PARAMETER)
 
     attr_accessor :options_list
     attr_accessor :version
@@ -139,7 +139,8 @@ module RTSP
     def setup(request)
       RTSP::Server.log "Received SETUP request from #{request.remote_host}"
       @session = @session.next
-      server_port = @stream_server.create_streamer(@session, request.transport_url)
+      server_port = @stream_server.setup_streamer(@session,
+        request.transport_url, request.stream_index)
       response = []
       transport = generate_transport(request, server_port)
       response << "Transport: #{transport.join}"

@@ -18,10 +18,10 @@ module RTSP
     # @return [Hash] Hash of session IDs and RTCP threads.
     attr_reader :rtcp_threads
 
-    # @return [String] IP address of the source camera.
+    # @return [Array<String>] IP address of the source camera.
     attr_accessor :source_ip
 
-    # @return [Fixnum] Port where the source camera is streaming.
+    # @return [Array<Fixnum>] Port where the source camera is streaming.
     attr_accessor :source_port
 
     # @return [String] IP address of the interface of the RTSP streamer.
@@ -35,6 +35,12 @@ module RTSP
 
     # @return [String] RTCP source identifier.
     attr_accessor :rtcp_source_identifier
+
+    # @return [Array<String>] Media type attributes.
+    attr_accessor :rtp_map
+
+    # @return [Array<String>] Media format attributes.
+    attr_accessor :fmtp
 
     # Generates a RTCP source ID based on the friendly name.
     # This ID is used in the RTCP communication with the client.
@@ -51,8 +57,9 @@ module RTSP
     #
     # @param [String] sid Session ID.
     # @param [String] transport_url Destination IP:port.
+    # @param [Fixnum] index Stream index.
     # @return [Fixnum] The port the streamer will stream on.
-    def create_streamer(sid, transport_url)
+    def setup_streamer(sid, transport_url, index=1)
       dest_ip, dest_port = transport_url.split ":"
       @rtcp_source_identifier ||= RTCP_SOURCE.pack("H*")
       local_port = free_port(true)
@@ -69,7 +76,7 @@ module RTSP
         end
       end
 
-      @sessions[sid] = build_socat(dest_ip, dest_port, local_port)
+      @sessions[sid] = build_socat(dest_ip, dest_port, local_port, index)
 
       local_port
     end
@@ -102,10 +109,10 @@ module RTSP
     # Returns the default stream description.
     #
     # @param[Boolean] multicast True if the description is for a multicast stream.
-    # @param [String] rtpmap Media type attribute.
-    # @param [String] fmtp Media format attribute.
-    def description multicast=false, rtp_map="96 H264/90000", fmtp=nil
-      fmtp ||= "96 packetization-mode=1;profile-level-id=428032;" +
+    # @param [Fixnum] stream_index Index of the stream type.
+    def description multicast=false, stream_index=1
+      rtp_map = @rtp_map[stream_index - 1] || "96 H264/90000"
+      fmtp = @fmtp[stream_index - 1] || "96 packetization-mode=1;profile-level-id=428032;" +
         "sprop-parameter-sets=Z0KAMtoAgAMEwAQAAjKAAAr8gYAAAYhMAABMS0IvfjAA" +
         "ADEJgAAJiWhF78CA,aM48gA=="
 
@@ -122,7 +129,7 @@ a=range:npt=0-\r
 a=x-qt-text-nam:Session streamed by "Streaming Server"\r
 a=x-qt-text-inf:stream1\r
 m=video 0 RTP/AVP 96\r
-c=IN IP4 #{multicast ? "#{@multicast_ip}/10" : "0.0.0.0"}\r
+c=IN IP4 #{multicast ? "#{multicast_ip[stream_index]}/10" : "0.0.0.0"}\r
 a=rtpmap:#{rtp_map}\r
 a=fmtp:#{fmtp}\r
 a=label:1.1.1.1\r
@@ -134,9 +141,10 @@ EOF
 
     # Returns the multicast IP on which the streamer will stream.
     #
+    # @param [Fixnum] index Stream index.
     # @return [String] Multicast IP.
-    def multicast_ip
-      @interface_ip ||= find_best_interface_ipaddr @source_ip
+    def multicast_ip index=1
+      @interface_ip ||= find_best_interface_ipaddr @source_ip[index-1]
       multicast_ip = @interface_ip.split "."
       multicast_ip[0] = "239"
 
@@ -198,7 +206,8 @@ EOF
       end
 
       if @processes.include?(command)
-        log "Streamer already running with pid #{get_pid(command)}"
+        pid = get_pid(command)
+        log "Streamer already running with pid #{pid}" if pid.is_a? Fixnum
       else
         @sessions[sid] = command
 
@@ -215,15 +224,19 @@ EOF
     # Builds a socat stream command based on the source and target
     # IP and ports of the RTP stream.
     #
-    # @param [String] device_ip IP address of the remote device you want to
-    #   talk to.
+    # @param [String] target_ip IP address of the remote device you want to
+    # talk to.
+    # @param [Fixnum] target_port Port on the remote device you want to
+    # talk to.
+    # @
+
     # @return [String] IP of the interface that would be used to talk to.
-    def build_socat(target_ip, target_port, server_port)
+    def build_socat(target_ip, target_port, server_port, index=1)
       bsd_options = BSD_OPTIONS if OS.mac?
       bsd_options ||= ""
 
-      "socat -b #{BLOCK_SIZE} UDP-RECV:#{@source_port},reuseaddr," +
-        "#{bsd_options}"+ SOCAT_OPTIONS + ",ip-add-membership=#{@source_ip}:" +
+      "socat -b #{BLOCK_SIZE} UDP-RECV:#{@source_port[index-1]},reuseaddr," +
+        "#{bsd_options}"+ SOCAT_OPTIONS + ",ip-add-membership=#{@source_ip[index-1]}:" +
         "#{@interface_ip} UDP:#{target_ip}:#{target_port},sourceport=#{server_port}," +
         SOCAT_OPTIONS
     end
