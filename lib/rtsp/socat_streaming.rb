@@ -36,7 +36,9 @@ module RTSP
     # @return [String] RTCP source identifier.
     attr_accessor :rtcp_source_identifier
 
-    # Generates a RTCP source ID.
+    # Generates a RTCP source ID based on the friendly name.
+    # This ID is used in the RTCP communication with the client.
+    # The default +RTCP_SOURCE+ will be used if one is not provided.
     #
     # @param [String] friendly_name Name to be used in the RTCP source ID.
     # @return [String] rtcp_source_id RTCP Source ID.

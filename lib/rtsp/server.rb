@@ -77,10 +77,9 @@ module RTSP
       begin
         request_str << io.read_nonblock(200)
       rescue Errno::EAGAIN
-        puts "."
         return -1 if count > 50
         count += 1
-        sleep 0.1
+        sleep 0.01
         retry
       end
 
