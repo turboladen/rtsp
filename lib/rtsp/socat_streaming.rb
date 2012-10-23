@@ -132,9 +132,20 @@ m=video 0 RTP/AVP 96\r
 c=IN IP4 #{multicast ? "#{multicast_ip[stream_index]}/10" : "0.0.0.0"}\r
 a=rtpmap:#{rtp_map}\r
 a=fmtp:#{fmtp}\r
-a=label:1.1.1.1\r
 a=control:track1\r
 EOF
+    end
+
+    # Disconnects the stream matching the session ID.
+    #
+    # @param [String] sid Session ID.
+    def disconnect sid
+      pid = @pids[sid].to_i
+      @pids.delete(sid)
+      @sessions.delete(sid)
+      Process.kill(9, pid) if pid > 1000
+    rescue Errno::ESRCH
+      log "Tried to kill dead process: #{pid}"
     end
 
     private
@@ -179,18 +190,6 @@ EOF
       @pids.values.each { |pid| Process.kill(9, pid.to_i) if pid.to_i > 1000 }
       @sessions.clear
       @pids.clear
-    end
-
-    # Disconnects the stream matching the session ID.
-    #
-    # @param [String] sid Session ID.
-    def disconnect sid
-      pid = @pids[sid].to_i
-      @pids.delete(sid)
-      @sessions.delete(sid)
-      Process.kill(9, pid) if pid > 1000
-    rescue Errno::ESRCH
-      log "Tried to kill dead process: #{pid}"
     end
 
     # Spawns an instance of Socat.

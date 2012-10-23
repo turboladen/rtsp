@@ -11,8 +11,12 @@ module RTSP
       @sessions = {}
       @pids = {}
       @rtcp_threads = {}
-      @rtp_timestamp = 2892263317
-      @rtp_sequence = 53719
+      @rtp_timestamp = 2612015746
+      @rtp_sequence = 21934
+      @rtp_map = []
+      @fmtp = []
+      @source_ip = []
+      @source_port = []
     end
 
     # Sets the stream module to be used by the stream server.

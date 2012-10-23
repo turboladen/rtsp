@@ -25,6 +25,7 @@ module RTSP
     attr_accessor :options_list
     attr_accessor :version
     attr_accessor :session
+    attr_accessor :agent
 
     # Initializes the the Stream Server.
     #
@@ -38,6 +39,7 @@ module RTSP
       @tcp_server = TCPServer.new(host, port)
       @udp_server = UDPSocket.new
       @udp_server.bind(host, port)
+      @agent = {}
     end
 
     # Starts accepting TCP connections
@@ -46,13 +48,14 @@ module RTSP
 
       loop do
         client = @tcp_server.accept
+
         Thread.start do
           begin
             loop { break if serve(client) == -1 }
           rescue EOFError
             # do nothing
           ensure
-            client.close
+            client.close unless @agent[client].include? "QuickTime"
           end
         end
       end
@@ -61,7 +64,7 @@ module RTSP
     # Listens on the UDP socket for RTSP requests.
     def udp_listen
       loop do
-        data, sender = @udp_server.recvfrom(200)
+        data, sender = @udp_server.recvfrom(500)
         response = process_request(data, sender[3])
         @udp_server.send(response, 0, sender[3], sender[1])
       end
@@ -75,7 +78,7 @@ module RTSP
       count = 0
 
       begin
-        request_str << io.read_nonblock(200)
+        request_str << io.read_nonblock(500)
       rescue Errno::EAGAIN
         return -1 if count > 50
         count += 1
@@ -83,7 +86,7 @@ module RTSP
         retry
       end
 
-      response = process_request(request_str, io.remote_address.ip_address)
+      response = process_request(request_str, io)
       io.send(response, 0)
     end
 
@@ -92,9 +95,11 @@ module RTSP
     # @param [String] request_str RTSP request.
     # @param [String] remote_address IP address of sender.
     # @return [String] Response.
-    def process_request request_str, remote_address
+    def process_request request_str, io
+      remote_address = io.remote_address.ip_address
       /(?<action>.*) rtsp:\/\// =~ request_str
       request = RTSP::Request.new(request_str, remote_address)
+      @agent[io] = request.user_agent
       response, body = send(action.downcase.to_sym, request)
 
       add_headers(request, response, body)
@@ -161,7 +166,7 @@ module RTSP
       response = []
       response << "Session: #{sid}"
       response << "Range: #{request.range}"
-      response << "RTP-Info: url=#{request.url}track1;" +
+      response << "RTP-Info: url=#{request.url}/track1;" +
         "seq=#{@stream_server.rtp_sequence} ;rtptime=#{@stream_server.rtp_timestamp}"
       response << "\r\n"
 
@@ -211,6 +216,16 @@ module RTSP
       @stream_server.stop_streaming sid
 
       [[]]
+    end
+
+    def pause(request)
+      RTSP::Server.log "Received PAUSE request from #{request.remote_host}"
+      response = []
+      sid = request.session[:session_id]
+      response << "Session: #{sid}"
+      @stream_server.disconnect sid
+
+      [response]
     end
 
     # Adds the headers to the response.
