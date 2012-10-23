@@ -19,7 +19,7 @@ module RTSP
   # RTSP::StreamServer.instance.fmtp << "96 packetization-mode=1..."
   # RTSP::StreamServer.instance.rtp_map << "96 H264/90000"
   #
-  # #This is for the stream at index 2 (rtsp://10.221.222.90:8554/stream2)
+  # This is for the stream at index 2 (rtsp://10.221.222.90:8554/stream2)
   # RTSP::StreamServer.instance.source_ip << "239.221.222.141"
   # RTSP::StreamServer.instance.source_port << 6740
   # RTSP::StreamServer.instance.fmtp << "96 packetization-mode=1..."
