@@ -12,9 +12,20 @@ module RTSP
   #
   # require 'rtsp/server'
   # server = RTSP::Server.new "10.221.222.90", 8554
+  #
+  # This is for the stream at index 1 (rtsp://10.221.222.90:8554/stream1)
   # RTSP::StreamServer.instance.source_ip << "239.221.222.241"
   # RTSP::StreamServer.instance.source_port << 6780
+  # RTSP::StreamServer.instance.fmtp << "96 packetization-mode=1..."
+  # RTSP::StreamServer.instance.rtp_map << "96 H264/90000"
   #
+  # #This is for the stream at index 2 (rtsp://10.221.222.90:8554/stream2)
+  # RTSP::StreamServer.instance.source_ip << "239.221.222.141"
+  # RTSP::StreamServer.instance.source_port << 6740
+  # RTSP::StreamServer.instance.fmtp << "96 packetization-mode=1..."
+  # RTSP::StreamServer.instance.rtp_map << "96 MP4/90000"
+  #
+  # Now start the server
   # server.start
   class Server
     extend RTSP::Global
@@ -218,6 +229,10 @@ module RTSP
       [[]]
     end
 
+    # Handles a pause request.
+    #
+    # @param [RTSP::Request] request
+    # @return [Array<Array<String>>] Response headers and body.
     def pause(request)
       RTSP::Server.log "Received PAUSE request from #{request.remote_host}"
       response = []
