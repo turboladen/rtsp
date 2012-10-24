@@ -106,7 +106,7 @@ module RTSP
     # @param [String] request_str RTSP request.
     # @param [String] remote_address IP address of sender.
     # @return [String] Response.
-    def process_request request_str, io
+    def process_request(request_str, io)
       remote_address = io.remote_address.ip_address
       /(?<action>.*) rtsp:\/\// =~ request_str
       request = RTSP::Request.new(request_str, remote_address)
