@@ -46,7 +46,7 @@ module RTSP
     def extract_status_line(line)
       /RTSP\/(?<rtsp_version>\d\.\d)/ =~ line
       /(?<url>rtsp:\/\/.*) RTSP/ =~ line
-      /rtsp:\/\/.*stream(?<stream_index>\d*)m? RTSP/ =~ line
+      /rtsp:\/\/.*stream(?<stream_index>\d*)m?\/?.* RTSP/ =~ line
       @url = url
       @stream_index = stream_index.to_i
 

@@ -135,7 +135,7 @@ module RTSP
     # @return [Array<Array<String>>] Response headers and body.
     def describe(request)
       RTSP::Server.log "Received DESCRIBE request from #{request.remote_host}"
-      description = @stream_server.description(request.multicast?)
+      description = @stream_server.description(request.multicast?, request.stream_index)
 
       [[], description]
     end
@@ -173,12 +173,15 @@ module RTSP
     def play(request)
       RTSP::Server.log "Received PLAY request from #{request.remote_host}"
       sid = request.session[:session_id]
-      @stream_server.start_streaming sid
       response = []
       response << "Session: #{sid}"
       response << "Range: #{request.range}"
+      index = request.stream_index - 1
+      rtp_sequence, rtp_timestamp = @stream_server.parse_sequence_number(
+        @stream_server.source_ip[index], @stream_server.source_port[index])
+      @stream_server.start_streaming sid
       response << "RTP-Info: url=#{request.url}/track1;" +
-        "seq=#{@stream_server.rtp_sequence} ;rtptime=#{@stream_server.rtp_timestamp}"
+        "seq=#{rtp_sequence + 6} ;rtptime=#{rtp_timestamp}"
       response << "\r\n"
 
       [response]
@@ -262,7 +265,7 @@ module RTSP
         result << "Content-Length: #{body.size}"
       end
 
-      result << "Date: #{Time.now.gmtime.strftime('%a, %d %b %Y %H:%M:%S GMT')}"
+      result << "Date: #{Time.now.gmtime.strftime('%a, %b %d %Y %H:%M:%S GMT')}"
       result << response.join("\r\n") unless response.nil?
       result << body unless body.nil?
 

@@ -1,13 +1,22 @@
 require 'sys/proctable'
 require_relative 'global'
 require 'os'
+require 'ipaddr'
+require 'rtp/packet'
 
 module RTSP
   module SocatStreaming
     include RTSP::Global
 
-    RTCP_SOURCE = ["80c80006072dee6ad42c300f76c3b928377e99e5006c461ba92d8a3081ca0006072dee6a010e49583330444e2d" +
-      "41414a4248513600000000"]
+    RTCP_SOURCE = ["80c80006072dee6ad42c300f76c3b928377e99e5006c461ba92d8a3" +
+      "081ca0006072dee6a010e49583330444e2d41414a4248513600000000"]
+    MP4_RTP_MAP = "96 MP4V-ES/30000"
+    MP4_FMTP = "96 profile-level-id=5;config=000001b005000001b50900000100000" +
+      "0012000c888ba9860fa22c087828307"
+    H264_RTP_MAP = "96 H264/90000"
+    H264_FMTP = "96 packetization-mode=1;profile-level-id=428032;" +
+      "sprop-parameter-sets=Z0KAMtoAgAMEwAQAAjKAAAr8gYAAAYhMAABMS0IvfjAA" +
+      "ADEJgAAJiWhF78CA,aM48gA=="
 
     # @return [Hash] Hash of session IDs and SOCAT commands.
     attr_accessor :sessions
@@ -76,6 +85,8 @@ module RTSP
         end
       end
 
+      @cleaner ||= Thread.start { cleanup_defunct }
+      @processes ||= Sys::ProcTable.ps.map { |p| p.cmdline }
       @sessions[sid] = build_socat(dest_ip, dest_port, local_port, index)
 
       local_port
@@ -90,7 +101,6 @@ module RTSP
     # @param [String] session ID.
     def start_streaming sid
       spawn_socat(sid, @sessions[sid])
-      @cleaner ||= Thread.start { cleanup_defunct }
     end
 
     # Stop streaming for the requested session.
@@ -111,10 +121,8 @@ module RTSP
     # @param[Boolean] multicast True if the description is for a multicast stream.
     # @param [Fixnum] stream_index Index of the stream type.
     def description multicast=false, stream_index=1
-      rtp_map = @rtp_map[stream_index - 1] || "96 H264/90000"
-      fmtp = @fmtp[stream_index - 1] || "96 packetization-mode=1;profile-level-id=428032;" +
-        "sprop-parameter-sets=Z0KAMtoAgAMEwAQAAjKAAAr8gYAAAYhMAABMS0IvfjAA" +
-        "ADEJgAAJiWhF78CA,aM48gA=="
+      rtp_map = @rtp_map[stream_index - 1] || H264_RTP_MAP
+      fmtp = @fmtp[stream_index - 1] || H264_FMTP
 
       <<EOF
 v=0\r
@@ -129,7 +137,7 @@ a=range:npt=0-\r
 a=x-qt-text-nam:Session streamed by "Streaming Server"\r
 a=x-qt-text-inf:stream1\r
 m=video 0 RTP/AVP 96\r
-c=IN IP4 #{multicast ? "#{multicast_ip[stream_index]}/10" : "0.0.0.0"}\r
+c=IN IP4 #{multicast ? "#{multicast_ip(stream_index)}/10" : "0.0.0.0"}\r
 a=rtpmap:#{rtp_map}\r
 a=fmtp:#{fmtp}\r
 a=control:track1\r
@@ -146,6 +154,30 @@ EOF
       Process.kill(9, pid) if pid > 1000
     rescue Errno::ESRCH
       log "Tried to kill dead process: #{pid}"
+    end
+
+    # Parses the headers from an RTP stream.
+    #
+    # @param [String] src_ip Multicast IP address of RTP stream.
+    # @param [Fixnum] src_port Port of RTP stream.
+    # @return [Array<Fixnum>] Sequence number and timestamp
+    def parse_sequence_number(src_ip, src_port)
+      sock = UDPSocket.new
+      ip = IPAddr.new(src_ip).hton + IPAddr.new("0.0.0.0").hton
+      sock.setsockopt(Socket::IPPROTO_IP, Socket::IP_ADD_MEMBERSHIP, ip)
+      sock.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1)
+      sock.bind(Socket::INADDR_ANY, src_port)
+
+      begin
+        data = sock.recv_nonblock(1500)
+      rescue Errno::EAGAIN
+        retry
+      end
+
+      sock.close
+      packet = RTP::Packet.read(data)
+
+      [packet["sequence_number"], packet["timestamp"]]
     end
 
     private
