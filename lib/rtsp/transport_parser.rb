@@ -43,7 +43,7 @@ module RTSP
 
     rule(:port) do
       str('port=') >> match('[\d]').repeat(1,5).as(:rtp) >>
-      dash.maybe >> match('[\d]').repeat(1,5).as(:rtcp).maybe
+        dash.maybe >> match('[\d]').repeat(1,5).as(:rtcp).maybe
     end
 
     rule(:ssrc) do
@@ -60,7 +60,7 @@ module RTSP
 
     rule(:mode) do
       str('mode=') >> str('"').maybe >> match('[A-Za-z]').repeat.as(:mode) >>
-      str('"').maybe
+        str('"').maybe
     end
 
     rule(:ip_address) do
