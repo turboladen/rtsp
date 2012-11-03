@@ -26,16 +26,16 @@ For more information see: http://www.ietf.org/rfc/rfc2326.txt}
   s.rubygems_version = %q{1.7.2}
   s.test_files = Dir.glob("{spec,features}/**/*")
 
-  s.add_runtime_dependency('os', ">= 0.9.6")
-  s.add_runtime_dependency('parslet', ">= 1.1.0")
-  s.add_runtime_dependency('rtp', ">= 0.0.1")
-  s.add_runtime_dependency('sdp', "~> 0.2.6")
-  s.add_runtime_dependency('sys-proctable', "~> 0.9.2")
+  s.add_runtime_dependency 'os', ">= 0.9.6"
+  s.add_runtime_dependency 'parslet', ">= 1.1.0"
+  s.add_runtime_dependency 'rtp', ">= 0.0.1"
+  s.add_runtime_dependency 'sdp', "~> 0.2.6"
+  s.add_runtime_dependency 'sys-proctable', "~> 0.9.2"
 
-  s.add_development_dependency('bundler')
-  s.add_development_dependency('cucumber', ">= 1.1.0")
-  s.add_development_dependency('rake', ">= 0.8.7")
-  s.add_development_dependency('rspec', ">= 2.5.0")
-  s.add_development_dependency('simplecov', ">= 0.4.0")
-  s.add_development_dependency('yard', ">= 0.6.0")
+  s.add_development_dependency 'bundler'
+  s.add_development_dependency 'cucumber', ">= 1.1.0"
+  s.add_development_dependency 'rake', ">= 0.8.7"
+  s.add_development_dependency 'rspec', ">= 2.5.0"
+  s.add_development_dependency 'simplecov', ">= 0.4.0"
+  s.add_development_dependency 'yard', ">= 0.6.0"
 end

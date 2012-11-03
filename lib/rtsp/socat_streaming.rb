@@ -1,8 +1,9 @@
-require 'sys/proctable'
 require_relative 'global'
 require 'os'
 require 'ipaddr'
 require 'rtp/packet'
+require 'sys/proctable'
+
 
 module RTSP
   module SocatStreaming
