@@ -1,7 +1,7 @@
 require './lib/rtsp/client'
 
 cap_file = File.new("sarix_cap.rtsp", "wb")
-url = "rtsp://10.221.222.242/stream1"
+url = "rtsp://10.221.222.241/stream1"
 r = RTSP::Client.new url
 r.capturer.rtp_file = cap_file
 
