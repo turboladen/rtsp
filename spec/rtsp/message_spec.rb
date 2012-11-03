@@ -106,9 +106,9 @@ describe "RTSP::Message" do
     end
 
     it "with passed-in sequence, session, content-type, and SDP body" do
-      sdp = SDP::Description.new
-      sdp.protocol_version = 1
-      sdp.username = 'bobo'
+      sdp_string = "this is a fake description"
+      sdp = double "SDP::Description"
+      sdp.stub(:to_s).and_return sdp_string
 
       message = RTSP::Message.announce(stream).with_headers({
         session: 123456789,
@@ -121,8 +121,8 @@ describe "RTSP::Message" do
       message.to_s.should include "CSeq: 2345\r\n"
       message.to_s.should include "Session: 123456789\r\n"
       message.to_s.should include "Content-Type: application/sdp\r\n"
-      message.to_s.should include "Content-Length: 29\r\n"
-      message.to_s.should match(/\r\n\r\nv=1\r\no=bobo     \r\ns=\r\nt= \r\n\r\n$/)
+      message.to_s.should include "Content-Length: #{sdp_string.length}\r\n"
+      message.to_s.should match(/\r\n\r\n#{sdp_string}$/)
     end
   end
 
