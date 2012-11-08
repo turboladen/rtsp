@@ -39,34 +39,20 @@ module RTSP
       :teardown
     ]
 
+    @message_types.each do |message_type|
+      define_singleton_method message_type do |*args|
+        request_uri = args.first
+
+        self.new(message_type, request_uri)
+      end
+    end
+
     # TODO: define #describe somewhere so I can actually test that method.
     class << self
 
       # Lists the method/message types this class can create.
       # @return [Array<Symbol>]
       attr_accessor :message_types
-
-      # Make sure the class responds to our message types.
-      #
-      # @param [Symbol] method
-      def respond_to?(method)
-        @message_types.include?(method) || super
-      end
-
-      # Creates a new message based on the given method type and URI.
-      #
-      # @param [Symbol] method
-      # @param [Array] args
-      # @return [RTSP::Message]
-      def method_missing(method, *args)
-        request_uri = args.first
-
-        if @message_types.include? method
-          self.new(method, request_uri)
-        else
-          super
-        end
-      end
     end
 
     attr_reader :method_type
