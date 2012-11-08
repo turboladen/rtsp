@@ -83,6 +83,20 @@ module RTSP
       end
     end
 
+    # Process an RTSP request
+    #
+    # @param [String] request_str RTSP request.
+    # @param [String] remote_address IP address of sender.
+    # @return [String] Response.
+    def process_request(request_str, io)
+      remote_address = io.remote_address.ip_address
+      /(?<action>.*) rtsp:\/\// =~ request_str
+      request = RTSP::Request.new(request_str, remote_address)
+      @agent[io] = request.user_agent
+      response, body = send(action.downcase.to_sym, request)
+
+      add_headers(request, response, body)
+    end
     # Serves a client request.
     #
     # @param [IO] io Request/response socket object.
@@ -101,21 +115,6 @@ module RTSP
 
       response = process_request(request_str, io)
       io.send(response, 0)
-    end
-
-    # Process an RTSP request
-    #
-    # @param [String] request_str RTSP request.
-    # @param [String] remote_address IP address of sender.
-    # @return [String] Response.
-    def process_request(request_str, io)
-      remote_address = io.remote_address.ip_address
-      /(?<action>.*) rtsp:\/\// =~ request_str
-      request = RTSP::Request.new(request_str, remote_address)
-      @agent[io] = request.user_agent
-      response, body = send(action.downcase.to_sym, request)
-
-      add_headers(request, response, body)
     end
 
     # Handles the options request.
