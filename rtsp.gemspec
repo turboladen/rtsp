@@ -30,7 +30,7 @@ For more information see: http://www.ietf.org/rfc/rfc2326.txt}
   s.add_runtime_dependency 'parslet', ">= 1.1.0"
   s.add_runtime_dependency 'rtp', ">= 0.0.1"
   s.add_runtime_dependency 'sdp', "~> 0.2.6"
-  s.add_runtime_dependency 'sys-proctable', "~> 0.9.2"
+  s.add_runtime_dependency 'sys-proctable', "~> 0.9.2" unless RUBY_PLATFORM == "java"
 
   s.add_development_dependency 'bundler'
   s.add_development_dependency 'cucumber', ">= 1.1.0"
