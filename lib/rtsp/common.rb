@@ -1,3 +1,7 @@
+require 'sdp'
+require_relative 'transport_parser'
+
+
 module RTSP
 
   # Contains common methods belonging to Request and Response classes.
@@ -47,8 +51,10 @@ module RTSP
       /RTSP\/(?<rtsp_version>\d\.\d)/ =~ line
       /(?<url>rtsp:\/\/.*) RTSP/ =~ line
       /rtsp:\/\/.*stream(?<stream_index>\d*)m?\/?.* RTSP/ =~ line
-      @url = url
-      @stream_index = stream_index.to_i
+      create_reader("rtsp_version", rtsp_version)
+      create_reader("url", url) unless url.nil?
+      #create_reader("stream_index", stream_index)
+      #@stream_index = stream_index.to_i
 
       if rtsp_version.nil?
         raise RTSP::Error, "Status line corrupted: #{line}"
@@ -82,7 +88,7 @@ module RTSP
     # snake-case accessor with that value set.
     #
     # @param [String] head The section of headers from the request text.
-    def parse_head head
+    def parse_head_to_attrs head
       lines = head.split "\r\n"
 
       lines.each_with_index do |line, i|
@@ -101,6 +107,10 @@ module RTSP
           end
 
           create_reader("session", value)
+        elsif line.include? "Transport: "
+          transport_data = line.match(/\S+$/).to_s
+          transport_parser = RTSP::TransportParser.new
+          create_reader("transport", transport_parser.parse(transport_data))
         elsif line.include? ": "
           header_and_value = line.strip.split(":", 2)
           header_name = header_and_value.first.downcase.gsub(/-/, "_")
@@ -114,13 +124,12 @@ module RTSP
     # 'application/sdp', otherwise returns the String that was passed in.
     #
     # @param [String] body
-    # @return [SDP::Description,String]
     def parse_body body
       if body =~ /^(\r\n|\n)/
         body.gsub!(/^(\r\n|\n)/, '')
       end
 
-      if @content_type == "application/sdp"
+      @body = if @content_type && @content_type.include?("application/sdp")
         SDP.parse body
       else
         body

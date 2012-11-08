@@ -29,7 +29,7 @@ describe RTSP::Response do
         subject.stub(:extract_status_line)
         subject.should_receive(:create_reader).with("session",
           { session_id: 118, timeout: 49 })
-        subject.parse_head(head)
+        subject.parse_head_to_attrs(head)
       end
     end
 
@@ -41,22 +41,22 @@ describe RTSP::Response do
         subject.stub(:extract_status_line)
         subject.should_receive(:create_reader).with("session",
           { session_id: 118 })
-        subject.parse_head(head)
+        subject.parse_head_to_attrs(head)
       end
     end
 
     subject { RTSP::Response.new OPTIONS_RESPONSE }
 
     it "raises when RTSP version is corrupted" do
-      expect { subject.parse_head "RTSP/ 200 OK\r\n" }.to raise_error RTSP::Error
+      expect { subject.parse_head_to_attrs "RTSP/ 200 OK\r\n" }.to raise_error RTSP::Error
     end
 
     it "raises when the response code is corrupted" do
-      expect { subject.parse_head "RTSP/1.0 2 OK\r\n" }.to raise_error RTSP::Error
+      expect { subject.parse_head_to_attrs "RTSP/1.0 2 OK\r\n" }.to raise_error RTSP::Error
     end
 
     it "raises when the response message is corrupted" do
-      expect { subject.parse_head "RTSP/1.0 200 \r\n" }.to raise_error RTSP::Error
+      expect { subject.parse_head_to_attrs "RTSP/1.0 200 \r\n" }.to raise_error RTSP::Error
     end
   end
 
@@ -90,170 +90,109 @@ describe RTSP::Response do
   end
 
   describe "#inspect" do
-    before do
-      @response = RTSP::Response.new OPTIONS_RESPONSE
+    subject do
+      RTSP::Response.new OPTIONS_RESPONSE
     end
 
     it "contains the class name and object ID first" do
-      @response.inspect.should match(/^#<RTSP::Response:\d+/)
+      subject.inspect.should match(/^#<RTSP::Response:\d+/)
     end
 
     it "begins with <# and ends with >" do
-      @response.inspect.should match(/^#<.*>$/)
+      subject.inspect.should match(/^#<.*>$/)
     end
   end
 
   context "options" do
-    before do
-      @response = RTSP::Response.new OPTIONS_RESPONSE
-    end
-
-    it "returns a 200 code" do
-      @response.code.should == 200
-    end
-
-    it "returns 'OK' message" do
-      @response.message.should == 'OK'
-    end
-
-    it "returns the date header" do
-      @response.date.should == 'Fri, Jan 28 2011 01:14:42 GMT'
-    end
+    subject { RTSP::Response.new OPTIONS_RESPONSE }
+    specify { subject.code.should == 200 }
+    specify { subject.message.should == 'OK' }
+    specify { subject.date.should == 'Fri, Jan 28 2011 01:14:42 GMT' }
 
     it "returns the supported methods in the Public header" do
-      @response.public.should == 'OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE'
+      subject.public.should == 'OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE'
     end
   end
 
   context "describe" do
-    before do
-      @response = RTSP::Response.new DESCRIBE_RESPONSE
-    end
-
-    it "returns a 200 code" do
-      @response.code.should == 200
-    end
-
-    it "returns 'OK' message" do
-      @response.message.should == "OK"
-    end
+    subject { RTSP::Response.new DESCRIBE_RESPONSE }
+    specify { subject.code.should == 200 }
+    specify { subject.message.should == 'OK' }
 
     it "returns all header fields" do
-      @response.server.should == "DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )"
-      @response.cseq.should == 1
-      @response.cache_control.should == "no-cache"
-      @response.content_length.should == 406
-      @response.date.should == "Sun, 23 Jan 2011 00:36:45 GMT"
-      @response.expires.should == "Sun, 23 Jan 2011 00:36:45 GMT"
-      @response.content_type.should == "application/sdp"
-      @response.x_accept_retransmit.should == "our-retransmit"
-      @response.x_accept_dynamic_rate.should == 1
-      @response.content_base.should == "rtsp://64.202.98.91:554/gs.sdp/"
+      subject.server.should == "DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )"
+      subject.cseq.should == 1
+      subject.cache_control.should == "no-cache"
+      subject.content_length.should == 406
+      subject.date.should == "Sun, 23 Jan 2011 00:36:45 GMT"
+      subject.expires.should == "Sun, 23 Jan 2011 00:36:45 GMT"
+      subject.content_type.should == "application/sdp"
+      subject.x_accept_retransmit.should == "our-retransmit"
+      subject.x_accept_dynamic_rate.should == 1
+      subject.content_base.should == "rtsp://64.202.98.91:554/gs.sdp/"
     end
 
     it "body is a parsed SDP::Description" do
-      @response.body.should be_kind_of SDP::Description
-      sdp_info = @response.body
+      subject.body.should be_a SDP::Description
+      sdp_info = subject.body
       sdp_info.protocol_version.should == "0"
       sdp_info.name.should == "Groove Salad from SomaFM [aacPlus]"
     end
   end
 
   context "setup" do
-    before do
-      @response = RTSP::Response.new SETUP_RESPONSE
-    end
+    subject { RTSP::Response.new SETUP_RESPONSE }
+    specify { subject.code.should == 200 }
+    specify { subject.message.should == 'OK' }
+    specify { subject.date.should == 'Fri, Jan 28 2011 01:14:42 GMT' }
+    specify {
+      subject.transport[:streaming_protocol].should == "RTP"
+      subject.transport[:profile].should == "AVP"
+      subject.transport[:broadcast_type].should == "unicast"
+      subject.transport[:destination].should == "10.221.222.186"
+      subject.transport[:source].should == "10.221.222.235"
+      subject.transport[:client_port][:rtp].should == "9000"
+      subject.transport[:client_port][:rtcp].should == "9001"
+    }
 
-    it "returns a 200 code" do
-      @response.code.should == 200
-    end
-
-    it "returns 'OK' message" do
-      @response.message.should == 'OK'
-    end
-
-    it "returns the date header" do
-      @response.date.should == 'Fri, Jan 28 2011 01:14:42 GMT'
-    end
-
-    it "returns the supported transport" do
-      @response.transport.should == 'RTP/AVP;unicast;destination=10.221.222.186;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701'
-    end
-
-    it "returns the session" do
-      @response.session[:session_id].should == 118
-    end
+    specify { subject.session.should == { session_id: 118 } }
   end
 
   context "play" do
-    before do
-      @response = RTSP::Response.new PLAY_RESPONSE
-    end
-
-    it "returns a 200 code" do
-      @response.code.should == 200
-    end
-
-    it "returns 'OK' message" do
-      @response.message.should == 'OK'
-    end
-
-    it "returns the date header" do
-      @response.date.should == 'Fri, Jan 28 2011 01:14:42 GMT'
-    end
-
-    it "returns the supported range" do
-      @response.range.should == 'npt=0.000-'
-    end
-
-    it "returns the session" do
-      @response.session[:session_id].should == 118
-    end
-
-    it "returns the rtp_info" do
-      @response.rtp_info.should == 'url=rtsp://10.221.222.235/stream1/track1;seq=17320;rtptime=400880602'
-    end
+    subject { RTSP::Response.new PLAY_RESPONSE }
+    specify { subject.code.should == 200 }
+    specify { subject.message.should == 'OK' }
+    specify { subject.date.should == 'Fri, Jan 28 2011 01:14:42 GMT' }
+    specify { subject.range.should == 'npt=0.000-' }
+    specify { subject.session.should == { session_id: 118 } }
+    specify {
+      subject.rtp_info.should ==
+        'url=rtsp://10.221.222.235/stream1/track1;seq=17320;rtptime=400880602'
+    }
   end
 
   context "teardown" do
-    before do
-      @response = RTSP::Response.new TEARDOWN_RESPONSE
-    end
-
-    it "returns a 200 code" do
-      @response.code.should == 200
-    end
-
-    it "returns 'OK' message" do
-      @response.message.should == 'OK'
-    end
-
-    it "returns the date header" do
-      @response.date.should == 'Fri, Jan 28 2011 01:14:47 GMT'
-    end
+    subject { RTSP::Response.new TEARDOWN_RESPONSE }
+    specify { subject.code.should == 200 }
+    specify { subject.message.should == 'OK' }
+    specify { subject.date.should == 'Fri, Jan 28 2011 01:14:47 GMT' }
   end
 
   context "#parse_head" do
-    before do
-      @response = RTSP::Response.new OPTIONS_RESPONSE
-    end
-
-    it "extracts the RTSP version from the header" do
-      @response.rtsp_version.should == "1.0"
-    end
+    subject { RTSP::Response.new OPTIONS_RESPONSE }
+    specify { subject.rtsp_version.should == "1.0" }
 
     it "extracts the response code from the header as a Fixnum" do
-      @response.code.is_a?(Fixnum).should be_true
-      @response.code.should == 200
+      subject.code.should == 200
     end
 
     it "extracts the response message from the header" do
-      @response.message.should == "OK"
+      subject.message.should == "OK"
     end
 
     it "returns empty value string when header has no value" do
       response = RTSP::Response.new NO_CSEQ_VALUE_RESPONSE
-      response.parse_head NO_CSEQ_VALUE_RESPONSE
+      response.parse_head_to_attrs NO_CSEQ_VALUE_RESPONSE
       response.instance_variable_get(:@cseq).should == ""
     end
   end

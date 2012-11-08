@@ -23,8 +23,8 @@ module RTSP
       @raw_body = raw_response
 
       head, body = split_head_and_body_from @raw_body
-      parse_head(head)
       @body = parse_body(body)
+      parse_head_to_attrs(head)
     end
 
     # Pulls out the RTSP version, response code, and response message (AKA the

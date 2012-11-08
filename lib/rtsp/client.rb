@@ -259,8 +259,7 @@ module RTSP
         end
 
         @session   = response.session
-        parser     = RTSP::TransportParser.new
-        @transport = parser.parse response.transport
+        @transport = response.transport
 
         unless @transport[:transport_protocol].nil?
           @capturer.transport_protocol = @transport[:transport_protocol]
