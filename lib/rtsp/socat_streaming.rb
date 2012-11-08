@@ -121,7 +121,7 @@ module RTSP
     #
     # @param[Boolean] multicast True if the description is for a multicast stream.
     # @param [Fixnum] stream_index Index of the stream type.
-    def description multicast=false, stream_index=1
+    def description(multicast=false, stream_index=1)
       rtp_map = @rtp_map[stream_index - 1] || H264_RTP_MAP
       fmtp = @fmtp[stream_index - 1] || H264_FMTP
 
