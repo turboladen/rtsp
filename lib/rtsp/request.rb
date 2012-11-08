@@ -1,4 +1,3 @@
-require 'rubygems'
 require_relative 'error'
 require_relative 'global'
 require_relative 'common'

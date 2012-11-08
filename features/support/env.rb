@@ -1,4 +1,3 @@
-require 'rubygems'
 require 'socket'
 require 'timeout'
 require 'cucumber/rspec/doubles'
