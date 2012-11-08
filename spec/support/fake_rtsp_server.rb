@@ -68,7 +68,8 @@ CSeq: #{@cseq}\r
 Date: #{Time.now.httpdate}\r
 Transport: RTP/AVP;unicast;destination=10.221.222.186;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701\r
 Session: #{@session}\r
-\r\n}
+\r
+}
   end
 
   def play
@@ -78,14 +79,16 @@ Date: #{Time.now.httpdate}\r
 Range: npt=0.000-\r
 Session: #{@session}\r
 RTP-Info: url=rtsp://10.221.222.235/stream1/track1;seq=17320;rtptime=400880602\r
-\r\n}
+\r
+}
   end
 
   def pause
     %Q{RTSP/1.0 200 OK\r
 CSeq: #{@cseq}\r
 Date: #{Time.now.httpdate}\r
-\r\n}
+\r
+}
   end
 
   def teardown
@@ -94,7 +97,8 @@ CSeq: #{@cseq}\r
 Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )\r
 Session: #{@session}\r
 Connection: Close\r
-\r\n}
+\r
+}
   end
 
   def get_parameter
@@ -103,7 +107,8 @@ CSeq: #{@cseq}\r
 Content-Length: 8\r
 \r
 response\r
-\r\n}
+\r
+}
   end
 
   def set_parameter

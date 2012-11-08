@@ -26,15 +26,19 @@ module RTSP
         new_request.parse_head_to_attrs(head)
 
         unless body.empty?
-          new_request.raw_body = body
+          new_request.raw = raw_request
           new_request.parse_body(body)
         end
+
+        new_request
       end
     end
 
     attr_accessor :action
+    attr_reader :rtsp_version
+    attr_reader :url
     attr_accessor :body
-    attr_accessor :raw_body
+    attr_accessor :raw
 
     def initialize
       @rtsp_version = '1.0'

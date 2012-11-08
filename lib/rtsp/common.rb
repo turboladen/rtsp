@@ -76,7 +76,7 @@ module RTSP
 
     # @return [String] The unparsed request as a String.
     def to_s
-      @raw_request || @raw_response || ""
+      @raw || ""
     end
 
     # This custom redefinition of #inspect is needed because of the #to_s

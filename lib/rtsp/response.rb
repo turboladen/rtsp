@@ -8,24 +8,35 @@ module RTSP
   class Response
     include RTSP::Common
 
-    attr_reader :rtsp_version
-    attr_reader :code
-    attr_reader :message
-    attr_reader :body
-
     # @param [String] raw_response The raw response string returned from the
-    # server/client.
-    def initialize(raw_response)
+    #   server/client.
+    def self.parse(raw_response)
       if raw_response.nil? || raw_response.empty?
         raise RTSP::Error,
           "#{self.class} received nil string--this shouldn't happen."
       end
 
-      @raw_body = raw_response
+      new do |new_response|
+        head, body = new_response.split_head_and_body_from(raw_response)
+        new_response.parse_head_to_attrs(head)
 
-      head, body = split_head_and_body_from @raw_body
-      parse_head_to_attrs(head)
-      parse_body(body)
+        if body && !body.empty?
+          new_response.instance_variable_set(:@raw, raw_response)
+          new_response.parse_body(body)
+        end
+
+        new_response
+      end
+    end
+
+    attr_reader :code
+    attr_reader :message
+    attr_reader :rtsp_version
+    attr_reader :body
+    attr_reader :raw
+
+    def initialize
+      yield self if block_given?
     end
 
     # Pulls out the RTSP version, response code, and response message (AKA the

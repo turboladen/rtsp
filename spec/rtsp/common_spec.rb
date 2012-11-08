@@ -12,8 +12,7 @@ describe RTSP::Common do
       head_and_body.first.should == %Q{RTSP/1.0 200 OK\r
 CSeq: 1\r
 Date: Fri, Jan 28 2011 01:14:42 GMT\r
-Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r
-}
+Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE}
     end
 
     it "splits responses with headers and body" do
@@ -46,6 +45,7 @@ b=AS:48\r
 a=rtpmap:96 MP4A-LATM/44100/2\r
 a=fmtp:96 cpresent=0;config=400027200000\r
 a=control:trackID=1\r
+\r
 }
     end
   end

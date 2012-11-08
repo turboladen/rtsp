@@ -1,7 +1,6 @@
 require 'sdp'
-require_relative '../spec_helper'
+require 'spec_helper'
 require 'rtsp/client'
-require_relative '../support/fake_rtsp_server'
 
 describe RTSP::Client do
   def setup_client_at(url)
@@ -132,7 +131,7 @@ describe RTSP::Client do
 
     it "returns a Response" do
       response = @client.options
-      response.is_a?(RTSP::Response).should be_true
+      response.should be_a RTSP::Response
     end
   end
 
@@ -161,7 +160,7 @@ describe RTSP::Client do
     end
 
     it "returns a Response" do
-      @response.is_a?(RTSP::Response).should be_true
+      @response.should be_a RTSP::Response
     end
   end
 
@@ -171,7 +170,7 @@ describe RTSP::Client do
       sdp = SDP::Description.new
       client.setup("rtsp://localhost/another_track")
       response = client.announce("rtsp://localhost/another_track", sdp)
-      response.is_a?(RTSP::Response).should be_true
+      response.should be_a RTSP::Response
     end
   end
 
@@ -199,7 +198,7 @@ describe RTSP::Client do
 
     it "returns a Response" do
       response = @client.setup("rtsp://localhost/some_track")
-      response.is_a?(RTSP::Response).should be_true
+      response.should be_a RTSP::Response
     end
   end
 
@@ -221,7 +220,7 @@ describe RTSP::Client do
     it "returns a Response" do
       @client.setup("rtsp://localhost/some_track")
       response = @client.play("rtsp://localhost/some_track")
-      response.is_a?(RTSP::Response).should be_true
+      response.should be_a RTSP::Response
     end
   end
 
@@ -249,7 +248,7 @@ describe RTSP::Client do
 
     it "returns a Response" do
       response = @client.pause("rtsp://localhost/some_track")
-      response.is_a?(RTSP::Response).should be_true
+      response.should be_a RTSP::Response
     end
   end
 
@@ -273,7 +272,7 @@ describe RTSP::Client do
 
     it "returns a Response" do
       response = @client.teardown("rtsp://localhost/some_track")
-      response.is_a?(RTSP::Response).should be_true
+      response.should be_a RTSP::Response
     end
   end
 
@@ -284,7 +283,7 @@ describe RTSP::Client do
 
     it "returns a Response" do
       response = @client.get_parameter("rtsp://localhost/some_track", "ping!")
-      response.is_a?(RTSP::Response).should be_true
+      response.should be_a RTSP::Response
     end
   end
 
@@ -295,7 +294,7 @@ describe RTSP::Client do
 
     it "returns a Response" do
       response = @client.set_parameter("rtsp://localhost/some_track", "ping!")
-      response.is_a?(RTSP::Response).should be_true
+      response.should be_a RTSP::Response
     end
   end
 
@@ -307,7 +306,7 @@ describe RTSP::Client do
 
     it "returns a Response" do
       response = @client.record("rtsp://localhost/some_track")
-      response.is_a?(RTSP::Response).should be_true
+      response.should be_a RTSP::Response
     end
 
     it "changes the session_state to :recording" do
