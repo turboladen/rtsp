@@ -6,8 +6,9 @@ require 'socket'
 module RTSP
   SUPPORTED_VERSION = "1.0"
 
-  # Instantiates an RTSP Server
-  # Streaming is performed using socat.
+  # Provides for serving an RTSP stream.  Currently the only method for sourcing
+  # streams is via {http://www.dest-unreach.org/socat/ socat}.  It is also only
+  # able to source a single media stream.
   # All you need is the multicast source RTP host and port.
   #
   # require 'rtsp/server'
@@ -42,6 +43,7 @@ module RTSP
     #
     # @param [Fixnum] host IP interface to bind.
     # @param [Fixnum] port RTSP port.
+    # @todo Only initialize a TCP or UDP server/socket as needed.
     def initialize(host, port=554)
       @session =  rand(99999999)
       @stream_server = RTSP::StreamServer.instance
