@@ -7,6 +7,7 @@ module RTSP
   # attr_readers.
   class Response
     include RTSP::Common
+
     attr_reader :rtsp_version
     attr_reader :code
     attr_reader :message
@@ -23,8 +24,8 @@ module RTSP
       @raw_body = raw_response
 
       head, body = split_head_and_body_from @raw_body
-      @body = parse_body(body)
       parse_head_to_attrs(head)
+      parse_body(body)
     end
 
     # Pulls out the RTSP version, response code, and response message (AKA the
