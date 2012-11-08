@@ -7,28 +7,6 @@ module RTSP
   # Contains common methods belonging to Request and Response classes.
   module Common
 
-    # @return [String] The unparsed request as a String.
-    def to_s
-      @raw_body
-    end
-
-    # Custom redefine to make sure all the dynamically created instance
-    # variables are displayed when this method is called.
-    #
-    # @return [String]
-    def inspect
-      me = "#<#{self.class.name}:#{self.__id__} "
-
-      self.instance_variables.each do |variable|
-        me << "#{variable}=#{instance_variable_get(variable).inspect}, "
-      end
-
-      me.sub!(/, $/, "")
-      me << ">"
-
-      me
-    end
-
     # Takes the raw request text and splits it into a 2-element Array, where 0
     # is the text containing the headers and 1 is the text containing the body.
     #
@@ -41,28 +19,6 @@ module RTSP
       body = head_and_body.last == head ? nil : head_and_body.last
 
       [head, body]
-    end
-
-    # Returns the transport URL.
-    #
-    # @return [String] Transport URL associated with the request.
-    def transport_url
-      /client_port=(?<port>.*)-/ =~ transport
-
-      if port.nil?
-        log("Could not find client port associated with transport", :warn)
-      else
-        "#{@remote_host}:#{port}"
-      end
-    end
-
-    # Checks if the request is for a multicast stream.
-    #
-    # @return [Boolean] true if the request is for a multicast stream.
-    def multicast?
-      return false if @url.nil?
-
-      @url.end_with? "m"
     end
 
     # Reads through each header line of the RTSP request, extracts the
@@ -118,6 +74,28 @@ module RTSP
       end
     end
 
+    # @return [String] The unparsed request as a String.
+    def to_s
+      @raw_request || @raw_response || ""
+    end
+
+    # This custom redefinition of #inspect is needed because of the #to_s
+    # definition.
+    #
+    # @return [String]
+    def inspect
+      me = "#<#{self.class.name}:0x#{self.object_id.to_s(16)}"
+
+      ivars = self.instance_variables.map do |variable|
+        "#{variable}=#{instance_variable_get(variable).inspect}"
+      end.join(' ')
+
+      me << " #{ivars} " unless ivars.empty?
+      me << ">"
+
+      me
+    end
+
     private
 
     # Creates an attr_reader with the name given and sets it to the value
@@ -133,7 +111,10 @@ module RTSP
       end
 
       instance_variable_set("@#{name}", value)
-      self.instance_eval "def #{name}; @#{name}; end"
+
+      define_singleton_method name.to_sym do
+        instance_variable_get "@#{name}".to_sym
+      end
     end
   end
 end

@@ -12,94 +12,32 @@ describe RTSP::Response do
     end
   end
 
-  describe "#parse_head" do
-    let(:head) do
-      head = double "head"
-      head.stub(:split).and_return(['', session_line])
-      head.stub(:each_with_index).and_yield
+  describe "#extract_status_line" do
+    let(:status_line) { "RTSP/1.0 200 OK" }
+    before { subject.extract_status_line(status_line) }
 
-      head
+    it "extracts the rtsp version" do
+      subject.rtsp_version.should == "1.0"
     end
 
-    context "Session header contains session-id and timeout" do
-      let(:session_line) { "Session: 118;timeout=49" }
-      subject { RTSP::Response.new SETUP_RESPONSE_WITH_SESSION_TIMEOUT }
-
-      it "creates a :session reader with value being a Hash with key/value" do
-        subject.stub(:extract_status_line)
-        subject.should_receive(:create_reader).with("session",
-          { session_id: 118, timeout: 49 })
-        subject.parse_head_to_attrs(head)
-      end
+    it "extracts the response code from the header as a Fixnum" do
+      subject.code.should == 200
     end
 
-    context "Session header contains just session-id" do
-      let(:session_line) { "Session: 118" }
-      subject { RTSP::Response.new SETUP_RESPONSE_WITH_SESSION_TIMEOUT }
-
-      it "creates a :session reader with value being a Hash with key/value" do
-        subject.stub(:extract_status_line)
-        subject.should_receive(:create_reader).with("session",
-          { session_id: 118 })
-        subject.parse_head_to_attrs(head)
-      end
+    it "extracts the response message from the header" do
+      subject.message.should == "OK"
     end
-
-    subject { RTSP::Response.new OPTIONS_RESPONSE }
 
     it "raises when RTSP version is corrupted" do
-      expect { subject.parse_head_to_attrs "RTSP/ 200 OK\r\n" }.to raise_error RTSP::Error
+      expect { subject.extract_status_line "RTSP/ 200 OK\r\n" }.to raise_error RTSP::Error
     end
 
     it "raises when the response code is corrupted" do
-      expect { subject.parse_head_to_attrs "RTSP/1.0 2 OK\r\n" }.to raise_error RTSP::Error
+      expect { subject.extract_status_line "RTSP/1.0 2 OK\r\n" }.to raise_error RTSP::Error
     end
 
     it "raises when the response message is corrupted" do
-      expect { subject.parse_head_to_attrs "RTSP/1.0 200 \r\n" }.to raise_error RTSP::Error
-    end
-  end
-
-  describe "#parse_body" do
-    it "returns an SDP::Description when @content_type is 'application/sdp" do
-      response = RTSP::Response.new DESCRIBE_RESPONSE
-      sdp = SDP::Description.new
-      sdp.username = "me"
-      sdp.id = 12345
-      sdp.version = 12345
-      sdp.network_type = "IN"
-      sdp.address_type = "IP4"
-      body = response.parse_body sdp.to_s
-      body.class.should == SDP::Description
-    end
-
-    it "returns the text that was passed to it but with line feeds removed" do
-      response = RTSP::Response.new OPTIONS_RESPONSE
-      string = "hi\r\nguys\r\n\r\n"
-      body = response.parse_body string
-      body.class.should == String
-      body.should == string
-    end
-  end
-
-  describe "#to_s" do
-    it "returns the text that was passed in" do
-      response = RTSP::Response.new OPTIONS_RESPONSE
-      response.to_s.should == OPTIONS_RESPONSE
-    end
-  end
-
-  describe "#inspect" do
-    subject do
-      RTSP::Response.new OPTIONS_RESPONSE
-    end
-
-    it "contains the class name and object ID first" do
-      subject.inspect.should match(/^#<RTSP::Response:\d+/)
-    end
-
-    it "begins with <# and ends with >" do
-      subject.inspect.should match(/^#<.*>$/)
+      expect { subject.extract_status_line "RTSP/1.0 200 \r\n" }.to raise_error RTSP::Error
     end
   end
 

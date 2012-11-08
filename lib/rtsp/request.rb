@@ -59,5 +59,27 @@ module RTSP
         raise RTSP::Error, "Status line corrupted: #{line}"
       end
     end
+
+    # Returns the transport URL.
+    #
+    # @return [String] Transport URL associated with the request.
+    def transport_url
+      /client_port=(?<port>.*)-/ =~ transport
+
+      if port.nil?
+        log("Could not find client port associated with transport", :warn)
+      else
+        "#{@remote_host}:#{port}"
+      end
+    end
+
+    # Checks if the request is for a multicast stream.
+    #
+    # @return [Boolean] true if the request is for a multicast stream.
+    def multicast?
+      return false if @url.nil?
+
+      @url.end_with? "m"
+    end
   end
 end
