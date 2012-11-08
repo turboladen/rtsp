@@ -2,6 +2,7 @@ OPTIONS_RESPONSE = %Q{RTSP/1.0 200 OK\r
 CSeq: 1\r
 Date: Fri, Jan 28 2011 01:14:42 GMT\r
 Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r
+\r
 }
 
 DESCRIBE_RESPONSE = %{RTSP/1.0 200 OK\r
@@ -31,6 +32,7 @@ b=AS:48\r
 a=rtpmap:96 MP4A-LATM/44100/2\r
 a=fmtp:96 cpresent=0;config=400027200000\r
 a=control:trackID=1\r
+\r
 }
 
 SETUP_RESPONSE = %Q{RTSP/1.0 200 OK\r
@@ -38,14 +40,16 @@ CSeq: 1\r
 Date: Fri, Jan 28 2011 01:14:42 GMT\r
 Transport: RTP/AVP;unicast;destination=10.221.222.186;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701\r
 Session: 118\r
-\r}
+\r
+}
 
 SETUP_RESPONSE_WITH_SESSION_TIMEOUT = %Q{RTSP/1.0 200 OK\r
 CSeq: 1\r
 Date: Fri, Jan 28 2011 01:14:42 GMT\r
 Transport: RTP/AVP;unicast;destination=10.221.222.186;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701\r
 Session: 118;timeout=49\r
-\r}
+\r
+}
 
 PLAY_RESPONSE = %Q{RTSP/1.0 200 OK\r
 CSeq: 1\r
@@ -53,15 +57,18 @@ Date: Fri, Jan 28 2011 01:14:42 GMT\r
 Range: npt=0.000-\r
 Session: 118\r
 RTP-Info: url=rtsp://10.221.222.235/stream1/track1;seq=17320;rtptime=400880602\r
-\r}
+\r
+}
 
 TEARDOWN_RESPONSE = %Q{RTSP/1.0 200 OK\r
 CSeq: 1\r
 Date: Fri, Jan 28 2011 01:14:47 GMT\r
-\r}
+\r
+}
 
 NO_CSEQ_VALUE_RESPONSE = %Q{ RTSP/1.0 460 Only Aggregate Option Allowed\r
 Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )\r
 Cseq: \r
 Connection: Close\r
-\r}
+\r
+}
