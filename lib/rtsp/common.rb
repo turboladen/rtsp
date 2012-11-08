@@ -43,24 +43,6 @@ module RTSP
       [head, body]
     end
 
-    # Pulls out the RTSP version, request code, and request message (AKA the
-    # status line info) into instance variables.
-    #
-    # @param [String] line The String containing the status line info.
-    def extract_status_line(line)
-      /RTSP\/(?<rtsp_version>\d\.\d)/ =~ line
-      /(?<url>rtsp:\/\/.*) RTSP/ =~ line
-      /rtsp:\/\/.*stream(?<stream_index>\d*)m?\/?.* RTSP/ =~ line
-      create_reader("rtsp_version", rtsp_version)
-      create_reader("url", url) unless url.nil?
-      #create_reader("stream_index", stream_index)
-      #@stream_index = stream_index.to_i
-
-      if rtsp_version.nil?
-        raise RTSP::Error, "Status line corrupted: #{line}"
-      end
-    end
-
     # Returns the transport URL.
     #
     # @return [String] Transport URL associated with the request.
