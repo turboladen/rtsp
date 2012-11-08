@@ -183,7 +183,7 @@ describe RTSP::Client do
     it "extracts the session number" do
       @client.session.should be_empty
       @client.setup("rtsp://localhost/some_track")
-      @client.session[:session_id].should == 1234567890
+      @client.session[:session_id].should == "1234567890"
     end
 
     it "changes the session_state to :ready" do

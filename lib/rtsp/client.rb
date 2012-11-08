@@ -438,7 +438,7 @@ module RTSP
     #
     # @raise [RTSP::Error] Raises if @session isn't set.
     def ensure_session
-      if @session.empty? || @session[:session_id] <= 0
+      if @session.empty?
         raise RTSP::Error, "Session number not retrieved from server yet.  Run SETUP first."
       end
     end
