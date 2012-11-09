@@ -45,10 +45,10 @@ Accept: application/sdp\r
 
     context "with non-default Accept" do
       it "builds the request" do
-        message = RTSP::Request.describe(stream).with_headers({
+        request = RTSP::Request.describe(stream).with_headers({
           accept: 'application/sdp, application/rtsl' }).to_s
 
-        message.should == %Q{DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Accept: application/sdp, application/rtsl\r
@@ -59,11 +59,11 @@ Accept: application/sdp, application/rtsl\r
 
     context "with non-default Sequence and Accept values" do
       it "builds the request" do
-        message = RTSP::Request.describe(stream).with_headers({
+        request = RTSP::Request.describe(stream).with_headers({
           accept: 'application/sdp, application/rtsl',
           cseq: 2345 }).to_s
 
-        message.should == %Q{DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{DESCRIBE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 2345\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Accept: application/sdp, application/rtsl\r
@@ -76,10 +76,10 @@ Accept: application/sdp, application/rtsl\r
   describe "an ANNOUNCE request string" do
     context "with default sequence, content type, but no body" do
       it "builds the request" do
-        message = RTSP::Request.announce(stream).
+        request = RTSP::Request.announce(stream).
           with_headers({ session: 123456789 }).to_s
 
-        message.should == %Q{ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Session: 123456789\r
@@ -91,11 +91,11 @@ Content-Type: application/sdp\r
 
     context "with passed-in session and content type but no body" do
       it "builds the request" do
-        message = RTSP::Request.announce(stream).with_headers({
+        request = RTSP::Request.announce(stream).with_headers({
           session: 123456789,
           content_type: 'application/sdp, application/rtsl' }).to_s
 
-        message.should == %Q{ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Session: 123456789\r
@@ -107,12 +107,12 @@ Content-Type: application/sdp, application/rtsl\r
 
     context "with passed-in sequence, session, content-type, but no body " do
       it "builds the request" do
-        message = RTSP::Request.announce(stream).with_headers({
+        request = RTSP::Request.announce(stream).with_headers({
           session: 123456789,
           content_type: 'application/sdp, application/rtsl',
           cseq: 2345 }).to_s
 
-        message.should == %Q{ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 2345\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Session: 123456789\r
@@ -128,14 +128,14 @@ Content-Type: application/sdp, application/rtsl\r
         sdp = double "SDP::Description"
         sdp.stub(:to_s).and_return sdp_string
 
-        message = RTSP::Request.announce(stream).with_headers_and_body({
+        request = RTSP::Request.announce(stream).with_headers_and_body({
           session: 123456789,
           content_type: 'application/sdp',
           cseq: 2345,
           body: sdp.to_s
         }).to_s
 
-        message.should == %Q{ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{ANNOUNCE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 2345\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Session: 123456789\r
@@ -150,9 +150,9 @@ Content-Length: #{sdp_string.length}\r
   describe "a SETUP string" do
     context "with default sequence, client_port, and routing values" do
       it "builds the request" do
-        message = RTSP::Request.setup(stream).to_s
+        request = RTSP::Request.setup(stream).to_s
 
-        message.should == %Q{SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 \r
@@ -162,11 +162,11 @@ User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})
 
     context "with default sequence, transport, and client_port values" do
       it "builds the request" do
-        message = RTSP::Request.setup(stream).with_headers({
+        request = RTSP::Request.setup(stream).with_headers({
           transport: ["RTP/AVP", "multicast", { :client_port => "9000-9001" }] }).
           to_s
 
-        message.should == %Q{SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Transport: RTP/AVP;multicast;client_port=9000-9001\r
@@ -177,11 +177,11 @@ Transport: RTP/AVP;multicast;client_port=9000-9001\r
 
     context "with default transport, client_port, and routing values" do
       it "builds the request" do
-        message = RTSP::Request.setup(stream).with_headers({
+        request = RTSP::Request.setup(stream).with_headers({
           transport: ["RTP/AVP", "multicast", { :client_port => "9000-9001" }],
           cseq: 2345 }).to_s
 
-        message.should == %Q{SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 2345\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Transport: RTP/AVP;multicast;client_port=9000-9001\r
@@ -194,10 +194,10 @@ Transport: RTP/AVP;multicast;client_port=9000-9001\r
   describe "a PLAY string" do
     context "with default sequence and range values" do
       it "builds the request" do
-        message = RTSP::Request.play(stream).with_headers({
+        request = RTSP::Request.play(stream).with_headers({
           session: 123456789 }).to_s
 
-        message.should == %Q{PLAY rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{PLAY rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Session: 123456789\r
@@ -209,11 +209,11 @@ Range: npt=0.000-\r
 
     context "with default sequence value" do
       it "builds the request" do
-        message = RTSP::Request.play(stream).with_headers({
+        request = RTSP::Request.play(stream).with_headers({
           session: 123456789,
           range: { :npt => "0.000-1.234" } }).to_s
 
-        message.should == %Q{PLAY rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{PLAY rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Session: 123456789\r
@@ -227,9 +227,9 @@ Range: npt=0.000-1.234\r
   describe "a PAUSE string" do
     context "with required Request values" do
       it "builds the request" do
-        message = RTSP::Request.pause(stream).to_s
+        request = RTSP::Request.pause(stream).to_s
 
-        message.should == %Q{PAUSE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{PAUSE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 \r
@@ -239,11 +239,11 @@ User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})
 
     context "with session and range headers" do
       it "builds the request" do
-        message = RTSP::Request.pause(stream).with_headers({
+        request = RTSP::Request.pause(stream).with_headers({
           session: 123456789,
           range: { :npt => "0.000" } }).to_s
 
-        message.should == %Q{PAUSE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{PAUSE rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Session: 123456789\r
@@ -257,9 +257,9 @@ Range: npt=0.000\r
   context "builds a TEARDOWN string" do
     context "with required Request values" do
       it "builds the request" do
-        message = RTSP::Request.teardown(stream).to_s
+        request = RTSP::Request.teardown(stream).to_s
 
-        message.should == %Q{TEARDOWN rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{TEARDOWN rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 \r
@@ -269,10 +269,10 @@ User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})
 
     context "with session and range headers" do
       it "builds the request" do
-        message = RTSP::Request.teardown(stream).with_headers({
+        request = RTSP::Request.teardown(stream).with_headers({
           session: 123456789 }).to_s
 
-        message.should == %Q{TEARDOWN rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{TEARDOWN rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Session: 123456789\r
@@ -285,9 +285,9 @@ Session: 123456789\r
   describe "a GET_PARAMETER string" do
     context "with required Request values" do
       it "builds the request" do
-        message = RTSP::Request.get_parameter(stream).to_s
+        request = RTSP::Request.get_parameter(stream).to_s
 
-        message.should == %Q{GET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{GET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Content-Type: text/parameters\r
@@ -300,14 +300,14 @@ Content-Type: text/parameters\r
       it "builds the request" do
         the_body = "packets_received\r\njitter\r\n"
 
-        message = RTSP::Request.get_parameter(stream).with_headers_and_body({
+        request = RTSP::Request.get_parameter(stream).with_headers_and_body({
           cseq: 431,
           content_type: 'text/parameters',
           session: 123456789,
           body: the_body
         }).to_s
 
-        message.should == %Q{GET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{GET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 431\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Session: 123456789\r
@@ -322,9 +322,9 @@ Content-Length: #{the_body.length}\r
   describe "a SET_PARAMETER string" do
     context "with required Request values" do
       it "builds the request" do
-        message = RTSP::Request.set_parameter(stream).to_s
+        request = RTSP::Request.set_parameter(stream).to_s
 
-        message.should == %Q{SET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{SET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Content-Type: text/parameters\r
@@ -337,14 +337,14 @@ Content-Type: text/parameters\r
       it "builds the request" do
         the_body = "barparam: barstuff\r\n"
 
-        message = RTSP::Request.set_parameter(stream).with_headers_and_body({
+        request = RTSP::Request.set_parameter(stream).with_headers_and_body({
           cseq: 431,
           content_type: 'text/parameters',
           session: 123456789,
           body: the_body
         }).to_s
 
-        message.should == %Q{SET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{SET_PARAMETER rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 431\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Session: 123456789\r
@@ -359,9 +359,9 @@ Content-Length: #{the_body.length}\r
   describe "a REDIRECT string" do
     context "with required Request values" do
       it "builds the request" do
-        message = RTSP::Request.redirect(stream).to_s
+        request = RTSP::Request.redirect(stream).to_s
 
-        message.should == %Q{REDIRECT rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{REDIRECT rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 \r
@@ -371,12 +371,12 @@ User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})
 
     context "with cseq, location, and range headers" do
       it "builds the request" do
-        message = RTSP::Request.redirect(stream).with_headers({
+        request = RTSP::Request.redirect(stream).with_headers({
           cseq: 732,
           location: "rtsp://bigserver.com:8001",
           range: { :clock => "19960213T143205Z-" } }).to_s
 
-        message.should == %Q{REDIRECT rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{REDIRECT rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 732\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Location: rtsp://bigserver.com:8001\r
@@ -390,9 +390,9 @@ Range: clock=19960213T143205Z-\r
   describe "a RECORD string" do
     context "with required Request values" do
       it "builds the request" do
-        message = RTSP::Request.record(stream).to_s
+        request = RTSP::Request.record(stream).to_s
 
-        message.should == %Q{RECORD rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{RECORD rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 \r
@@ -402,12 +402,12 @@ User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})
 
     context "with cseq, session, and conference headers" do
       it "builds the request" do
-        message = RTSP::Request.record(stream).with_headers({
+        request = RTSP::Request.record(stream).with_headers({
           cseq: 954,
           session: 12345678,
           conference: "128.16.64.19/32492374" }).to_s
 
-        message.should == %Q{RECORD rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
+        request.should == %Q{RECORD rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 954\r
 User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})\r
 Session: 12345678\r
