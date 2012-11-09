@@ -6,6 +6,7 @@ require 'rtp/receiver'
 require_relative 'error'
 require_relative 'global'
 require_relative 'helpers'
+require_relative 'logger'
 require_relative 'request'
 require_relative 'response'
 
@@ -53,7 +54,7 @@ module RTSP
   # @todo Break Stream out in to its own class.
   class Client
     include RTSP::Helpers
-    extend RTSP::Global
+    include LogSwitch::Mixin
 
     MAX_BYTES_TO_RECEIVE = 3000
 
@@ -145,8 +146,8 @@ module RTSP
     # @raise [RTSP::Error] If the timeout value is reached and the server hasn't
     #   responded.
     def send_message request_message
-      RTSP::Client.log "Sending #{request_message.method_type.upcase} to #{request_message.request_uri}"
-      request_message.to_s.each_line { |line| RTSP::Client.log line.strip }
+      log "Sending #{request_message.method_type.upcase} to #{request_message.request_uri}"
+      request_message.to_s.each_line { |line| log line.strip }
 
       begin
         response = Timeout::timeout(@connection.timeout) do
@@ -160,16 +161,16 @@ module RTSP
       end
 
       if response
-        RTSP::Client.log "Received response:"
+        log "Received response:"
 
         if response.to_s.empty?
-          RTSP::Client.log "Response was empty."
-          RTSP::Client.log "\n"
+          log "Response was empty."
+          log "\n"
         else
-          response.to_s.each_line { |line| RTSP::Client.log line.strip }
+          response.to_s.each_line { |line| log line.strip }
         end
       else
-        RTSP::Client.log "No response received.", :warn
+        log "No response received.", :warn
       end
 
       response
@@ -298,7 +299,7 @@ module RTSP
         end
 
         if @play_thread.nil?
-          RTSP::Client.log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
+          log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
 
           unless @capturer.running?
             @play_thread = Thread.new do

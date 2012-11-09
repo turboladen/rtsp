@@ -1,7 +1,7 @@
 require './lib/rtsp/client'
 
-#RTSP::Client.log = false
-RTSP::Client.log = true
+#RTSP::Logger.log = false
+RTSP::Logger.log = true
 
 cap_file = File.new("soma_cap.rtsp", "wb")
 url = "rtsp://64.202.98.91/sa.sdp"
