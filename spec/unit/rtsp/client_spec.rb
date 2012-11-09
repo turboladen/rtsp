@@ -5,7 +5,6 @@ require 'rtsp/client'
 describe RTSP::Client do
   def setup_client_at(url)
     fake_rtsp_server = FakeRTSPServer.new
-    mock_logger = double 'MockLogger', :send => nil
 
     client = RTSP::Client.new(url) do |connection|
       connection.socket = fake_rtsp_server
