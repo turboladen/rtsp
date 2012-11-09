@@ -1,9 +1,11 @@
-require_relative 'helpers'
+require 'sdp'
 require_relative 'error'
-require_relative 'common'
 require_relative 'global'
+require_relative 'helpers'
 require_relative 'logger'
+require_relative 'transport_parser'
 require_relative 'version'
+require_relative '../ext/hash_ext'
 
 module RTSP
 
@@ -22,7 +24,6 @@ module RTSP
   class Message
     extend RTSP::Global
     include RTSP::Helpers
-    include RTSP::Common
 
     RTSP_ACCEPT_TYPE = "application/sdp"
     RTSP_DEFAULT_NPT             = "0.000-"
@@ -38,9 +39,9 @@ module RTSP
     # @param [Symbol] method_type The RTSP method to build and send.
     # @param [String] request_uri The URL to include in the message.
     def initialize
-      @headers     = default_headers
-      @body        = ""
-      @rtsp_version     = DEFAULT_VERSION
+      @headers = default_headers
+      @body = ""
+      @rtsp_version = DEFAULT_VERSION
     end
 
     # Adds the header and its value to the list of headers for the message.
@@ -49,7 +50,7 @@ module RTSP
     # @param [] value The value to set the header field to.
     def header(type, value)
       if type.is_a? Symbol
-        headers[type] = value
+        @headers[type] = value
       else
         raise RTSP::Error, "Header type must be a Symbol (i.e. :cseq)."
       end
@@ -78,18 +79,36 @@ module RTSP
       @headers.merge! new_headers
     end
 
-    # Use when creating a new Message to add body you want.
+    # Like #with_headers, this allows including a :body key/value pair to add
+    # to the message.
+    #
+    # @param [Hash] new_stuff The headers and body to add to the message.
+    # @return [RTSP::Message]
+    def with_headers_and_body(new_stuff)
+      with_body(new_stuff[:body])
+      new_stuff.delete(:body)
+
+      with_headers(new_stuff)
+
+      self
+    end
+
+    # Use when creating a new Message to add body you want.  This is really just
+    # syntactic sugar for #add_body.
     #
     # @example Simple header
     #   RTSP::Message.options("192.168.1.10").with_body("The body!")
-    # @param [Hash] new_headers The headers to add to the Request.  The Hash
-    #   key will be capitalized; if
+    # @param [Hash] new_body The body to add to the Request.
     def with_body(new_body)
       add_body new_body
 
       self
     end
 
+    # Adds the body to the message, adds the Content-Length header and sets the
+    # value to the length of +new_body+.
+    #
+    # @param [String] new_body
     def add_body new_body
       add_headers({ content_length: new_body.length })
       @body = new_body
@@ -109,6 +128,92 @@ module RTSP
       message.to_s
     end
 
+    # Takes the raw request text and splits it into a 2-element Array, where 0
+    # is the text containing the headers and 1 is the text containing the body.
+    #
+    # @param [String] raw_request
+    # @return [Array<String>] 2-element Array containing the head and body of
+    #   the request.  Body will be nil if there wasn't one in the request.
+    def split_head_and_body_from raw_request
+      head_and_body = raw_request.split("\r\n\r\n", 2)
+      head = head_and_body.first
+      body = head_and_body.last == head ? nil : head_and_body.last
+
+      [head, body]
+    end
+
+    # Reads through each header line of the RTSP request, extracts the
+    # request code, request message, request version, and adds the header
+    # name/value pair to @headers.
+    #
+    # @param [String] head The section of headers from the request text.
+    def parse_head head
+      @headers ||= {}
+      lines = head.split "\r\n"
+
+      lines.each_with_index do |line, i|
+        if i == 0
+          extract_status_line(line)
+          next
+        end
+
+        if line.include? "Session: "
+          value = {}
+          line =~ /Session: (\d+)/
+          value[:session_id] = $1.to_i
+
+          if line =~ /timeout=(.+)/
+            value[:timeout] = $1.to_i
+          end
+
+          @headers[:session] = value
+        elsif line.include? "Transport: "
+          transport_data = line.match(/\S+$/).to_s
+          transport_parser = RTSP::TransportParser.new
+          @headers[:transport] = transport_parser.parse(transport_data)
+        elsif line.include? ": "
+          header_and_value = line.strip.split(":", 2)
+          header_name = header_and_value.first.downcase.gsub(/-/, "_").to_sym
+          value = header_and_value[1].strip
+          @headers[header_name] = Integer(value) rescue value
+        end
+      end
+    end
+
+    # Reads through each line of the RTSP response body and parses it if
+    # needed.  Returns a SDP::Description if the Content-Type is
+    # 'application/sdp', otherwise returns the String that was passed in.
+    #
+    # @param [String] body
+    def parse_body body
+      if body =~ /^(\r\n|\n)/
+        body.gsub!(/^(\r\n|\n)/, '')
+      end
+
+      @body = if @headers[:content_type] && @headers[:content_type].include?("application/sdp")
+        SDP.parse body
+      else
+        body
+      end
+    end
+
+    # This custom redefinition of #inspect is needed because of the #to_s
+    # definition.
+    #
+    # @return [String]
+    def inspect
+      me = "#<#{self.class.name}:0x#{self.object_id.to_s(16)}"
+
+      ivars = self.instance_variables.map do |variable|
+        "#{variable}=#{instance_variable_get(variable).inspect}"
+      end.join(' ')
+
+      me << " #{ivars} " unless ivars.empty?
+      me << ">"
+
+      me
+    end
+
     protected
 
     def default_headers
@@ -124,92 +229,34 @@ module RTSP
     # @return [String]
     def message
       message = status_line
-      message << headers_to_s(@headers)
+      message << @headers.to_headers_s
       message << "\r\n"
-      message << "#{@body}" unless @body.nil?
-
-      message.each_line { |line| RTSP::Logger.log line.strip }
+      message << "#{@body}" unless @body.empty?
 
       message
     end
 
     def status_line
-      raise "This shouldn't get called.  Please define this method in your child class."
+      "This shouldn't get called.  Inheriting classes should redefine this.\r\n"
     end
 
-    # Turns headers from Hash(es) into a String, where each element
-    # is a String in the form: [Header Type]: value(s)\r\n.
+    # Creates an attr_reader with the name given and sets it to the value
+    # that's given.
     #
-    # @param [Hash] headers The headers to put to string.
-    # @return [String]
-    def headers_to_s headers
-      header_string = headers.inject("") do |result, (key, value)|
-        header_name = key.to_s.split(/_/).map do |header|
-          header.capitalize
-        end.join('-')
-
-        header_name = "CSeq" if header_name == "Cseq"
-
-        if value.is_a?(Hash) || value.is_a?(Array)
-          if header_name == "Content-Type"
-            values = values_to_s(value, ", ")
-          else
-            values = values_to_s(value)
-          end
-
-          result << "#{header_name}: #{values}\r\n"
-        else
-          result << "#{header_name}: #{value}\r\n"
+    # @param [String] name
+    # @param [String,Hash] value
+    def create_reader(name, value)
+      unless value.empty?
+        if value.is_a? String
+          value = value =~ /^[0-9]*$/ ? value.to_i : value
         end
-
-        result
       end
 
-      arr = header_string.split "\r\n"
-      # Move the Session header to the top
-      session_index = arr.index { |a| a =~ /Session/ }
-      unless session_index.nil?
-        session = arr.delete_at(session_index)
-        arr.unshift(session)
+      instance_variable_set("@#{name}", value)
+
+      define_singleton_method name.to_sym do
+        instance_variable_get "@#{name}".to_sym
       end
-
-      # Move the User-Agent header to the top
-      user_agent_index = arr.index { |a| a =~ /User-Agent/ }
-      unless user_agent_index.nil?
-        user_agent = arr.delete_at(user_agent_index)
-        arr.unshift(user_agent)
-      end
-
-      # Move the CSeq header to the top
-      cseq_index = arr.index { |a| a =~ /CSeq/ }
-      cseq = arr.delete_at(cseq_index)
-      arr.unshift(cseq)
-
-      # Put it all back to a String
-      header_string = arr.join("\r\n")
-      header_string << "\r\n"
-    end
-
-    # Turns header values into a single string.
-    #
-    # @param [] values The header values to put to string.
-    # @param [String] separator The character to use to separate multiple
-    #   values that define a header.
-    # @return [String] The header values as a single string.
-    def values_to_s(values, separator=";")
-      result = values.inject("") do |values_string, (header_field, header_field_value)|
-        if header_field.is_a? Symbol
-          values_string << "#{header_field}=#{header_field_value}"
-        elsif header_field.is_a? Hash
-          values_string << values_to_s(header_field)
-        else
-          values_string << header_field.to_s
-        end
-
-        values_string + separator
-      end
-
-      result.sub!(/#{separator}$/, '') if result.end_with? separator
     end
   end
 end

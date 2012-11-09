@@ -21,8 +21,8 @@ module RTSP
     ]
 
     @method_types.each do |message_type|
-      define_singleton_method message_type do |*args|
-        self.new(*args)
+      define_singleton_method message_type do |request_uri|
+        self.new(message_type, request_uri)
       end
     end
 
@@ -44,7 +44,7 @@ module RTSP
 
       /^(?<method_type>\w+)/ =~ raw_request
 
-      new(method_type.to_sym) do |new_request|
+      new(method_type.downcase.to_sym) do |new_request|
         head, body = new_request.split_head_and_body_from(raw_request)
         new_request.parse_head(head)
 
@@ -64,7 +64,13 @@ module RTSP
     # @param [String] request_uri The URL to include in the message.
     def initialize(method_type, request_uri="")
       @method_type = method_type
-      @request_uri = build_resource_uri_from(request_uri) unless request_uri.empty?
+
+      @request_uri = if request_uri.empty? || request_uri == "*"
+        request_uri
+      else
+        build_resource_uri_from(request_uri)
+      end
+
       super()
 
       yield self if block_given?

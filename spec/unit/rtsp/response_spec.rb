@@ -10,11 +10,11 @@ describe RTSP::Response do
 
       it "parses the response" do
         subject.should be_ok
-        subject.body.should be_nil
+        subject.body.should be_empty
 
-        subject.cseq.should == 1
-        subject.date.should == "Fri, Jan 28 2011 01:14:42 GMT"
-        subject.public.should == "OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE"
+        subject.headers[:cseq].should == 1
+        subject.headers[:date].should == "Fri, Jan 28 2011 01:14:42 GMT"
+        subject.headers[:public].should == "OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE"
       end
     end
 
@@ -25,15 +25,15 @@ describe RTSP::Response do
         subject.should be_ok
         subject.body.should be_a SDP::Description
 
-        subject.server.should == "DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )"
-        subject.cseq.should == 1
-        subject.cache_control.should == 'no-cache'
-        subject.date.should == "Sun, 23 Jan 2011 00:36:45 GMT"
-        subject.expires.should == "Sun, 23 Jan 2011 00:36:45 GMT"
-        subject.content_type.should == 'application/sdp'
-        subject.x_accept_retransmit.should == 'our-retransmit'
-        subject.x_accept_dynamic_rate.should == 1
-        subject.content_base.should == "rtsp://64.202.98.91:554/gs.sdp/"
+        subject.headers[:server].should == "DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )"
+        subject.headers[:cseq].should == 1
+        subject.headers[:cache_control].should == 'no-cache'
+        subject.headers[:date].should == "Sun, 23 Jan 2011 00:36:45 GMT"
+        subject.headers[:expires].should == "Sun, 23 Jan 2011 00:36:45 GMT"
+        subject.headers[:content_type].should == 'application/sdp'
+        subject.headers[:x_accept_retransmit].should == 'our-retransmit'
+        subject.headers[:x_accept_dynamic_rate].should == 1
+        subject.headers[:content_base].should == "rtsp://64.202.98.91:554/gs.sdp/"
       end
     end
 
@@ -42,18 +42,18 @@ describe RTSP::Response do
 
       it "parses the response" do
         subject.should be_ok
-        subject.body.should be_nil
+        subject.body.should be_empty
 
-        subject.cseq.should == 1
-        subject.date.should == "Fri, Jan 28 2011 01:14:42 GMT"
-        subject.transport[:streaming_protocol].should == "RTP"
-        subject.transport[:profile].should == "AVP"
-        subject.transport[:broadcast_type].should == "unicast"
-        subject.transport[:destination].should == "10.221.222.186"
-        subject.transport[:source].should == "10.221.222.235"
-        subject.transport[:client_port][:rtp].should == "9000"
-        subject.transport[:client_port][:rtcp].should == "9001"
-        subject.session.should == { session_id: 118 }
+        subject.headers[:cseq].should == 1
+        subject.headers[:date].should == "Fri, Jan 28 2011 01:14:42 GMT"
+        subject.headers[:transport][:streaming_protocol].should == "RTP"
+        subject.headers[:transport][:profile].should == "AVP"
+        subject.headers[:transport][:broadcast_type].should == "unicast"
+        subject.headers[:transport][:destination].should == "10.221.222.186"
+        subject.headers[:transport][:source].should == "10.221.222.235"
+        subject.headers[:transport][:client_port][:rtp].should == "9000"
+        subject.headers[:transport][:client_port][:rtcp].should == "9001"
+        subject.headers[:session].should == { session_id: 118 }
       end
     end
 
@@ -62,13 +62,13 @@ describe RTSP::Response do
 
       it "parses the response" do
         subject.should be_ok
-        subject.body.should be_nil
+        subject.body.should be_empty
 
-        subject.cseq.should == 1
-        subject.date.should == "Fri, Jan 28 2011 01:14:42 GMT"
-        subject.range.should == "npt=0.000-"
-        subject.session.should == { session_id: 118 }
-        subject.rtp_info.should ==
+        subject.headers[:cseq].should == 1
+        subject.headers[:date].should == "Fri, Jan 28 2011 01:14:42 GMT"
+        subject.headers[:range].should == "npt=0.000-"
+        subject.headers[:session].should == { session_id: 118 }
+        subject.headers[:rtp_info].should ==
           "url=rtsp://10.221.222.235/stream1/track1;seq=17320;rtptime=400880602"
       end
     end
@@ -78,10 +78,10 @@ describe RTSP::Response do
 
       it "parses the response" do
         subject.should be_ok
-        subject.body.should be_nil
+        subject.body.should be_empty
 
-        subject.cseq.should == 1
-        subject.date.should == "Fri, Jan 28 2011 01:14:47 GMT"
+        subject.headers[:cseq].should == 1
+        subject.headers[:date].should == "Fri, Jan 28 2011 01:14:47 GMT"
       end
     end
 
@@ -89,7 +89,7 @@ describe RTSP::Response do
       let(:raw_response) { NO_CSEQ_VALUE_RESPONSE }
 
       it "parses the value to be empty" do
-        subject.cseq.should be_empty
+        subject.headers[:cseq].should be_empty
       end
     end
   end
@@ -107,7 +107,7 @@ describe RTSP::Response do
     end
 
     it "extracts the response message from the header" do
-      subject.message.should == "OK"
+      subject.status_message.should == "OK"
     end
 
     it "raises when RTSP version is corrupted" do

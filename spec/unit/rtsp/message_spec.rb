@@ -8,87 +8,198 @@ describe RTSP::Message do
 
   describe "#header" do
     it "raises if the header type isn't a Symbol" do
-      message = RTSP::Message.new
-
-      expect {
-        message.header "hi", "everyone"
-      }.to raise_error RTSP::Error
-    end
-  end
-
-
-
-  context "#to_s turns a Hash into an String of header strings" do
-    it "single header, non-hyphenated name, hash value" do
-      message = RTSP::Message.play(stream).with_headers({
-        range: { npt: "0.000-" }
-      })
-
-      string = message.to_s
-      string.is_a?(String).should be_true
-      string.should include "Range: npt=0.000-"
-    end
-
-    it "single header, hyphenated, non-hash value" do
-      message = RTSP::Message.play(stream).with_headers({
-        :if_modified_since => "Sat, 29 Oct 1994 19:43:31 GMT"
-      })
-
-      string = message.to_s
-      string.is_a?(String).should be_true
-      string.should include "If-Modified-Since: Sat, 29 Oct 1994 19:43:31 GMT"
-    end
-
-    it "two headers, mixed hyphenated, array & hash values" do
-      message = RTSP::Message.redirect(stream).with_headers({
-        :cache_control => ["no-cache", { :max_age => 12345 }],
-        :content_type => ['application/sdp', 'application/x-rtsp-mh']
-      })
-
-      string = message.to_s
-      string.is_a?(String).should be_true
-      string.should include "Cache-Control: no-cache;max_age=12345"
-      string.should include "Content-Type: application/sdp, application/x-rtsp-mh"
+      expect { subject.header "hi", "everyone" }.to raise_error RTSP::Error
     end
   end
 
   describe "#with_headers" do
+    it "calls #add_headers and returns an RTSP::Message" do
+      new_headers = { test: 'test' }
+      subject.should_receive(:add_headers).with(new_headers)
+
+      result = subject.with_headers({ test: "test" })
+      result.should be_a RTSP::Message
+    end
+  end
+
+  describe "#with_headers_and_body" do
     it "returns an RTSP::Message" do
-      message = RTSP::Message.options(stream)
-      result = message.with_headers({ test: "test" })
-      result.class.should == RTSP::Message
+      new_headers_and_body = { test: 'test', body: 'the body' }
+      subject.should_receive(:with_headers).with({ test: 'test' })
+      subject.should_receive(:with_body).with('the body')
+
+      result = subject.with_headers_and_body(new_headers_and_body)
+      result.should be_a RTSP::Message
     end
   end
 
   describe "#with_body" do
+    let(:new_body) { "1234567890" }
+    before { subject.with_body(new_body) }
+
     it "adds the passed-in text to the body of the message" do
-      new_body = "1234567890"
-      message = RTSP::Message.record("rtsp://localhost/track").with_body(new_body)
-      message.to_s.should match(/\r\n\r\n#{new_body}$/)
+      subject.body.should == new_body
     end
 
     it "adds the Content-Length header to reflect the body" do
-      new_body = "1234567890"
-      message = RTSP::Message.record("rtsp://localhost/track").with_body(new_body)
-      message.to_s.should match(/Content-Length: #{new_body.size}\r\n/)
+      subject.headers[:content_length].should == new_body.size
     end
   end
 
-  describe "#respond_to?" do
-    it "returns true to each method in the list of supported method types" do
-      RTSP::Message.instance_variable_get(:@method_types).each do |m|
-        RTSP::Message.respond_to?(m).should be_true
+  describe "#message" do
+    before do
+      headers = double "@headers"
+      headers.stub(:to_headers_s).and_return "some headers\r\n"
+      subject.instance_variable_set(:@headers, headers)
+      subject.stub(:status_line).and_return "test status\r\n"
+    end
+
+    context "@body is empty" do
+      it "builds the headers into the message" do
+        subject.send(:message).should == %Q{test status\r
+some headers\r
+\r
+}
       end
     end
 
-    it "returns false to a method that's not in the list of supported methods" do
-      RTSP::Message.respond_to?(:meow).should be_false
+    context "@body is set" do
+      it "builds the headers and body into the message" do
+        subject.instance_variable_set(:@body, "this is my body")
+        subject.send(:message).should == %Q{test status\r
+some headers\r
+\r
+this is my body}
+      end
     end
   end
 
-  describe "#method_missing" do
-    it "returns " do
-      lambda { RTSP::Message.meow }.should raise_error NoMethodError
+  describe "#split_head_and_body_from" do
+    it "splits responses with headers and no body" do
+      head_and_body = subject.split_head_and_body_from OPTIONS_RESPONSE
+      head_and_body.first.should == %Q{RTSP/1.0 200 OK\r
+CSeq: 1\r
+Date: Fri, Jan 28 2011 01:14:42 GMT\r
+Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE}
+    end
+
+    it "splits responses with headers and body" do
+      head_and_body = subject.split_head_and_body_from DESCRIBE_RESPONSE
+      head_and_body.first.should == %{RTSP/1.0 200 OK\r
+Server: DSS/5.5 (Build/489.7; Platform/Linux; Release/Darwin; )\r
+Cseq: 1\r
+Cache-Control: no-cache\r
+Content-length: 406\r
+Date: Sun, 23 Jan 2011 00:36:45 GMT\r
+Expires: Sun, 23 Jan 2011 00:36:45 GMT\r
+Content-Type: application/sdp\r
+x-Accept-Retransmit: our-retransmit\r
+x-Accept-Dynamic-Rate: 1\r
+Content-Base: rtsp://64.202.98.91:554/gs.sdp/}
+
+      head_and_body.last.should == %{\r
+v=0\r
+o=- 545877020 467920391 IN IP4 127.0.0.1\r
+s=Groove Salad from SomaFM [aacPlus]\r
+i=Downtempo Ambient Groove\r
+c=IN IP4 0.0.0.0\r
+t=0 0\r
+a=x-qt-text-cmt:Orban Opticodec-PC\r
+a=x-qt-text-nam:Groove Salad from SomaFM [aacPlus]\r
+a=x-qt-text-inf:Downtempo Ambient Groove\r
+a=control:*\r
+m=audio 0 RTP/AVP 96\r
+b=AS:48\r
+a=rtpmap:96 MP4A-LATM/44100/2\r
+a=fmtp:96 cpresent=0;config=400027200000\r
+a=control:trackID=1\r
+\r
+}
+    end
+  end
+
+  describe "#parse_head" do
+    before { subject.stub(:extract_status_line) }
+
+    context "Session header contains session-id and timeout" do
+      it "creates a :session reader with value being a Hash with key/value" do
+        subject.parse_head(SETUP_RESPONSE_WITH_SESSION_TIMEOUT)
+        subject.headers.should have_key :session
+        subject.headers[:session].should == { session_id: 118, timeout: 49 }
+      end
+    end
+
+    context "Session header contains just session-id" do
+      it "creates a :session reader with value being a Hash with key/value" do
+        subject.parse_head(SETUP_RESPONSE)
+        subject.headers[:session].should == { session_id: 118 }
+      end
+    end
+
+    context "header has no value" do
+      it "returns empty value string" do
+        subject.parse_head(NO_CSEQ_VALUE_RESPONSE)
+        subject.headers[:cseq].should == ""
+      end
+    end
+  end
+
+  describe "#parse_body" do
+    it "returns the text that was passed to it but with line feeds removed" do
+      string = "hi\r\nguys\r\n\r\n"
+      body = subject.parse_body string
+      body.should be_a String
+      body.should == string
+    end
+
+    context "@headers[:content_type] is 'application/sdp'" do
+      let(:description) do
+        sdp = SDP::Description.new
+        sdp.username = "me"
+        sdp.id = 12345
+        sdp.version = 12345
+        sdp.network_type = "IN"
+        sdp.address_type = "IP4"
+
+        sdp
+      end
+
+      it "returns an SDP::Description" do
+        subject.instance_variable_set(:@headers, { content_type: 'application/sdp' })
+        body = subject.parse_body description.to_s
+        body.should be_a SDP::Description
+        body.username.should == "me"
+      end
+    end
+  end
+
+  describe "#inspect" do
+    it "contains the class name and object ID first" do
+      subject.inspect.should match(/^#<#{subject.class}:\d+/)
+    end
+
+    it "contains the instance variables" do
+      subject.instance_variable_set(:@test, 'pants')
+      subject.inspect.should match(/@test="pants"/)
+    end
+
+    it "begins with <# and ends with >" do
+      subject.inspect.should match(/^#<.*>$/)
+    end
+  end
+
+  describe "#create_reader" do
+    before do
+      subject.send(:create_reader, 'make_noise', 'meow')
+    end
+
+    it "sets an instance variable by 'name' to 'value'" do
+      subject.instance_variable_get(:@make_noise).should == 'meow'
+    end
+
+    it "defines a method for reading the instance variable" do
+      subject.should respond_to :make_noise
+      subject.make_noise.should == 'meow'
     end
   end
 end

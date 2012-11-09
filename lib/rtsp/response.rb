@@ -32,6 +32,8 @@ module RTSP
     attr_reader :status_message
 
     def initialize
+      super()
+
       yield self if block_given?
     end
 

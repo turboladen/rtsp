@@ -6,7 +6,7 @@ RSpec::Matchers.define :be_ok do
 
     @fail_types << "class" unless actual_response.is_a?(RTSP::Response)
     @fail_types << "code" unless actual_response.code == 200
-    @fail_types << "message" unless actual_response.message == 'OK'
+    @fail_types << "message" unless actual_response.status_message == 'OK'
     @fail_types << "rtsp_version" unless actual_response.rtsp_version == '1.0'
 
     @fail_types.empty?
