@@ -2,6 +2,7 @@ PATH
   remote: .
   specs:
     rtsp (0.4.0)
+      log_switch (>= 0.3.0)
       os (>= 0.9.6)
       parslet (>= 1.1.0)
       rtp (>= 0.0.1)

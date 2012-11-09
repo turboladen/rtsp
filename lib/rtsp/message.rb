@@ -2,6 +2,7 @@ require_relative 'helpers'
 require_relative 'error'
 require_relative 'common'
 require_relative 'global'
+require_relative 'logger'
 require_relative 'version'
 
 module RTSP
@@ -127,7 +128,7 @@ module RTSP
       message << "\r\n"
       message << "#{@body}" unless @body.nil?
 
-      #message.each_line { |line| RTSP::Client.log line.strip }
+      message.each_line { |line| RTSP::Logger.log line.strip }
 
       message
     end
