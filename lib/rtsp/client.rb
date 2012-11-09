@@ -86,12 +86,6 @@ module RTSP
     # @return [Symbol] See {RFC section A.1.}[http://tools.ietf.org/html/rfc2326#page-76]
     attr_reader :session_state
 
-    # Use to configure options for all clients.
-    # @see RTSP::Global
-    def self.configure
-      yield self if block_given?
-    end
-
     # @param [String] server_url URL to the resource to stream.  If no scheme is
     #   given, "rtsp" is assumed.  If no port is given, 554 is assumed.
     # @yield [Struct::Connection, RTP::Receiver]

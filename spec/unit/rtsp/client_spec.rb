@@ -11,9 +11,7 @@ describe RTSP::Client do
       connection.socket = fake_rtsp_server
     end
 
-    RTSP::Client.reset_config!
-    RTSP::Client.configure { |config| config.log = false }
-    client.logger = mock_logger
+    RTSP::Logger.log = false
 
     client
   end
@@ -43,57 +41,6 @@ describe RTSP::Client do
       @client.instance_variable_get(:@server_uri).should be_a(URI)
       @client.instance_variable_get(:@server_uri).to_s.should ==
           "rtsp://localhost:554"
-    end
-  end
-
-  describe ".configure" do
-    around do |example|
-      RTSP::Client.reset_config!
-      example.run
-      RTSP::Client.reset_config!
-      RTSP::Client.log = false
-    end
-
-    before :each do
-      mock_socket = double 'MockSocket'
-
-      @client = RTSP::Client.new("rtsp://localhost") do |connection|
-        connection.socket = mock_socket
-      end
-    end
-
-    describe "log" do
-      it "should default to true" do
-        RTSP::Client.log?.should be_true
-      end
-
-      it "should set whether to log RTSP requests/responses" do
-        RTSP::Client.configure { |config| config.log = false }
-        RTSP::Client.log?.should be_false
-      end
-    end
-
-    describe "logger" do
-      it "should set the logger to use" do
-        MyLogger = Class.new
-        RTSP::Client.configure { |config| config.logger = MyLogger }
-        RTSP::Client.logger.should == MyLogger
-      end
-
-      it "should default to Logger writing to STDOUT" do
-        RTSP::Client.logger.should be_a(Logger)
-      end
-    end
-
-    describe "log_level" do
-      it "should default to :debug" do
-        RTSP::Client.log_level.should == :debug
-      end
-
-      it "should set the log level to use" do
-        RTSP::Client.configure { |config| config.log_level = :info }
-        RTSP::Client.log_level.should == :info
-      end
     end
   end
 
