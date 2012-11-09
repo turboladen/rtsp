@@ -22,7 +22,7 @@ describe RTSP::Request do
         subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
-        subject.request_uri.should be_nil
+        subject.uri.should be_nil
         subject.headers[:cseq].should == 1
         subject.headers[:require].should == 'implicit-play'
         subject.headers[:proxy_require].should == 'gzipped-messages'
@@ -39,7 +39,7 @@ describe RTSP::Request do
         subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
-        subject.request_uri.should == "rtsp://server.example.com/fizzle/foo"
+        subject.uri.should == "rtsp://server.example.com/fizzle/foo"
         subject.headers[:cseq].should == 312
         subject.headers[:accept].should ==
           "application/sdp, application/rtsl, application/mheg"
@@ -56,7 +56,7 @@ describe RTSP::Request do
         subject.raw.should_not be_empty
 
         subject.rtsp_version.should == "1.0"
-        subject.request_uri.should == "rtsp://server.example.com/fizzle/foo"
+        subject.uri.should == "rtsp://server.example.com/fizzle/foo"
         subject.headers[:cseq].should == 312
         subject.headers[:date].should == "23 Jan 1997 15:35:06 GMT"
         subject.headers[:session].should == { session_id: 47112344 }
@@ -75,7 +75,7 @@ describe RTSP::Request do
         subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
-        subject.request_uri.should == "rtsp://example.com/foo/bar/baz.rm"
+        subject.uri.should == "rtsp://example.com/foo/bar/baz.rm"
         subject.headers[:cseq].should == 302
         subject.headers[:transport].should == {
           streaming_protocol: 'RTP',
@@ -98,7 +98,7 @@ describe RTSP::Request do
         subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
-        subject.request_uri.should == "rtsp://audio.example.com/audio"
+        subject.uri.should == "rtsp://audio.example.com/audio"
         subject.headers[:cseq].should == 835
         subject.headers[:session].should == { session_id: 12345678 }
         subject.headers[:range].should == "npt=10-15"
@@ -115,7 +115,7 @@ describe RTSP::Request do
         subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
-        subject.request_uri.should == "rtsp://example.com/fizzle/foo"
+        subject.uri.should == "rtsp://example.com/fizzle/foo"
         subject.headers[:cseq].should == 834
         subject.headers[:session].should == { session_id: 12345678 }
       end
@@ -131,7 +131,7 @@ describe RTSP::Request do
         subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
-        subject.request_uri.should == "rtsp://example.com/fizzle/foo"
+        subject.uri.should == "rtsp://example.com/fizzle/foo"
         subject.headers[:cseq].should == 892
         subject.headers[:session].should == { session_id: 12345678 }
       end
@@ -147,7 +147,7 @@ describe RTSP::Request do
         subject.raw.should == raw_request
 
         subject.rtsp_version.should == "1.0"
-        subject.request_uri.should == "rtsp://example.com/fizzle/foo"
+        subject.uri.should == "rtsp://example.com/fizzle/foo"
         subject.headers[:cseq].should == 431
         subject.headers[:content_length].should == 15
         subject.headers[:session].should == { session_id: 12345678 }
@@ -164,7 +164,7 @@ describe RTSP::Request do
         subject.raw.should == raw_request
 
         subject.rtsp_version.should == "1.0"
-        subject.request_uri.should == "rtsp://example.com/fizzle/foo"
+        subject.uri.should == "rtsp://example.com/fizzle/foo"
         subject.headers[:cseq].should == 421
         subject.headers[:content_length].should == 20
       end
@@ -180,7 +180,7 @@ describe RTSP::Request do
         subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
-        subject.request_uri.should == "rtsp://example.com/meeting/audio.en"
+        subject.uri.should == "rtsp://example.com/meeting/audio.en"
         subject.headers[:cseq].should == 954
         subject.headers[:session].should == { session_id: 12345678 }
         subject.headers[:conference].should == "128.16.64.19/32492374"

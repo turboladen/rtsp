@@ -140,7 +140,7 @@ module RTSP
     # @raise [RTSP::Error] If the timeout value is reached and the server hasn't
     #   responded.
     def send_message request_message
-      log "Sending #{request_message.method_type.upcase} to #{request_message.request_uri}"
+      log "Sending #{request_message.method_type.upcase} to #{request_message.uri}"
       request_message.to_s.each_line { |line| log line.strip }
 
       begin

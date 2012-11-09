@@ -57,7 +57,7 @@ module RTSP
       end
     end
 
-    attr_reader :request_uri
+    attr_reader :uri
     attr_reader :method_type
 
     # @param [Symbol] method_type The RTSP method to build and send.
@@ -65,7 +65,7 @@ module RTSP
     def initialize(method_type, request_uri="")
       @method_type = method_type
 
-      @request_uri = if request_uri.empty? || request_uri == "*"
+      @uri = if request_uri.empty? || request_uri == "*"
         request_uri
       else
         build_resource_uri_from(request_uri)
@@ -85,7 +85,7 @@ module RTSP
       /(?<request_uri>rtspu?:\/\/.*) RTSP/ =~ line
       /rtsp:\/\/.*stream(?<stream_index>\d*)m?\/?.* RTSP/ =~ line
       @rtsp_version = rtsp_version
-      @request_uri = request_uri
+      @uri = request_uri
 
       #create_reader("stream_index", stream_index)
       #@stream_index = stream_index.to_i
@@ -96,7 +96,7 @@ module RTSP
     end
 
     def status_line
-      "#{@method_type.to_s.upcase} #{@request_uri} RTSP/#{@rtsp_version}\r\n"
+      "#{@method_type.to_s.upcase} #{@uri} RTSP/#{@rtsp_version}\r\n"
     end
 
     # Returns the required/default headers for the provided method.
@@ -129,6 +129,7 @@ module RTSP
     # Returns the transport URL.
     #
     # @return [String] Transport URL associated with the request.
+=begin
     def transport_url
       /client_port=(?<port>.*)-/ =~ transport
 
@@ -138,6 +139,7 @@ module RTSP
         "#{@remote_host}:#{port}"
       end
     end
+=end
 
     # Checks if the request is for a multicast stream.
     #
