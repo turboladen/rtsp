@@ -1,12 +1,11 @@
-require_relative 'error'
-require_relative 'common'
+require_relative 'message'
+
 
 module RTSP
 
   # Parses raw response data from the server/client and turns it into
   # attr_readers.
-  class Response
-    include RTSP::Common
+  class Response < Message
 
     # @param [String] raw_response The raw response string returned from the
     #   server/client.
@@ -18,7 +17,7 @@ module RTSP
 
       new do |new_response|
         head, body = new_response.split_head_and_body_from(raw_response)
-        new_response.parse_head_to_attrs(head)
+        new_response.parse_head(head)
 
         if body && !body.empty?
           new_response.instance_variable_set(:@raw, raw_response)
@@ -30,10 +29,7 @@ module RTSP
     end
 
     attr_reader :code
-    attr_reader :message
-    attr_reader :rtsp_version
-    attr_reader :body
-    attr_reader :raw
+    attr_reader :status_message
 
     def initialize
       yield self if block_given?
@@ -47,11 +43,15 @@ module RTSP
       line =~ /RTSP\/(\d\.\d) (\d\d\d) ([^\r\n]+)/
       @rtsp_version = $1
       @code         = $2.to_i
-      @message      = $3
+      @status_message      = $3
 
       if @rtsp_version.nil?
         raise RTSP::Error, "Status line corrupted: #{line}"
       end
+    end
+
+    def status_line
+      "RTSP/#{@rtsp_version} #{@code} #{@status_message}\r\n"
     end
   end
 end

@@ -1,5 +1,7 @@
 require_relative 'helpers'
 require_relative 'error'
+require_relative 'common'
+require_relative 'global'
 require_relative 'version'
 
 module RTSP
@@ -11,13 +13,15 @@ module RTSP
   # are implemented, however if you need to add a new message type (perhaps for
   # some custom server implementation?), you can simply add to the supported
   # list by:
-  #    RTSP::Message.message_types << :barrel_roll
+  #    RTSP::Message.method_types << :barrel_roll
   #
   # You can then build it like a standard message:
   #   message = RTSP::Message.barrel_roll("192.168.1.10").with_headers({
   #   cseq: 123, content_type: "video/x-m4v" })
   class Message
+    extend RTSP::Global
     include RTSP::Helpers
+    include RTSP::Common
 
     RTSP_ACCEPT_TYPE = "application/sdp"
     RTSP_DEFAULT_NPT             = "0.000-"
@@ -25,50 +29,17 @@ module RTSP
     USER_AGENT                   =
         "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
 
-    @message_types = [
-      :announce,
-      :describe,
-      :get_parameter,
-      :options,
-      :play,
-      :pause,
-      :record,
-      :redirect,
-      :set_parameter,
-      :setup,
-      :teardown
-    ]
-
-    @message_types.each do |message_type|
-      define_singleton_method message_type do |*args|
-        request_uri = args.first
-
-        self.new(message_type, request_uri)
-      end
-    end
-
-    # TODO: define #describe somewhere so I can actually test that method.
-    class << self
-
-      # Lists the method/message types this class can create.
-      # @return [Array<Symbol>]
-      attr_accessor :message_types
-    end
-
-    attr_reader :method_type
-    attr_reader :request_uri
     attr_reader :headers
     attr_reader :body
-    attr_writer :rtsp_version
+    attr_reader :rtsp_version
+    attr_reader :raw
 
-    # @param [Symbol] :method_type The RTSP method to build and send.
-    # @param [String] request_uri The URL to communicate to.
-    def initialize(method_type, request_uri)
-      @method_type = method_type
-      @request_uri = build_resource_uri_from request_uri
+    # @param [Symbol] method_type The RTSP method to build and send.
+    # @param [String] request_uri The URL to include in the message.
+    def initialize
       @headers     = default_headers
       @body        = ""
-      @version     = DEFAULT_VERSION
+      @rtsp_version     = DEFAULT_VERSION
     end
 
     # Adds the header and its value to the list of headers for the message.
@@ -132,7 +103,15 @@ module RTSP
 
     # @return [String] The message as a String.
     def to_s
+      return @raw if @raw
+
       message.to_s
+    end
+
+    protected
+
+    def default_headers
+      {}
     end
 
     ###########################################################################
@@ -143,7 +122,7 @@ module RTSP
     #
     # @return [String]
     def message
-      message = "#{@method_type.to_s.upcase} #{@request_uri} RTSP/#{@version}\r\n"
+      message = status_line
       message << headers_to_s(@headers)
       message << "\r\n"
       message << "#{@body}" unless @body.nil?
@@ -153,31 +132,8 @@ module RTSP
       message
     end
 
-    # Returns the required/default headers for the provided method.
-    #
-    # @return [Hash] The default headers for the given method.
-    def default_headers
-      headers = {}
-
-      headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      headers[:user_agent] ||= USER_AGENT
-
-      case @method_type
-      when :describe
-        headers[:accept] = RTSP_ACCEPT_TYPE
-      when :announce
-        headers[:content_type] = RTSP_ACCEPT_TYPE
-      when :play
-        headers[:range] = "npt=#{RTSP_DEFAULT_NPT}"
-      when :get_parameter
-        headers[:content_type] = 'text/parameters'
-      when :set_parameter
-        headers[:content_type] = 'text/parameters'
-      else
-        {}
-      end
-
-      headers
+    def status_line
+      raise "This shouldn't get called.  Please define this method in your child class."
     end
 
     # Turns headers from Hash(es) into a String, where each element
