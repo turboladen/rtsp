@@ -1,5 +1,5 @@
 source :rubygems
 
-#gem 'rtp', path: '../rtp'
+gem 'rtp', path: '../rtp'
 gemspec
 

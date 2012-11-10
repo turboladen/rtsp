@@ -1,7 +1,11 @@
-require_relative 'request'
-require_relative 'stream_server'
 require_relative 'global'
+require_relative 'logger'
+require_relative 'request'
+require_relative 'response'
+require_relative 'stream_server'
 require 'socket'
+
+Thread.abort_on_exception= true
 
 module RTSP
   SUPPORTED_VERSION = "1.0"
@@ -30,6 +34,7 @@ module RTSP
   # server.start
   class Server
     extend RTSP::Global
+    include LogSwitch::Mixin
 
     OPTIONS_LIST = %w(OPTIONS DESCRIBE SETUP TEARDOWN PLAY
      PAUSE GET_PARAMETER SET_PARAMETER)
@@ -39,26 +44,40 @@ module RTSP
     attr_accessor :session
     attr_accessor :agent
 
+    attr_accessor :supported_methods
+    attr_accessor :stream_list
+
     # Initializes the the Stream Server.
     #
     # @param [Fixnum] host IP interface to bind.
     # @param [Fixnum] port RTSP port.
     # @todo Only initialize a TCP or UDP server/socket as needed.
-    def initialize(host, port=554)
+    def initialize(host='localhost', port=554)
       @session =  rand(99999999)
-      @stream_server = RTSP::StreamServer.instance
+      #@stream_server = RTSP::StreamServer.instance
       @interface_ip = host
-      @stream_server.interface_ip = host
+      #@stream_server.interface_ip = host
       @tcp_server = TCPServer.new(host, port)
       @udp_server = UDPSocket.new
       @udp_server.bind(host, port)
       @agent = {}
+
+      @sessions = {}
+
+      # { '/stream1' => stream_object, '/stream2' => different_stream_object }
+      @stream_list = {}
+
+      @supported_methods = OPTIONS_LIST
+      Struct.new("Session", :id, :cseq, :remote_address, :remote_port, :stream,
+        :user_agent)
     end
 
     # Starts accepting TCP connections
     def start
+      log "Starting RTSP Server..."
       Thread.start { udp_listen }
 
+      log "Starting TCP RTSP request listener..."
       loop do
         client = @tcp_server.accept
 
@@ -68,7 +87,8 @@ module RTSP
           rescue EOFError
             # do nothing
           ensure
-            client.close unless @agent[client].include? "QuickTime"
+            #client.close unless @agent[client].include? "QuickTime"
+            #client.close unless @sessions[client].user_agent.include? "QuickTime"
           end
         end
       end
@@ -76,27 +96,32 @@ module RTSP
 
     # Listens on the UDP socket for RTSP requests.
     def udp_listen
+      log "Starting UDP RTSP request listener..."
+
       loop do
         data, sender = @udp_server.recvfrom(500)
-        response = process_request(data, sender[3])
-        @udp_server.send(response, 0, sender[3], sender[1])
+        remote_address = sender[3]
+        remote_port = sender[1]
+        log "UDP listener received data:\n#{data}"
+        log "...from #{remote_address}:#{remote_port}"
+
+        #response = process_request(data, sender[3])
+        request = RTSP::Request.parse(data)
+        log "Parsed request: #{request}"
+        #@agent[remote_address] = request.headers[:user_agent]
+
+        @sessions[remote_address] ||= Struct::Session.new
+        @sessions[remote_address].user_agent ||= request.headers[:user_agent]
+        @sessions[remote_address].cseq = request.headers[:cseq]
+        @sessions[remote_address].remote_address = remote_address
+        @sessions[remote_address].remote_port = remote_port
+
+        #response = RTSP::Response.send(request.action)
+        #@udp_server.send(response.to_s, 0, sender[3], sender[1])
+        respond_to(request.method_type, @sessions[remote_address], request)
       end
     end
 
-    # Process an RTSP request
-    #
-    # @param [String] request_str RTSP request.
-    # @param [String] remote_address IP address of sender.
-    # @return [String] Response.
-    def process_request(request_str, io)
-      remote_address = io.remote_address.ip_address
-      /(?<action>.*) rtsp:\/\// =~ request_str
-      request = RTSP::Request.new(request_str, remote_address)
-      @agent[io] = request.user_agent
-      response, body = send(action.downcase.to_sym, request)
-
-      add_headers(request, response, body)
-    end
     # Serves a client request.
     #
     # @param [IO] io Request/response socket object.
@@ -113,32 +138,108 @@ module RTSP
         retry
       end
 
-      response = process_request(request_str, io)
-      io.send(response, 0)
+      #response = process_request(request_str, io)
+      #io.send(response, 0)
+
+      log "TCP listener received data:\n#{request_str}"
+      request = RTSP::Request.parse(request_str)
+
+      remote_ip, remote_port = peer_info(io)
+      @sessions[io] ||= Struct::Session.new
+      @sessions[io].user_agent ||= request.headers[:user_agent]
+      @sessions[io].cseq = request.headers[:cseq]
+      @sessions[io].remote_address = remote_ip
+      @sessions[io].remote_port = remote_port
+
+      respond_to_tcp(request.method_type, @sessions[io], request, io)
     end
+
+    def peer_info(io)
+      io.getpeername
+      peer_bytes = io.getpeername[2, 6].unpack("nC4")
+      port = peer_bytes.first.to_i
+      ip = peer_bytes[1, 4].join(".")
+
+      [ip, port]
+    end
+
+    # @param [Symbol] method_type
+    # @param [Struct::Session] session
+    # @param [RTSP::Request] request
+    def respond_to(method_type, session, request)
+      response = self.send(method_type, session, request)
+
+      log "Sending UDP response:\n#{response}"
+      @udp_server.send(response.to_s, 0, session.remote_address, session.remote_port)
+    end
+    def respond_to_tcp(method_type, session, request, io)
+      response = self.send(method_type, session, request)
+      log "Sending TCP response:\n#{response}"
+      io.send(response.to_s, 0)
+    end
+
+    # Process an RTSP request
+    #
+    # @param [String] request_str RTSP request.
+    # @param [String] remote_address IP address of sender.
+    # @return [String] Response.
+=begin
+    def process_request(request_str, io)
+      remote_address = io.remote_address.ip_address
+      /(?<action>.*) rtsp:\/\// =~ request_str
+      request = RTSP::Request.new(request_str, remote_address)
+      @agent[io] = request.user_agent
+      response, body = send(action.downcase.to_sym, request)
+
+      add_headers(request, response, body)
+    end
+=end
 
     # Handles the options request.
     #
-    # @param [RTSP::Request] request
-    # @return [Array<Array<String>>] Response headers and body.
-    def options(request)
-      RTSP::Server.log "Received OPTIONS request from #{request.remote_host}"
-      response = []
-      response << "Public: #{OPTIONS_LIST.join ','}"
-      response << "\r\n"
+    # @param [String] client_hostname
+    # @return [String] Response headers and body.
+    def options(session, request)
+      log "Received OPTIONS request from #{session.remote_address}:#{session.remote_port}"
 
-      [response]
+      RTSP::Response.new(200).with_headers({
+        cseq: session.cseq,
+        public: @supported_methods.join(', ')
+      }).to_s
     end
 
     # Handles the describe request.
     #
     # @param [RTSP::Request] request
     # @return [Array<Array<String>>] Response headers and body.
+=begin
     def describe(request)
-      RTSP::Server.log "Received DESCRIBE request from #{request.remote_host}"
+      log "Received DESCRIBE request from #{request.remote_host}"
       description = @stream_server.description(request.multicast?, request.stream_index)
 
       [[], description]
+    end
+=end
+    def describe(session, request)
+      log "Received DESCRIBE request from #{session.remote_address}"
+
+      if request.headers[:accept] && request.headers[:accept].match(/application\/sdp/)
+        content_type = 'application/sdp'
+      else
+        log "Unknown Accept types: #{request.headers[:accept]}", :warn
+        return RTSP::Response.new(451).with_headers({
+          cseq: session.cseq
+        }).to_s
+      end
+
+      p request
+      p request.uri
+      p @stream_list
+      RTSP::Response.new(200).with_headers_and_body({
+        cseq: session.cseq,
+        content_type: content_type,
+        body: @stream_list[request.uri].description
+      })
     end
 
     # Handles the announce request.
@@ -154,7 +255,7 @@ module RTSP
     # @param [RTSP::Request] request
     # @return [Array<Array<String>>] Response headers and body.
     def setup(request)
-      RTSP::Server.log "Received SETUP request from #{request.remote_host}"
+      log "Received SETUP request from #{request.remote_host}"
       @session = @session.next
       server_port = @stream_server.setup_streamer(@session,
         request.transport_url, request.stream_index)
@@ -172,7 +273,7 @@ module RTSP
     # @param [RTSP::Request] request
     # @return [Array<Array<String>>] Response headers and body.
     def play(request)
-      RTSP::Server.log "Received PLAY request from #{request.remote_host}"
+      log "Received PLAY request from #{request.remote_host}"
       sid = request.session[:session_id]
       response = []
       response << "Session: #{sid}"
@@ -193,7 +294,7 @@ module RTSP
     # @param [RTSP::Request] request
     # @return [Array<Array<String>>] Response headers and body.
     def get_parameter(request)
-      RTSP::Server.log "Received GET_PARAMETER request from #{request.remote_host}"
+      log "Received GET_PARAMETER request from #{request.remote_host}"
       " Pending Implementation"
 
       [[]]
@@ -204,7 +305,7 @@ module RTSP
     # @param [RTSP::Request] request
     # @return [Array<Array<String>>] Response headers and body.
     def set_parameter(request)
-      RTSP::Server.log "Received SET_PARAMETER request from #{request.remote_host}"
+      log "Received SET_PARAMETER request from #{request.remote_host}"
       " Pending Implementation"
 
       [[]]
@@ -215,7 +316,7 @@ module RTSP
     # @param [RTSP::Request] request
     # @return [Array<Array<String>>] Response headers and body.
     def redirect(request)
-      RTSP::Server.log "Received REDIRECT request from #{request.remote_host}"
+      log "Received REDIRECT request from #{request.remote_host}"
       " Pending Implementation"
 
       [[]]
@@ -226,7 +327,7 @@ module RTSP
     # @param [RTSP::Request] request
     # @return [Array<Array<String>>] Response headers and body.
     def teardown(request)
-      RTSP::Server.log "Received TEARDOWN request from #{request.remote_host}"
+      log "Received TEARDOWN request from #{request.remote_host}"
       sid = request.session[:session_id]
       @stream_server.stop_streaming sid
 
@@ -238,7 +339,7 @@ module RTSP
     # @param [RTSP::Request] request
     # @return [Array<Array<String>>] Response headers and body.
     def pause(request)
-      RTSP::Server.log "Received PAUSE request from #{request.remote_host}"
+      log "Received PAUSE request from #{request.remote_host}"
       response = []
       sid = request.session[:session_id]
       response << "Session: #{sid}"
@@ -279,7 +380,7 @@ module RTSP
     # @param [Array] args Arguments to be passed in to the method.
     # @param [Proc] block A block of code to be passed to a method.
     def method_missing(method_name, *args, &block)
-      RTSP::Server.log("Received request for #{method_name} (not implemented)", :warn)
+      log("Received request for #{method_name} (not implemented)", :warn)
 
       [[], "Not Implemented"]
     end
