@@ -2,6 +2,10 @@
 
 * Requests and Responses now call +.parse+ to read in raw data and convert to
   that object type.
+* Message now uses #rtsp_version instead of #version.
+* Message now uses .method_types instead of .message_types.
+* Request and Response headers are now put in a Hash instead of converted to
+  methods.
 
 === 0.4.0 / 2012-03-08
 
