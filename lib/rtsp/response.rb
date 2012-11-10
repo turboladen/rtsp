@@ -1,4 +1,5 @@
 require_relative 'message'
+require 'time'
 
 
 module RTSP
@@ -148,6 +149,7 @@ module RTSP
       headers = {}
 
       headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
+      headers[:date] = Time.now.httpdate
 
       headers
     end
