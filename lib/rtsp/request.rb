@@ -48,7 +48,7 @@ module RTSP
         head, body = new_request.split_head_and_body_from(raw_request)
         new_request.parse_head(head)
 
-        unless body.empty?
+        unless body && body.empty?
           new_request.instance_variable_set(:@raw, raw_request)
           new_request.parse_body(body)
         end
