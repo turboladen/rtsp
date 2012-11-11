@@ -20,7 +20,7 @@ module RTSP
         head, body = new_response.split_head_and_body_from(raw_response)
         new_response.parse_head(head)
 
-        if body && !body.empty?
+        unless body && body.empty?
           new_response.instance_variable_set(:@raw, raw_response)
           new_response.parse_body(body)
         end
