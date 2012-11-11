@@ -2,7 +2,7 @@ require_relative 'global'
 require_relative 'logger'
 require_relative 'request'
 require_relative 'response'
-require_relative 'stream_server'
+require_relative 'stream'
 require 'socket'
 
 Thread.abort_on_exception= true
@@ -141,7 +141,9 @@ module RTSP
       #response = process_request(request_str, io)
       #io.send(response, 0)
 
-      log "TCP listener received data:\n#{request_str}"
+      log "TCP listener received data:"
+      request_str.each_line { |line| log "<<< #{line}" }
+
       request = RTSP::Request.parse(request_str)
 
       remote_ip, remote_port = peer_info(io)
@@ -174,7 +176,10 @@ module RTSP
     end
     def respond_to_tcp(method_type, session, request, io)
       response = self.send(method_type, session, request)
-      log "Sending TCP response:\n#{response}"
+
+      log "Sending TCP response:"
+      response.each_line { |line| log ">>> #{line}" }
+
       io.send(response.to_s, 0)
     end
 
@@ -239,7 +244,7 @@ module RTSP
         cseq: session.cseq,
         content_type: content_type,
         body: @stream_list[request.uri].description
-      })
+      }).to_s
     end
 
     # Handles the announce request.
