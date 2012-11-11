@@ -141,7 +141,7 @@ module RTSP
     #   responded.
     def send_message request_message
       log "Sending #{request_message.method_type.upcase} to #{request_message.uri}"
-      request_message.to_s.each_line { |line| log line.strip }
+      request_message.to_s.each_line { |line| log ">>> #{line.strip}" }
 
       begin
         response = Timeout::timeout(@connection.timeout) do
@@ -161,7 +161,7 @@ module RTSP
           log "Response was empty."
           log "\n"
         else
-          response.to_s.each_line { |line| log line.strip }
+          response.to_s.each_line { |line| log "<<< #{line.strip}" }
         end
       else
         log "No response received.", :warn
