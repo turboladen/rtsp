@@ -2,6 +2,7 @@ require 'socket'
 require 'tempfile'
 require 'timeout'
 require 'rtp/receiver'
+require 'uri'
 
 require_relative 'error'
 require_relative 'global'
@@ -178,11 +179,11 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-30 RFC 2326, Section 10.1.
     def options(additional_headers={})
-      message = RTSP::Request.options(@server_uri.to_s).with_headers({
+      request = RTSP::Request.options(@server_uri.to_s).with_headers({
           cseq: @cseq })
-      message.add_headers additional_headers
+      request.add_headers additional_headers
 
-      request(message) do |response|
+      send_request(request) do |response|
         @supported_methods = extract_supported_methods_from(response.headers[:public])
       end
     end
@@ -198,15 +199,21 @@ module RTSP
     # @see #media_control_tracks
     # @see #aggregate_control_track
     def describe additional_headers={}
-      message = RTSP::Request.describe(@server_uri.to_s).with_headers({
+      request = RTSP::Request.describe(@server_uri.to_s).with_headers({
           cseq: @cseq })
-      message.add_headers additional_headers
+      request.add_headers additional_headers
 
-      request(message) do |response|
+      send_request(request) do |response|
         @session_description = response.body
         #@session_start_time =   response.body.start_time
         #@session_stop_time =    response.body.stop_time
-        @content_base = build_resource_uri_from response.headers[:content_base]
+        @content_base = if response.headers[:content_base]
+          build_resource_uri_from(response.headers[:content_base])
+        elsif URI(response.headers[:content_location]).absolute?
+          build_resource_uri_from(response.headers[:content_location])
+        else
+          request.uri
+        end
 
         @media_control_tracks    = media_control_tracks
         @aggregate_control_track = aggregate_control_track
@@ -224,11 +231,11 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-32 RFC 2326, Section 10.3.
     def announce(request_url, description, additional_headers={})
-      message = RTSP::Request.announce(request_url).with_headers({ cseq: @cseq })
-      message.add_headers additional_headers
-      message.body = description.to_s
+      request = RTSP::Request.announce(request_url).with_headers({ cseq: @cseq })
+      request.add_headers additional_headers
+      request.body = description.to_s
 
-      request(message)
+      send_request(request)
     end
 
     # Builds the Transport header fields string based on info used in setting up
@@ -241,7 +248,7 @@ module RTSP
       value << "#{@capturer.rtp_port}-#{@capturer.rtp_port + 1}\r\n"
     end
 
-    # Sends the SETUP request, then sets +@session+ to the value returned in the
+    # Sends the SETUP send_request, then sets +@session+ to the value returned in the
     # Session header from the server, then sets the +@session_state+ to +:ready+.
     #
     # @todo +@session+ numbers are relevant to tracks, and a client must be able
@@ -251,11 +258,11 @@ module RTSP
     # @return [RTSP::Response] The response formatted as a Hash.
     # @see http://tools.ietf.org/html/rfc2326#page-33 RFC 2326, Section 10.4.
     def setup(track, additional_headers={})
-      message = RTSP::Request.setup(track).with_headers({
+      request = RTSP::Request.setup(track).with_headers({
           cseq: @cseq, transport: request_transport })
-      message.add_headers additional_headers
+      request.add_headers additional_headers
 
-      request(message) do |response|
+      send_request(request) do |response|
         if @session_state == :init
           @session_state = :ready
         end
@@ -272,7 +279,7 @@ module RTSP
       end
     end
 
-    # Sends the PLAY request and sets +@session_state+ to +:playing+.
+    # Sends the PLAY send_request and sets +@session_state+ to +:playing+.
     #
     # @param [String] track
     # @param [Hash] additional_headers
@@ -283,11 +290,11 @@ module RTSP
     #   set up via +#setup+.
     # @see http://tools.ietf.org/html/rfc2326#page-34 RFC 2326, Section 10.5.
     def play(track, additional_headers={})
-      message = RTSP::Request.play(track).with_headers({
+      request = RTSP::Request.play(track).with_headers({
           cseq: @cseq, session: @session[:session_id] })
-      message.add_headers additional_headers
+      request.add_headers additional_headers
 
-      request(message) do
+      send_request(request) do
         unless @session_state == :ready
           raise RTSP::Error, "Session not set up yet.  Run #setup first."
         end
@@ -306,25 +313,25 @@ module RTSP
       end
     end
 
-    # Sends the PAUSE request and sets +@session_state+ to +:ready+.
+    # Sends the PAUSE send_request and sets +@session_state+ to +:ready+.
     #
     # @param [String] track A track or presentation URL to pause.
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-36 RFC 2326, Section 10.6.
     def pause(track, additional_headers={})
-      message = RTSP::Request.pause(track).with_headers({
+      request = RTSP::Request.pause(track).with_headers({
           cseq: @cseq, session: @session[:session_id] })
-      message.add_headers additional_headers
+      request.add_headers additional_headers
 
-      request(message) do
+      send_request(request) do
         if [:playing, :recording].include? @session_state
           @session_state = :ready
         end
       end
     end
 
-    # Sends the TEARDOWN request, then resets all state-related instance
+    # Sends the TEARDOWN send_request, then resets all state-related instance
     # variables.
     #
     # @param [String] track The presentation or media track to teardown.
@@ -332,11 +339,11 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-37 RFC 2326, Section 10.7.
     def teardown(track, additional_headers={})
-      message = RTSP::Request.teardown(track).with_headers({
+      request = RTSP::Request.teardown(track).with_headers({
           cseq: @cseq, session: @session[:session_id] })
-      message.add_headers additional_headers
+      request.add_headers additional_headers
 
-      request(message) do
+      send_request(request) do
         reset_state
 
         if @play_thread
@@ -354,7 +361,7 @@ module RTSP
       @session = {}
     end
 
-    # Sends the GET_PARAMETERS request.
+    # Sends the GET_PARAMETERS send_request.
     #
     # @param [String] track The presentation or media track to ping.
     # @param [String] body The string containing the parameters to send.
@@ -362,15 +369,15 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-37 RFC 2326, Section 10.8.
     def get_parameter(track, body="", additional_headers={})
-      message = RTSP::Request.get_parameter(track).with_headers({
+      request = RTSP::Request.get_parameter(track).with_headers({
           cseq: @cseq })
-      message.add_headers additional_headers
-      message.body = body
+      request.add_headers additional_headers
+      request.body = body
 
-      request(message)
+      send_request(request)
     end
 
-    # Sends the SET_PARAMETERS request.
+    # Sends the SET_PARAMETERS send_request.
     #
     # @param [String] track The presentation or media track to teardown.
     # @param [String] parameters The string containing the parameters to send.
@@ -378,26 +385,26 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-38 RFC 2326, Section 10.9.
     def set_parameter(track, parameters, additional_headers={})
-      message = RTSP::Request.set_parameter(track).with_headers({
+      request = RTSP::Request.set_parameter(track).with_headers({
           cseq: @cseq })
-      message.add_headers additional_headers
-      message.body = parameters
+      request.add_headers additional_headers
+      request.body = parameters
 
-      request(message)
+      send_request(request)
     end
 
-    # Sends the RECORD request and sets +@session_state+ to +:recording+.
+    # Sends the RECORD send_request and sets +@session_state+ to +:recording+.
     #
     # @param [String] track
     # @param [Hash] additional_headers
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-39 RFC 2326, Section 10.11.
     def record(track, additional_headers={})
-      message = RTSP::Request.record(track).with_headers({
+      request = RTSP::Request.record(track).with_headers({
           cseq: @cseq, session: @session[:session_id] })
-      message.add_headers additional_headers
+      request.add_headers additional_headers
 
-      request(message) { @session_state = :recording }
+      send_request(request) { @session_state = :recording }
     end
 
     # Executes the Request with the arguments passed in, yields the response to
@@ -405,12 +412,12 @@ module RTSP
     # then increments +@cseq+ by 1.  Handles any exceptions raised during the
     # Request.
     #
-    # @param [Hash] new_args
+    # @param [RTSP::Request] request
     # @yield [RTSP::Response]
     # @return [RTSP::Response]
     # @raise [RTSP::Error] All 4xx & 5xx response codes & their messages.
-    def request message
-      response = send_message(message)
+    def send_request(request)
+      response = send_message(request)
       #compare_sequence_number response.cseq
       @cseq += 1
 
@@ -428,7 +435,7 @@ module RTSP
 
       dont_ensure_list = [:options, :describe, :teardown, :set_parameter,
           :get_parameter]
-      unless dont_ensure_list.include? message.method_type
+      unless dont_ensure_list.include? request.method_type
         ensure_session
       end
 
@@ -481,7 +488,7 @@ module RTSP
 
     # Compares the sequence number passed in to the current client sequence
     # number ( +@cseq+ ) and raises if they're not equal.  If that's the case, the
-    # server responded to a different request.
+    # server responded to a different send_request.
     #
     # @param [Fixnum] server_cseq Sequence number returned by the server.
     # @raise [RTSP::Error] If the server returns a CSeq value that's different
@@ -495,7 +502,7 @@ module RTSP
 
     # Compares the session number passed in to the current client session
     # number ( +@session+ ) and raises if they're not equal.  If that's the case,
-    # the server responded to a different request.
+    # the server responded to a different send_request.
     #
     # @param [Fixnum] server_session Session number returned by the server.
     # @raise [RTSP::Error] If the server returns a Session value that's different
