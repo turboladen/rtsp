@@ -243,6 +243,7 @@ module RTSP
       RTSP::Response.new(200).with_headers_and_body({
         cseq: session.cseq,
         content_type: content_type,
+        content_base: request.uri,
         body: @stream_list[request.uri].description
       }).to_s
     end
