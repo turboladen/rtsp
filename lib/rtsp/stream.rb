@@ -51,6 +51,8 @@ module RTSP
       sdp.stop_time = 0
 
       # User must still define media section.
+
+      sdp
     end
 
   end
