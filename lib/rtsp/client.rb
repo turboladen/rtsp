@@ -214,11 +214,12 @@ module RTSP
         @session_description = response.body
         #@session_start_time =   response.body.start_time
         #@session_stop_time =    response.body.stop_time
+
         @content_base = if response.headers[:content_base]
-          build_resource_uri_from(response.headers[:content_base])
+          response.headers[:content_base]
         elsif response.headers[:content_location] &&
           URI(response.headers[:content_location]).absolute?
-          build_resource_uri_from(response.headers[:content_location])
+          response.headers[:content_location]
         else
           request.uri
         end.to_s
