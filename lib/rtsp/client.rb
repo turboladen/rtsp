@@ -112,7 +112,14 @@ module RTSP
       @connection.server_url       = server_url || @connection.server_url
       @server_uri                  = build_resource_uri_from(@connection.server_url)
       @connection.timeout          ||= 30
-      @connection.socket           ||= TCPSocket.new(@server_uri.host, @server_uri.port)
+
+      if @server_uri.scheme == 'rtsp'
+        @connection.socket           ||= TCPSocket.new(@server_uri.host, @server_uri.port)
+      elsif @server_uri.scheme == 'rtspu'
+        @connection.socket           ||= UDPSocket.new
+        @connection.socket.bind(@server_uri.host, @server_uri.port)
+      end
+
       @connection.do_capture       ||= true
       @connection.interleave       ||= false
       @capturer.rtp_port           ||= 9000

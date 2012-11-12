@@ -1,5 +1,6 @@
 === x.x.x / 2012-11-08
 
+* Clients can now access servers running on UDP (via 'rtspu://' URIs).
 * Requests and Responses now call +.parse+ to read in raw data and convert to
   that object type.
 * Message now uses #rtsp_version instead of #version.
