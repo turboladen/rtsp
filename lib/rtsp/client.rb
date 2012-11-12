@@ -438,7 +438,7 @@ module RTSP
           reset_state
         end
 
-        raise RTSP::Error, "#{response.code}: #{response.message}"
+        raise RTSP::Error, "#{response.code}: #{response.status_message}"
       else
         raise RTSP::Error, "Unknown Response code: #{response.code}"
       end
