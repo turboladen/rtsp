@@ -221,7 +221,9 @@ module RTSP
           build_resource_uri_from(response.headers[:content_location])
         else
           request.uri
-        end
+        end.to_s
+
+        @content_base += '/' unless @content_base.end_with?('/')
 
         @media_control_tracks    = media_control_tracks
         @aggregate_control_track = aggregate_control_track
