@@ -12,17 +12,12 @@ module RTSP
     # @param [String] url The URL to turn in to a URI.
     # @return [URI]
     def build_resource_uri_from url
-      if url.is_a? String
         url = "rtsp://#{url}" unless url =~ /^rtsp/
 
         resource_uri = URI.parse url
         resource_uri.port ||= DEFAULT_RTSP_PORT
 
         resource_uri
-
-      else
-        raise RTSP::Error, "url must be a String."
-      end
     end
   end
 end
