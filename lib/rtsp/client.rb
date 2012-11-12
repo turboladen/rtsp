@@ -258,7 +258,7 @@ module RTSP
       value << "#{@capturer.rtp_port}-#{@capturer.rtp_port + 1}\r\n"
     end
 
-    # Sends the SETUP send_request, then sets +@session+ to the value returned in the
+    # Sends the SETUP request, then sets +@session+ to the value returned in the
     # Session header from the server, then sets the +@session_state+ to +:ready+.
     #
     # @todo +@session+ numbers are relevant to tracks, and a client must be able
@@ -289,7 +289,7 @@ module RTSP
       end
     end
 
-    # Sends the PLAY send_request and sets +@session_state+ to +:playing+.
+    # Sends the PLAY request and sets +@session_state+ to +:playing+.
     #
     # @param [String] track
     # @param [Hash] additional_headers
@@ -323,7 +323,7 @@ module RTSP
       end
     end
 
-    # Sends the PAUSE send_request and sets +@session_state+ to +:ready+.
+    # Sends the PAUSE request and sets +@session_state+ to +:ready+.
     #
     # @param [String] track A track or presentation URL to pause.
     # @param [Hash] additional_headers
@@ -341,7 +341,7 @@ module RTSP
       end
     end
 
-    # Sends the TEARDOWN send_request, then resets all state-related instance
+    # Sends the TEARDOWN request, then resets all state-related instance
     # variables.
     #
     # @param [String] track The presentation or media track to teardown.
@@ -371,7 +371,7 @@ module RTSP
       @session = {}
     end
 
-    # Sends the GET_PARAMETERS send_request.
+    # Sends the GET_PARAMETERS request.
     #
     # @param [String] track The presentation or media track to ping.
     # @param [String] body The string containing the parameters to send.
@@ -387,7 +387,7 @@ module RTSP
       send_request(request)
     end
 
-    # Sends the SET_PARAMETERS send_request.
+    # Sends the SET_PARAMETERS request.
     #
     # @param [String] track The presentation or media track to teardown.
     # @param [String] parameters The string containing the parameters to send.
@@ -403,7 +403,7 @@ module RTSP
       send_request(request)
     end
 
-    # Sends the RECORD send_request and sets +@session_state+ to +:recording+.
+    # Sends the RECORD request and sets +@session_state+ to +:recording+.
     #
     # @param [String] track
     # @param [Hash] additional_headers
@@ -498,7 +498,7 @@ module RTSP
 
     # Compares the sequence number passed in to the current client sequence
     # number ( +@cseq+ ) and raises if they're not equal.  If that's the case, the
-    # server responded to a different send_request.
+    # server responded to a different request.
     #
     # @param [Fixnum] server_cseq Sequence number returned by the server.
     # @raise [RTSP::Error] If the server returns a CSeq value that's different
@@ -512,7 +512,7 @@ module RTSP
 
     # Compares the session number passed in to the current client session
     # number ( +@session+ ) and raises if they're not equal.  If that's the case,
-    # the server responded to a different send_request.
+    # the server responded to a different request.
     #
     # @param [Fixnum] server_session Session number returned by the server.
     # @raise [RTSP::Error] If the server returns a Session value that's different
