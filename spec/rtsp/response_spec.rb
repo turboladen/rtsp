@@ -28,7 +28,7 @@ describe RTSP::Response do
       it "creates a :session reader with value being a Hash with key/value" do
         subject.stub(:extract_status_line)
         subject.should_receive(:create_reader).with("session",
-          { session_id: 118, timeout: 49 })
+          { session_id: "118", timeout: 49 })
         subject.parse_head(head)
       end
     end
@@ -40,7 +40,7 @@ describe RTSP::Response do
       it "creates a :session reader with value being a Hash with key/value" do
         subject.stub(:extract_status_line)
         subject.should_receive(:create_reader).with("session",
-          { session_id: 118 })
+          { session_id: "118" })
         subject.parse_head(head)
       end
     end
@@ -181,7 +181,7 @@ describe RTSP::Response do
     end
 
     it "returns the session" do
-      @response.session[:session_id].should == 118
+      @response.session[:session_id].should == "118"
     end
   end
 
@@ -207,7 +207,7 @@ describe RTSP::Response do
     end
 
     it "returns the session" do
-      @response.session[:session_id].should == 118
+      @response.session[:session_id].should == "118"
     end
 
     it "returns the rtp_info" do

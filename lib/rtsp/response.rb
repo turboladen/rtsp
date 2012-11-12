@@ -94,8 +94,8 @@ module RTSP
 
         if line.include? "Session: "
           value = {}
-          line =~ /Session: (\d+)/
-          value[:session_id] = $1.to_i
+          line =~ /Session: ([\w\\$\-\.\+]+)/
+          value[:session_id] = $1
 
           if line =~ /timeout=(.+)/
             value[:timeout] = $1.to_i
