@@ -26,10 +26,8 @@ module RTSP
     include RTSP::Helpers
 
     RTSP_ACCEPT_TYPE = "application/sdp"
-    RTSP_DEFAULT_NPT             = "0.000-"
+    RTSP_DEFAULT_NPT = "0.000-"
     RTSP_DEFAULT_SEQUENCE_NUMBER = 1
-    USER_AGENT                   =
-        "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
 
     attr_reader :headers
     attr_reader :body

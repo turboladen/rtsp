@@ -5,6 +5,8 @@ module RTSP
   # Parses raw request data from the server/client and turns it into
   # attr_readers.
   class Request < Message
+    USER_AGENT =
+      "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
 
     @method_types = [
       :announce,
