@@ -72,7 +72,11 @@ class Hash
   def values_to_s(values, separator=";")
     result = values.inject("") do |values_string, (header_field, header_field_value)|
       if header_field.is_a? Symbol
-        values_string << "#{header_field}=#{header_field_value}"
+        values_string << if header_field == :session_id
+          header_field_value.to_s
+        else
+          "#{header_field}=#{header_field_value}"
+        end
       elsif header_field.is_a? Hash
         values_string << values_to_s(header_field)
       else
