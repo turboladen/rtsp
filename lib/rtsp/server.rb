@@ -79,9 +79,7 @@ module RTSP
 
       log "Starting TCP RTSP request listener..."
       loop do
-        client = @tcp_server.accept
-
-        Thread.start do
+        Thread.start(@tcp_server.accept) do |client|
           begin
             loop { break if serve(client) == -1 }
           rescue EOFError
