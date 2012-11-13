@@ -5,3 +5,5 @@ module RTSP
     extend LogSwitch
   end
 end
+
+RTSP::Logger.log_class_name = true
