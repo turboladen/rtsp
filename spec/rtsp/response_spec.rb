@@ -12,6 +12,36 @@ describe RTSP::Response do
     end
   end
 
+  describe "#extract_status_line" do
+    before do
+      RTSP::Response.any_instance.stub(:split_head_and_body_from)
+      RTSP::Response.any_instance.stub(:parse_head)
+      RTSP::Response.any_instance.stub(:parse_body)
+    end
+
+    subject { RTSP::Response.new " " }
+
+    context "RTSP response" do
+      let(:status_line) { "RTSP/1.0 200 OK\r\n" }
+      before { subject.extract_status_line(status_line) }
+      specify {
+        subject.rtsp_version.should == "1.0"
+        subject.code.should == 200
+        subject.message.should == "OK"
+      }
+    end
+
+    context "HTTP response" do
+      let(:status_line) { "HTTP/1.1 200 OK\r\n" }
+      before { subject.extract_status_line(status_line) }
+      specify {
+        subject.rtsp_version.should == "1.1"
+        subject.code.should == 200
+        subject.message.should == "OK"
+      }
+    end
+  end
+
   describe "#parse_head" do
     let(:head) do
       head = double "head"

@@ -68,10 +68,10 @@ module RTSP
     #
     # @param [String] line The String containing the status line info.
     def extract_status_line(line)
-      line =~ /RTSP|HTTP\/(\d\.\d) (\d\d\d) ([^\r\n]+)/
-      @rtsp_version = $1
-      @code         = $2.to_i
-      @message      = $3
+      line =~ /(RTSP|HTTP)\/(\d\.\d) (\d\d\d) ([^\r\n]+)/
+      @rtsp_version = $2
+      @code         = $3.to_i
+      @message      = $4
 
       if @rtsp_version.nil?
         raise RTSP::Error, "Status line corrupted: #{line}"
