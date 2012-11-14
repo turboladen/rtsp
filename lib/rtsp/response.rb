@@ -131,7 +131,7 @@ module RTSP
     #
     # @param [String] line The String containing the status line info.
     def extract_status_line(line)
-      line =~ /RTSP\/(\d\.\d) (\d\d\d) ([^\r\n]+)/
+      line =~ /RTSP|HTTP\/(\d\.\d) (\d\d\d) ([^\r\n]+)/
       @rtsp_version = $1
       @code         = $2.to_i
       @status_message      = $3
