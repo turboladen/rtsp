@@ -79,7 +79,7 @@ module RTSP
     attr_accessor :connection
 
     # Use to get/set an object for capturing received data.
-    # @param [RTP::Receiver]
+    #
     # @return [RTP::Receiver]
     attr_accessor :capturer
 
@@ -114,16 +114,12 @@ module RTSP
 
       yield(connection, capturer) if block_given?
 
-      @connection.server_url       = server_url || @connection.server_url
-      @server_uri                  = build_resource_uri_from(@connection.server_url)
-      @connection.timeout          ||= 30
-      @connection.socket           ||= TCPSocket.new(@server_uri.host, @server_uri.port)
-      @connection.do_capture       ||= true
-      @connection.interleave       ||= false
-      @capturer.rtp_port           ||= 9000
-      @capturer.transport_protocol ||= :UDP
-      @capturer.broadcast_type     ||= :unicast
-      @capturer.rtp_file           ||= Tempfile.new(RTP::Receiver::DEFAULT_CAPFILE_NAME)
+      @connection.server_url        = server_url || @connection.server_url
+      @server_uri                   = build_resource_uri_from(@connection.server_url)
+      @connection.timeout           ||= 30
+      @connection.socket            ||= TCPSocket.new(@server_uri.host, @server_uri.port)
+      @connection.do_capture        ||= true
+      @connection.interleave        ||= false
 
       @play_thread = nil
       @cseq        = 1
@@ -235,8 +231,8 @@ module RTSP
     # @return [String] The String to use with the Transport header.
     # @see http://tools.ietf.org/html/rfc2326#page-58 RFC 2326, Section 12.39.
     def request_transport
-      value = "RTP/AVP;#{@capturer.broadcast_type};client_port="
-      value << "#{@capturer.rtp_port}-#{@capturer.rtp_port + 1}\r\n"
+      value = "RTP/AVP;#{@capturer.ip_addressing_type};client_port="
+      value << "#{@capturer.rtp_port}-#{@capturer.rtcp_port}\r\n"
     end
 
     # Sends the SETUP request, then sets +@session+ to the value returned in the
@@ -266,8 +262,8 @@ module RTSP
           @capturer.transport_protocol = @transport[:transport_protocol]
         end
 
-        @capturer.rtp_port     = @transport[:client_port][:rtp].to_i
-        @capturer.broadcast_type = @transport[:broadcast_type]
+        @capturer.rtp_port = @transport[:client_port][:rtp].to_i
+        @capturer.ip_address = @transport[:destination].to_s
       end
     end
 
@@ -281,7 +277,7 @@ module RTSP
     # @raise [RTSP::Error] If +#play+ is called but the session hasn't yet been
     #   set up via +#setup+.
     # @see http://tools.ietf.org/html/rfc2326#page-34 RFC 2326, Section 10.5.
-    def play(track, additional_headers={})
+    def play(track, additional_headers={}, &block)
       message = RTSP::Message.play(track).with_headers({
           cseq: @cseq, session: @session[:session_id] })
       message.add_headers additional_headers
@@ -296,7 +292,7 @@ module RTSP
 
           unless @capturer.running?
             @play_thread = Thread.new do
-              @capturer.run
+              @capturer.start(&block)
             end
           end
         end
@@ -340,7 +336,7 @@ module RTSP
 
         if @play_thread
           @capturer.stop
-          @capturer.rtp_file.close
+          @capturer.capture_file.close
           @play_thread.exit
         end
       end
