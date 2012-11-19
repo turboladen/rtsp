@@ -112,7 +112,7 @@ module RTSP
       @connection = Struct::Connection.new
       @capturer   = RTP::Receiver.new
 
-      yield(connection, capturer) if block_given?
+      yield(@connection, @capturer) if block_given?
 
       @connection.server_url        = server_url || @connection.server_url
       @server_uri                   = build_resource_uri_from(@connection.server_url)
@@ -336,7 +336,6 @@ module RTSP
 
         if @play_thread
           @capturer.stop
-          @capturer.capture_file.close
           @play_thread.exit
         end
       end
