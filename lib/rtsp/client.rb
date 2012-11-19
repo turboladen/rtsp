@@ -399,7 +399,7 @@ module RTSP
     # then increments +@cseq+ by 1.  Handles any exceptions raised during the
     # Request.
     #
-    # @param [Hash] new_args
+    # @param [RTSP::Message] message
     # @yield [RTSP::Response]
     # @return [RTSP::Response]
     # @raise [RTSP::Error] All 4xx & 5xx response codes & their messages.

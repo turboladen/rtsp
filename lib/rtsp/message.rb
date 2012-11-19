@@ -75,7 +75,7 @@ module RTSP
     attr_reader :body
     attr_writer :rtsp_version
 
-    # @param [Symbol] :method_type The RTSP method to build and send.
+    # @param [Symbol] method_type The RTSP method to build and send.
     # @param [String] request_uri The URL to communicate to.
     def initialize(method_type, request_uri)
       @method_type = method_type
@@ -88,7 +88,7 @@ module RTSP
     # Adds the header and its value to the list of headers for the message.
     #
     # @param [Symbol] type The header type.
-    # @param [] value The value to set the header field to.
+    # @param [*] value The value to set the header field to.
     def header(type, value)
       if type.is_a? Symbol
         headers[type] = value
@@ -124,8 +124,7 @@ module RTSP
     #
     # @example Simple header
     #   RTSP::Message.options("192.168.1.10").with_body("The body!")
-    # @param [Hash] new_headers The headers to add to the Request.  The Hash
-    #   key will be capitalized; if
+    # @param [Hash] new_body The new body to add to the request.
     def with_body(new_body)
       add_body new_body
 
@@ -249,7 +248,7 @@ module RTSP
 
     # Turns header values into a single string.
     #
-    # @param [] values The header values to put to string.
+    # @param [*] values The header values to put to string.
     # @param [String] separator The character to use to separate multiple
     #   values that define a header.
     # @return [String] The header values as a single string.
