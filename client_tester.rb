@@ -58,13 +58,25 @@ class ClientTester < Thor
       #client.setup media_track, :transport => "RTP/AVP/TCP;unicast;interleaved=0-1"
       #client[media_track].setup
       #client.media_control_tracks.play
+      #client.play(aggregate_track)
       client.play(aggregate_track) do |packet|
-        p packet['sequence_number']
+        this_packet = packet['sequence_number']
+
+        puts "RTP sequence: #{this_packet}"
+        if defined? last_packet
+          puts "last: #{last_packet}"
+          diff = this_packet - last_packet
+          if diff != 1
+            puts "ZOMG!!!!!!!! PACKET DIFF: #{diff}"
+          end
+        end
+        last_packet = packet['sequence_number']
       end
       sleep 1
       #client[aggregate_track].play
       client.teardown aggregate_track
       p client.capturer.capture_file.path
+      p client.capturer.capture_file.size
     end
   end
 end
