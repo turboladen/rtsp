@@ -513,3 +513,5 @@ module RTSP
     end
   end
 end
+
+RTSP::Client.log = false
