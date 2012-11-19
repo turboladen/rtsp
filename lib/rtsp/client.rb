@@ -149,16 +149,14 @@ module RTSP
         response = Timeout::timeout(@connection.timeout) do
           @connection.socket.send(message.to_s, 0)
           socket_data = @connection.socket.recvfrom MAX_BYTES_TO_RECEIVE
+
+          RTSP::Client.log "Received response:"
+          socket_data.first.each_line { |line| RTSP::Client.log line.strip }
+
           RTSP::Response.new socket_data.first
         end
       rescue Timeout::Error
         raise RTSP::Error, "Request took more than #{@connection.timeout} seconds to send."
-      end
-
-      RTSP::Client.log "Received response:"
-
-      if response
-        response.to_s.each_line { |line| RTSP::Client.log line.strip }
       end
 
       response
