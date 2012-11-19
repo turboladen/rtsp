@@ -61,8 +61,8 @@ class ClientTester < Thor
       #client.play(aggregate_track)
       client.play(aggregate_track) do |packet|
         this_packet = packet['sequence_number']
-
         puts "RTP sequence: #{this_packet}"
+
         if defined? last_packet
           puts "last: #{last_packet}"
           diff = this_packet - last_packet
@@ -70,8 +70,10 @@ class ClientTester < Thor
             puts "ZOMG!!!!!!!! PACKET DIFF: #{diff}"
           end
         end
+
         last_packet = packet['sequence_number']
       end
+
       sleep 1
       #client[aggregate_track].play
       client.teardown aggregate_track
