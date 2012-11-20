@@ -2,6 +2,8 @@
 
 * https://github.com/turboladen/rtsp
 
+{<img src="https://secure.travis-ci.org/turboladen/rtsp.png" alt="Build Status" />}[https://travis-ci.org/turboladen/rtsp]
+
 == DESCRIPTION:
 
 This library intends to follow the RTSP RFC document (2326) to allow for working
