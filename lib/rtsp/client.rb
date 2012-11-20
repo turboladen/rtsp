@@ -121,7 +121,6 @@ module RTSP
       @connection.do_capture        ||= true
       @connection.interleave        ||= false
 
-      @play_thread = nil
       @cseq        = 1
       reset_state
     end
@@ -254,7 +253,7 @@ module RTSP
 
         @session   = response.session
         parser     = RTSP::TransportParser.new
-        @transport = parser.parse response.transport
+        @transport = parser.parse(response.transport)
 
         unless @transport[:transport_protocol].nil?
           @capturer.transport_protocol = @transport[:transport_protocol]
@@ -285,16 +284,8 @@ module RTSP
           raise RTSP::Error, "Session not set up yet.  Run #setup first."
         end
 
-        if @play_thread.nil?
-          RTSP::Client.log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
-
-          unless @capturer.running?
-            @play_thread = Thread.new do
-              @capturer.start(&block)
-            end
-          end
-        end
-
+        RTSP::Client.log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
+        @capturer.start(&block)
         @session_state = :playing
       end
     end
@@ -307,7 +298,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-36 RFC 2326, Section 10.6.
     def pause(track, additional_headers={})
       message = RTSP::Message.pause(track).with_headers({
-          cseq: @cseq, session: @session[:session_id] })
+        cseq: @cseq, session: @session[:session_id] })
       message.add_headers additional_headers
 
       request(message) do
@@ -331,19 +322,8 @@ module RTSP
 
       request(message) do
         reset_state
-
-        if @play_thread
-          @capturer.stop
-          @play_thread.exit
-        end
+        @capturer.stop
       end
-    end
-
-    # Sets state related variables back to their starting values;
-    # +@session_state+ is set to +:init+; +@session+ is set to 0.
-    def reset_state
-      @session_state = :init
-      @session = {}
     end
 
     # Sends the GET_PARAMETERS request.
@@ -354,8 +334,7 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-37 RFC 2326, Section 10.8.
     def get_parameter(track, body="", additional_headers={})
-      message = RTSP::Message.get_parameter(track).with_headers({
-          cseq: @cseq })
+      message = RTSP::Message.get_parameter(track).with_headers({ cseq: @cseq })
       message.add_headers additional_headers
       message.body = body
 
@@ -370,8 +349,7 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-38 RFC 2326, Section 10.9.
     def set_parameter(track, parameters, additional_headers={})
-      message = RTSP::Message.set_parameter(track).with_headers({
-          cseq: @cseq })
+      message = RTSP::Message.set_parameter(track).with_headers({ cseq: @cseq })
       message.add_headers additional_headers
       message.body = parameters
 
@@ -427,15 +405,6 @@ module RTSP
       response
     end
 
-    # Ensures that +@session+ is set before continuing on.
-    #
-    # @raise [RTSP::Error] Raises if @session isn't set.
-    def ensure_session
-      if @session.empty?
-        raise RTSP::Error, "Session number not retrieved from server yet.  Run SETUP first."
-      end
-    end
-
     # Extracts the URL associated with the "control" attribute from the main
     # section of the session description.
     #
@@ -471,6 +440,41 @@ module RTSP
       tracks
     end
 
+    private
+
+    # Sets state related variables back to their starting values;
+    # +@session_state+ is set to +:init+; +@session+ is set to 0.
+    def reset_state
+      @session_state = :init
+      @session = {}
+    end
+
+    # Takes the methods returned from the Public header from an OPTIONS response
+    # and puts them to an Array.
+    #
+    # @param [String] method_list The string returned from the server containing
+    #   the list of methods it supports.
+    # @return [Array<Symbol>] The list of methods as symbols.
+    # @see #options
+    def extract_supported_methods_from method_list
+      method_list.downcase.split(', ').map { |m| m.to_sym }
+    end
+
+    # Compares the session number passed in to the current client session
+    # number ( +@session+ ) and raises if they're not equal.  If that's the case,
+    # the server responded to a different request.
+    #
+    # @todo Remove this--it's not used.
+    # @param [Fixnum] server_session Session number returned by the server.
+    # @raise [RTSP::Error] If the server returns a Session value that's different
+    #   from what the client sent.
+    def compare_session_number server_session
+      if @session[:session_id] != server_session
+        message = "Session number mismatch.  Client: #{@session[:session_id]}, Server: #{server_session}"
+        raise RTSP::Error, message
+      end
+    end
+
     # Compares the sequence number passed in to the current client sequence
     # number ( +@cseq+ ) and raises if they're not equal.  If that's the case, the
     # server responded to a different request.
@@ -485,30 +489,15 @@ module RTSP
       end
     end
 
-    # Compares the session number passed in to the current client session
-    # number ( +@session+ ) and raises if they're not equal.  If that's the case,
-    # the server responded to a different request.
+    # Ensures that +@session+ is set before continuing on.
     #
-    # @param [Fixnum] server_session Session number returned by the server.
-    # @raise [RTSP::Error] If the server returns a Session value that's different
-    #   from what the client sent.
-    def compare_session_number server_session
-      if @session[:session_id] != server_session
-        message = "Session number mismatch.  Client: #{@session[:session_id]}, Server: #{server_session}"
-        raise RTSP::Error, message
+    # @raise [RTSP::Error] Raises if @session isn't set.
+    def ensure_session
+      if @session.empty?
+        raise RTSP::Error, "Session number not retrieved from server yet.  Run SETUP first."
       end
     end
 
-    # Takes the methods returned from the Public header from an OPTIONS response
-    # and puts them to an Array.
-    #
-    # @param [String] method_list The string returned from the server containing
-    #   the list of methods it supports.
-    # @return [Array<Symbol>] The list of methods as symbols.
-    # @see #options
-    def extract_supported_methods_from method_list
-      method_list.downcase.split(', ').map { |m| m.to_sym }
-    end
   end
 end
 

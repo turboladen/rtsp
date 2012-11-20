@@ -4,9 +4,10 @@ SimpleCov.start do
   add_filter "/spec/"
 end
 
-require 'rspec'
 $:.unshift(File.dirname(__FILE__) + '/../lib')
 require 'rtsp'
+
+Dir[File.dirname(__FILE__) + "/support/**/*.rb"].each { |f| require f }
 
 OPTIONS_RESPONSE = %Q{RTSP/1.0 200 OK\r
 CSeq: 1\r

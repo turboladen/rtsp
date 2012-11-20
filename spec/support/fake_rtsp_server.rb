@@ -66,7 +66,7 @@ class FakeRTSPServer
     %Q{RTSP/1.0 200 OK\r
 CSeq: #{@cseq}\r
 Date: #{Time.now.httpdate}\r
-Transport: RTP/AVP;unicast;destination=10.221.222.186;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701\r
+Transport: RTP/AVP;unicast;destination=127.0.0.1;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701\r
 Session: #{@session}\r
 \r\n}
   end
