@@ -11,7 +11,7 @@ optparse = OptionParser.new do |opts|
   # Turn on logging
   RTSP::Client.configure { |c| c.log = false }
   opts.on('-d', '--debug', "Turn on RTSP::Client logging.") do
-    RTSP::Client.configure { |c| c.log = true }
+    RTSP::Client.log = true
   end
 
   #----------------------------------------------------------------------------
