@@ -19,8 +19,8 @@ For more information:
 
 * All standard RTSP methods supported except REDIRECT.
 * Captures RTP data to a file, or yields if a block is passed to #play.
-* One client object can only handle 1 stream; use a client per stream until this functionality
-gets implemented.
+* One client object can only handle 1 stream; use a client per stream until this
+  functionality gets implemented.
 * Only handles unicast, TCP RTSP communication.
 * RTSP exceptions are all {RTSP::Error}s.
 
@@ -85,6 +85,9 @@ gets implemented.
   puts client.capturer.rtp_file     # => (Lots of data)
 
 === RTP packet inspection
+
+As of RTP 0.1.0, you can now inspect and use packets as they come across the
+wire:
 
   client = RTSP::Client.new "rtsp://64.202.98.91/sa.sdp"
   client.describe
