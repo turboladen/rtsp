@@ -124,6 +124,10 @@ describe "Client use" do
       subject.setup("rtsp://localhost/some_track")
     end
 
+    after do
+      subject.teardown('rtsp://localhost/some_track')
+    end
+
     it "changes the session_state from :playing to :ready" do
       subject.play("rtsp://localhost/some_track")
       subject.pause("rtsp://localhost/some_track")
@@ -182,6 +186,10 @@ describe "Client use" do
   describe "#record" do
     before :each do
       subject.setup("rtsp://localhost/some_track")
+    end
+
+    after do
+      subject.teardown('rtsp://localhost/some_track')
     end
 
     it "returns a Response" do
