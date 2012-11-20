@@ -84,7 +84,7 @@ For more information:
   client.session_state          # => :init
 
   # Check the streamed file's contents
-  puts client.capturer.rtp_file     # => (Lots of data)
+  puts client.capturer.capture_file     # => (Lots of data)
 
 === RTP packet inspection
 
@@ -98,11 +98,11 @@ wire:
 
   client.play(client.aggregate_control_track) do |packet|
     puts "packet is a #{packet.class}"
-    puts "RTP seqence: #{packet['sequence_number']"
-    puts "RTP payload type: #{packet['payload_type']"
+    puts "RTP seqence: #{packet.sequence_number}"
+    puts "RTP payload type: #{packet.payload_type}"
 
     # Let's save the payload data while we're at it...
-    payload_file.write(packet['rtp_payload'])
+    payload_file.write(packet.rtp_payload)
   end
 
   payload_file.close
