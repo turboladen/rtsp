@@ -9,7 +9,6 @@ PATH
 GEM
   remote: http://rubygems.org/
   specs:
-    bindata (1.4.5)
     blankslate (2.1.2.4)
     builder (3.1.4)
     cucumber (1.2.1)
@@ -20,8 +19,10 @@ GEM
     diff-lcs (1.1.3)
     gherkin (2.11.5)
       json (>= 1.4.6)
+    gherkin (2.11.5-java)
+      json (>= 1.4.6)
     json (1.7.5)
-    log_switch (0.4.0)
+    json (1.7.5-java)
     multi_json (1.3.7)
     parslet (1.4.0)
       blankslate (~> 2.0)
@@ -35,8 +36,6 @@ GEM
       diff-lcs (~> 1.1.3)
     rspec-mocks (2.12.0)
     rtp (0.1.0)
-      bindata (~> 1.4)
-      log_switch (>= 0.4.0)
     sdp (0.2.8)
       parslet (>= 1.1.0)
     simplecov (0.7.1)
@@ -47,6 +46,7 @@ GEM
     yard (0.8.3)
 
 PLATFORMS
+  java
   ruby
 
 DEPENDENCIES
