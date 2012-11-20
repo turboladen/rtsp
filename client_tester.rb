@@ -60,7 +60,7 @@ class ClientTester < Thor
       #client.media_control_tracks.play
       #client.play(aggregate_track)
       client.play(aggregate_track) do |packet|
-        this_packet = packet['sequence_number']
+        this_packet = packet.sequence_number
         puts "RTP sequence: #{this_packet}"
 
         if defined? last_packet
@@ -71,7 +71,7 @@ class ClientTester < Thor
           end
         end
 
-        last_packet = packet['sequence_number']
+        last_packet = packet.sequence_number
       end
 
       sleep 1
