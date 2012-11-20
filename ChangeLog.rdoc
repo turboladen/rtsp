@@ -1,3 +1,13 @@
+=== 0.4.2 / 2012-11-14
+
+* Bug fixes
+  * {gh-17}[https://github.com/turboladen/rtsp/issues/17] Can now parse HTTP
+    responses (some servers may send HTTP responses to RTSP requests).
+* Other
+  * Turned logging off by default.  To enable, simply do <tt>RTSP::Client.log = true</tt>
+  * Updated to work with RTP 0.1.0.
+  * Can now inspect RTP packets during #play.
+
 === 0.4.1 / 2012-11-14
 
 * gh-16: Can now parse Session IDs to be alpha characters.  Thanks @greywolf-colorado!
