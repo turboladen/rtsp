@@ -1,5 +1,5 @@
 require 'sdp'
-require_relative '../spec_helper'
+require 'spec_helper'
 require 'rtsp/message'
 
 describe "RTSP::Message" do
