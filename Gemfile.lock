@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rtsp (0.4.2)
+    rtsp (0.4.3)
       parslet (>= 1.1.0)
       rtp (>= 0.1.2)
       sdp (~> 0.2.6)
