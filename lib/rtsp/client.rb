@@ -114,14 +114,14 @@ module RTSP
 
       yield(@connection, @capturer) if block_given?
 
-      @connection.server_url        = server_url || @connection.server_url
-      @server_uri                   = build_resource_uri_from(@connection.server_url)
-      @connection.timeout           ||= 30
-      @connection.socket            ||= TCPSocket.new(@server_uri.host, @server_uri.port)
-      @connection.do_capture        ||= true
-      @connection.interleave        ||= false
+      @connection.server_url = server_url || @connection.server_url
+      @server_uri            = build_resource_uri_from(@connection.server_url)
+      @connection.timeout    ||= 30
+      @connection.socket     ||= TCPSocket.new(@server_uri.host, @server_uri.port)
+      @connection.do_capture ||= true
+      @connection.interleave ||= false
 
-      @cseq        = 1
+      @cseq = 1
       reset_state
     end
 
