@@ -140,8 +140,6 @@ As usual, get help by:
 * (Tested) Rubies
   * 1.9.2
   * 1.9.3
-  * JRuby 1.6.8, 1.9 mode
-  * Rubinius head, 1.9 mode
 * RubyGems
   * sdp
   * rtp

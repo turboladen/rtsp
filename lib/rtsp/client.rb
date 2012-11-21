@@ -321,8 +321,8 @@ module RTSP
       message.add_headers additional_headers
 
       request(message) do
+        @capturer.stop
         reset_state
-        @capturer.stop if @capturer.running?
       end
     end
 
