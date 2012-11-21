@@ -3,7 +3,7 @@ PATH
   specs:
     rtsp (0.4.2)
       parslet (>= 1.1.0)
-      rtp (>= 0.1.0)
+      rtp (>= 0.1.1)
       sdp (~> 0.2.6)
 
 GEM
@@ -37,10 +37,10 @@ GEM
     rspec-expectations (2.12.0)
       diff-lcs (~> 1.1.3)
     rspec-mocks (2.12.0)
-    rtp (0.1.0)
+    rtp (0.1.1)
       bindata (~> 1.4)
       log_switch (>= 0.4.0)
-    sdp (0.2.8)
+    sdp (0.2.9)
       parslet (>= 1.1.0)
     simplecov (0.7.1)
       multi_json (~> 1.0)
