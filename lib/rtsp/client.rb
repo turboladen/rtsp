@@ -322,7 +322,7 @@ module RTSP
 
       request(message) do
         reset_state
-        @capturer.stop
+        @capturer.stop if @capturer.running?
       end
     end
 
