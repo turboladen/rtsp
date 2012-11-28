@@ -62,6 +62,7 @@ class ClientTester < Thor
       client.play(aggregate_track) do |packet|
         this_packet = packet.sequence_number
         puts "RTP sequence: #{this_packet}"
+        puts "payload type", packet.payload_type
 
         if defined? last_packet
           puts "last: #{last_packet}"
@@ -74,7 +75,7 @@ class ClientTester < Thor
         last_packet = packet.sequence_number
       end
 
-      sleep 1
+      sleep 50
       #client[aggregate_track].play
       client.teardown aggregate_track
       p client.capturer.capture_file.path
