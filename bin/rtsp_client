@@ -11,7 +11,7 @@ optparse = OptionParser.new do |opts|
   # Turn on logging
   RTSP::Client.configure { |c| c.log = false }
   opts.on('-d', '--debug', "Turn on RTSP::Client logging.") do
-    RTSP::Client.configure { |c| c.log = true }
+    RTSP::Client.log = true
   end
 
   #----------------------------------------------------------------------------
@@ -50,8 +50,8 @@ optparse = OptionParser.new do |opts|
       exit
     end
 
-    rtsp_client = RTSP::Client.new(url) do |connection, capturer|
-      capturer.rtp_file = File.open("#{Dir.pwd}/rtsp_client_stream.rtp", "wb")
+    rtsp_client = RTSP::Client.new(url) do |_, capturer|
+      capturer.capture_file = File.open("#{Dir.pwd}/rtsp_client_stream.rtp", "wb")
     end
 
     begin

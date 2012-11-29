@@ -187,19 +187,4 @@ a=control:trackID=1\r
       subject.inspect.should match(/^#<.*>$/)
     end
   end
-
-  describe "#create_reader" do
-    before do
-      subject.send(:create_reader, 'make_noise', 'meow')
-    end
-
-    it "sets an instance variable by 'name' to 'value'" do
-      subject.instance_variable_get(:@make_noise).should == 'meow'
-    end
-
-    it "defines a method for reading the instance variable" do
-      subject.should respond_to :make_noise
-      subject.make_noise.should == 'meow'
-    end
-  end
 end

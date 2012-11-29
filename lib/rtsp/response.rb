@@ -131,18 +131,46 @@ module RTSP
     #
     # @param [String] line The String containing the status line info.
     def extract_status_line(line)
-      line =~ /RTSP|HTTP\/(\d\.\d) (\d\d\d) ([^\r\n]+)/
-      @rtsp_version = $1
-      @code         = $2.to_i
-      @status_message      = $3
+      line =~ /(RTSP|HTTP)\/(\d\.\d) (\d\d\d) ([^\r\n]+)/
+      @rtsp_version = $2
+      @code         = $3.to_i
+      @message      = $4
 
       if @rtsp_version.nil?
         raise RTSP::Error, "Status line corrupted: #{line}"
       end
     end
 
-    def status_line
-      "RTSP/#{@rtsp_version} #{@code} #{@status_message}\r\n"
+    # Reads through each header line of the RTSP response, extracts the
+    # response code, response message, response version, and creates a
+    # snake-case accessor with that value set.
+    #
+    # @param [String] head The section of headers from the response text.
+    def parse_head head
+      lines = head.split "\r\n"
+
+      lines.each_with_index do |line, i|
+        if i == 0
+          extract_status_line(line)
+          next
+        end
+
+        if line.include? "Session: "
+          value = {}
+          line =~ /Session: ([\w\\$\-\.\+]+)/
+          value[:session_id] = $1
+
+          if line =~ /timeout=(.+)/
+            value[:timeout] = $1.to_i
+          end
+
+          create_reader("session", value)
+        elsif line.include? ": "
+          header_and_value = line.strip.split(":", 2)
+          header_name = header_and_value.first.downcase.gsub(/-/, "_")
+          create_reader(header_name, header_and_value[1].strip)
+        end
+      end
     end
 
     def default_headers

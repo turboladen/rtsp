@@ -80,7 +80,7 @@ module RTSP
     attr_accessor :connection
 
     # Use to get/set an object for capturing received data.
-    # @param [RTP::Receiver]
+    #
     # @return [RTP::Receiver]
     attr_accessor :capturer
 
@@ -107,28 +107,16 @@ module RTSP
       @connection = Struct::Connection.new
       @capturer   = RTP::Receiver.new
 
-      yield(connection, capturer) if block_given?
+      yield(@connection, @capturer) if block_given?
 
-      @connection.server_url       = server_url || @connection.server_url
-      @server_uri                  = build_resource_uri_from(@connection.server_url)
-      @connection.timeout          ||= 30
+      @connection.server_url = server_url || @connection.server_url
+      @server_uri            = build_resource_uri_from(@connection.server_url)
+      @connection.timeout    ||= 30
+      @connection.socket     ||= TCPSocket.new(@server_uri.host, @server_uri.port)
+      @connection.do_capture ||= true
+      @connection.interleave ||= false
 
-      if @server_uri.scheme == 'rtsp'
-        @connection.socket           ||= TCPSocket.new(@server_uri.host, @server_uri.port)
-      elsif @server_uri.scheme == 'rtspu'
-        @connection.socket           ||= UDPSocket.new
-        @connection.socket.bind(@server_uri.host, @server_uri.port)
-      end
-
-      @connection.do_capture       ||= true
-      @connection.interleave       ||= false
-      @capturer.rtp_port           ||= 9000
-      @capturer.transport_protocol ||= :UDP
-      @capturer.broadcast_type     ||= :unicast
-      @capturer.rtp_file           ||= Tempfile.new(RTP::Receiver::DEFAULT_CAPFILE_NAME)
-
-      @play_thread = nil
-      @cseq        = 1
+      @cseq = 1
       reset_state
     end
 
@@ -153,26 +141,17 @@ module RTSP
 
       begin
         response = Timeout::timeout(@connection.timeout) do
-          @connection.socket.send(request_message.to_s, 0)
-          socket_data = @connection.socket.recvfrom(MAX_BYTES_TO_RECEIVE)
-          RTSP::Response.parse(socket_data.first)
+          @connection.socket.send(message.to_s, 0)
+          socket_data = @connection.socket.recvfrom MAX_BYTES_TO_RECEIVE
+
+          RTSP::Client.log "Received response:"
+          socket_data.first.each_line { |line| RTSP::Client.log line.strip }
+
+          RTSP::Response.new socket_data.first
         end
       rescue Timeout::Error
         raise RTSP::Error,
           "Request took more than #{@connection.timeout} seconds to send."
-      end
-
-      if response
-        log "Received response:"
-
-        if response.to_s.empty?
-          log "Response was empty."
-          log "\n"
-        else
-          response.to_s.each_line { |line| log "<<< #{line.strip}" }
-        end
-      else
-        log "No response received.", :warn
       end
 
       response
@@ -255,8 +234,8 @@ module RTSP
     # @return [String] The String to use with the Transport header.
     # @see http://tools.ietf.org/html/rfc2326#page-58 RFC 2326, Section 12.39.
     def request_transport
-      value = "RTP/AVP;#{@capturer.broadcast_type};client_port="
-      value << "#{@capturer.rtp_port}-#{@capturer.rtp_port + 1}\r\n"
+      value = "RTP/AVP;#{@capturer.ip_addressing_type};client_port="
+      value << "#{@capturer.rtp_port}-#{@capturer.rtcp_port}\r\n"
     end
 
     # Sends the SETUP request, then sets +@session+ to the value returned in the
@@ -278,15 +257,16 @@ module RTSP
           @session_state = :ready
         end
 
-        @session   = response.headers[:session]
-        @transport = response.headers[:transport]
+        @session   = response.session
+        parser     = RTSP::TransportParser.new
+        @transport = parser.parse(response.transport)
 
         unless @transport[:transport_protocol].nil?
           @capturer.transport_protocol = @transport[:transport_protocol]
         end
 
-        @capturer.rtp_port       = @transport[:client_port][:rtp].to_i
-        @capturer.broadcast_type = @transport[:broadcast_type]
+        @capturer.rtp_port = @transport[:client_port][:rtp].to_i
+        @capturer.ip_address = @transport[:destination].to_s
       end
     end
 
@@ -300,8 +280,8 @@ module RTSP
     # @raise [RTSP::Error] If +#play+ is called but the session hasn't yet been
     #   set up via +#setup+.
     # @see http://tools.ietf.org/html/rfc2326#page-34 RFC 2326, Section 10.5.
-    def play(track, additional_headers={})
-      request = RTSP::Request.play(track).with_headers({
+    def play(track, additional_headers={}, &block)
+      message = RTSP::Message.play(track).with_headers({
           cseq: @cseq, session: @session[:session_id] })
       request.add_headers additional_headers
 
@@ -310,16 +290,8 @@ module RTSP
           raise RTSP::Error, "Session not set up yet.  Run #setup first."
         end
 
-        if @play_thread.nil?
-          log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
-
-          unless @capturer.running?
-            @play_thread = Thread.new do
-              @capturer.run
-            end
-          end
-        end
-
+        RTSP::Client.log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
+        @capturer.start(&block)
         @session_state = :playing
       end
     end
@@ -331,9 +303,9 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-36 RFC 2326, Section 10.6.
     def pause(track, additional_headers={})
-      request = RTSP::Request.pause(track).with_headers({
-          cseq: @cseq, session: @session[:session_id] })
-      request.add_headers additional_headers
+      message = RTSP::Message.pause(track).with_headers({
+        cseq: @cseq, session: @session[:session_id] })
+      message.add_headers additional_headers
 
       send_request(request) do
         if [:playing, :recording].include? @session_state
@@ -354,22 +326,10 @@ module RTSP
           cseq: @cseq, session: @session[:session_id] })
       request.add_headers additional_headers
 
-      send_request(request) do
+      request(message) do
+        @capturer.stop
         reset_state
-
-        if @play_thread
-          @capturer.stop
-          @capturer.rtp_file.close
-          @play_thread.exit
-        end
       end
-    end
-
-    # Sets state related variables back to their starting values;
-    # +@session_state+ is set to +:init+; +@session+ is set to 0.
-    def reset_state
-      @session_state = :init
-      @session = {}
     end
 
     # Sends the GET_PARAMETERS request.
@@ -380,10 +340,9 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-37 RFC 2326, Section 10.8.
     def get_parameter(track, body="", additional_headers={})
-      request = RTSP::Request.get_parameter(track).with_headers({
-          cseq: @cseq })
-      request.add_headers additional_headers
-      request.body = body
+      message = RTSP::Message.get_parameter(track).with_headers({ cseq: @cseq })
+      message.add_headers additional_headers
+      message.body = body
 
       send_request(request)
     end
@@ -396,10 +355,9 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-38 RFC 2326, Section 10.9.
     def set_parameter(track, parameters, additional_headers={})
-      request = RTSP::Request.set_parameter(track).with_headers({
-          cseq: @cseq })
-      request.add_headers additional_headers
-      request.body = parameters
+      message = RTSP::Message.set_parameter(track).with_headers({ cseq: @cseq })
+      message.add_headers additional_headers
+      message.body = parameters
 
       send_request(request)
     end
@@ -423,7 +381,7 @@ module RTSP
     # then increments +@cseq+ by 1.  Handles any exceptions raised during the
     # Request.
     #
-    # @param [RTSP::Request] request
+    # @param [RTSP::Message] message
     # @yield [RTSP::Response]
     # @return [RTSP::Response]
     # @raise [RTSP::Error] All 4xx & 5xx response codes & their messages.
@@ -451,15 +409,6 @@ module RTSP
       end
 
       response
-    end
-
-    # Ensures that +@session+ is set before continuing on.
-    #
-    # @raise [RTSP::Error] Raises if @session isn't set.
-    def ensure_session
-      if @session.empty? || @session[:session_id] <= 0
-        raise RTSP::Error, "Session number not retrieved from server yet.  Run SETUP first."
-      end
     end
 
     # Extracts the URL associated with the "control" attribute from the main
@@ -497,6 +446,41 @@ module RTSP
       tracks
     end
 
+    private
+
+    # Sets state related variables back to their starting values;
+    # +@session_state+ is set to +:init+; +@session+ is set to 0.
+    def reset_state
+      @session_state = :init
+      @session = {}
+    end
+
+    # Takes the methods returned from the Public header from an OPTIONS response
+    # and puts them to an Array.
+    #
+    # @param [String] method_list The string returned from the server containing
+    #   the list of methods it supports.
+    # @return [Array<Symbol>] The list of methods as symbols.
+    # @see #options
+    def extract_supported_methods_from method_list
+      method_list.downcase.split(', ').map { |m| m.to_sym }
+    end
+
+    # Compares the session number passed in to the current client session
+    # number ( +@session+ ) and raises if they're not equal.  If that's the case,
+    # the server responded to a different request.
+    #
+    # @todo Remove this--it's not used.
+    # @param [Fixnum] server_session Session number returned by the server.
+    # @raise [RTSP::Error] If the server returns a Session value that's different
+    #   from what the client sent.
+    def compare_session_number server_session
+      if @session[:session_id] != server_session
+        message = "Session number mismatch.  Client: #{@session[:session_id]}, Server: #{server_session}"
+        raise RTSP::Error, message
+      end
+    end
+
     # Compares the sequence number passed in to the current client sequence
     # number ( +@cseq+ ) and raises if they're not equal.  If that's the case, the
     # server responded to a different request.
@@ -511,29 +495,16 @@ module RTSP
       end
     end
 
-    # Compares the session number passed in to the current client session
-    # number ( +@session+ ) and raises if they're not equal.  If that's the case,
-    # the server responded to a different request.
+    # Ensures that +@session+ is set before continuing on.
     #
-    # @param [Fixnum] server_session Session number returned by the server.
-    # @raise [RTSP::Error] If the server returns a Session value that's different
-    #   from what the client sent.
-    def compare_session_number server_session
-      if @session[:session_id] != server_session
-        message = "Session number mismatch.  Client: #{@session[:session_id]}, Server: #{server_session}"
-        raise RTSP::Error, message
+    # @raise [RTSP::Error] Raises if @session isn't set.
+    def ensure_session
+      if @session.empty?
+        raise RTSP::Error, "Session number not retrieved from server yet.  Run SETUP first."
       end
     end
 
-    # Takes the methods returned from the Public header from an OPTIONS response
-    # and puts them to an Array.
-    #
-    # @param [String] method_list The string returned from the server containing
-    #   the list of methods it supports.
-    # @return [Array<Symbol>] The list of methods as symbols.
-    # @see #options
-    def extract_supported_methods_from method_list
-      method_list.downcase.split(', ').map { |m| m.to_sym }
-    end
   end
 end
+
+RTSP::Client.log = false

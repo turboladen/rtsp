@@ -31,21 +31,22 @@ module RTSP
 
     attr_reader :headers
     attr_reader :body
-    attr_reader :rtsp_version
-    attr_reader :raw
+    attr_writer :rtsp_version
 
     # @param [Symbol] method_type The RTSP method to build and send.
-    # @param [String] request_uri The URL to include in the message.
-    def initialize
-      @headers = default_headers
-      @body = ""
-      @rtsp_version = DEFAULT_VERSION
+    # @param [String] request_uri The URL to communicate to.
+    def initialize(method_type, request_uri)
+      @method_type = method_type
+      @request_uri = build_resource_uri_from request_uri
+      @headers     = default_headers
+      @body        = ""
+      @version     = DEFAULT_VERSION
     end
 
     # Adds the header and its value to the list of headers for the message.
     #
     # @param [Symbol] type The header type.
-    # @param [] value The value to set the header field to.
+    # @param [*] value The value to set the header field to.
     def header(type, value)
       if type.is_a? Symbol
         @headers[type] = value
@@ -96,7 +97,7 @@ module RTSP
     #
     # @example Simple header
     #   RTSP::Message.options("192.168.1.10").with_body("The body!")
-    # @param [Hash] new_body The body to add to the Request.
+    # @param [Hash] new_body The new body to add to the request.
     def with_body(new_body)
       add_body new_body
 
@@ -241,12 +242,18 @@ module RTSP
     # Creates an attr_reader with the name given and sets it to the value
     # that's given.
     #
-    # @param [String] name
-    # @param [String,Hash] value
-    def create_reader(name, value)
-      unless value.empty?
-        if value.is_a? String
-          value = value =~ /^[0-9]*$/ ? value.to_i : value
+    # @param [*] values The header values to put to string.
+    # @param [String] separator The character to use to separate multiple
+    #   values that define a header.
+    # @return [String] The header values as a single string.
+    def values_to_s(values, separator=";")
+      result = values.inject("") do |values_string, (header_field, header_field_value)|
+        if header_field.is_a? Symbol
+          values_string << "#{header_field}=#{header_field_value}"
+        elsif header_field.is_a? Hash
+          values_string << values_to_s(header_field)
+        else
+          values_string << header_field.to_s
         end
       end
 

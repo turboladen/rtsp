@@ -2,48 +2,47 @@
 
 * https://github.com/turboladen/rtsp
 
+{<img src="https://secure.travis-ci.org/turboladen/rtsp.png" alt="Build Status" />}[https://travis-ci.org/turboladen/rtsp]
+
 == DESCRIPTION:
 
 This library intends to follow the RTSP RFC document (2326) to allow for working
-with RTSP servers.  At this point, it's up to you to parse the data from a play
-call, but we'll get there.  ...eventually.
+with RTSP servers.  By way of {rtp}[https://github.com/turboladen/rtp], you can
+either inspect the RTP packets as they come across the wire or use the file
+that the data got saved to.
 
-For more information
+For more information:
 
-RTSP: http://tools.ietf.org/html/rfc2326
-
-SDP: http://tools.ietf.org/html/rfc4566
+* RTSP: {http://tools.ietf.org/html/rfc2326}[http://tools.ietf.org/html/rfc2326]
+* RTP: {http://tools.ietf.org/html/rfc3550}[http://tools.ietf.org/html/rfc3550]
+* SDP: {http://tools.ietf.org/html/rfc4566}[http://tools.ietf.org/html/rfc4566]
 
 == FEATURES/PROBLEMS:
 
 * All standard RTSP methods supported except REDIRECT.
-* Captures RTP data to a file, but doesn't ensure RTP sequencing before putting to file.
-* One client object can only handle 1 stream; use a client per stream until this functionality
-gets implemented.
-* Only handles unicast, UDP streams.
-* RTSP exceptions are all +RTSP::Error+s; this will change.
+* Captures RTP data to a file, or yields if a block is passed to #play.
+* One client object can only handle 1 stream; use a client per stream until this
+  functionality gets implemented.
+* Only handles unicast, TCP RTSP communication.
+* RTSP exceptions are all {RTSP::Error}s.
 
 == SYNOPSIS:
 
 === Basic Usage
 
-  RTSP::Client.log?                # => true
-  RTSP::Client.log = false
-  client = RTSP::Client.new "rtsp://64.202.98.91/sa.sdp" do |connection, capturer|
-    connection.timeout = 5
-    capturer.rtp_port = 8554
-    capturer.rtp_file = File.open("captured_stuff.rtp", "wb")
-  end
-  
+  RTSP::Client.log?                # => false
+  RTSP::Client.log = true
+  client = RTSP::Client.new "rtsp://64.202.98.91/sa.sdp"
+
   client.server_uri                   # => #<URI::Generic:0x00000100ba4db0 URL:rtsp://64.202.98.91:554/sa.sdp>
   client.session_state                # => :init
   client.cseq                         # => 1
   client.connection.do_capture        # => true
   client.connection.interleave        # => false
-  client.connection.timeout           # => 5
-  client.capturer.broadcast_type      # => :unicast
-  client.capturer.rtp_port            # => 8554
-  client.capturer.rtp_file            # => #<File:captured_stuff.rtp>
+  client.connection.timeout           # => 30
+  client.capturer.ip_addressing_type  # => :unicast
+  client.capturer.rtp_port            # => 6970
+  client.capturer.capture_file        # => #<File:/var/folders/tg/j9jxvvfs4qn9cg4vztzyy2gc0000gp/T/rtp_capture.raw-59901-1l8dgv2>
   client.capturer.transport_protocol  # => :UDP
   
   response = client.options
@@ -66,7 +65,6 @@ gets implemented.
   client.cseq                     # => 4
   client.session_state            # => :ready
 
-
   response = client.play(client.aggregate_control_track)
   response.range            # => "npt=now="
   resposne.rtp_info         # => "url=rtsp://64.202.98.91:554/sa.sdp/trackID=1"
@@ -86,7 +84,31 @@ gets implemented.
   client.session_state          # => :init
 
   # Check the streamed file's contents
-  puts client.capturer.rtp_file     # => (Lots of data)
+  puts client.capturer.capture_file     # => (Lots of data)
+
+=== RTP packet inspection
+
+As of RTP 0.1.0, you can now inspect and use packets as they come across the
+wire:
+
+  client = RTSP::Client.new "rtsp://64.202.98.91/sa.sdp"
+  client.describe
+  client.setup(client.media_control_tracks.first)
+  payload_file = File.new('rtp.data', 'wb')
+
+  client.play(client.aggregate_control_track) do |packet|
+    puts "packet is a #{packet.class}"
+    puts "RTP seqence: #{packet.sequence_number}"
+    puts "RTP payload type: #{packet.payload_type}"
+
+    # Let's save the payload data while we're at it...
+    payload_file.write(packet.rtp_payload)
+  end
+
+  payload_file.close
+
+Take a look at the {RTP::Packet docs}[http://rdoc.info/gems/rtp/RTP/Packet] for
+more information.
 
 === CLI App
 
@@ -116,20 +138,12 @@ As usual, get help by:
 == REQUIREMENTS:
 
 * (Tested) Rubies
-  * 1.9.2-p180
+  * 1.9.2
+  * 1.9.3
 * RubyGems
-  * sdp, '~> 0.2.2'
-* RubyGems (development)
-  * bundler, '~> 1.0.0'
-  * code_statistics, '~> 0.2.13'
-  * metric_fu, '>= 2.0.0'
-  * ore, '~> 0.7.2'
-  * ore-core, '~> 0.1.0'
-  * ore-tasks, '~> 0.3.0'
-  * rake, '~> 0.8.7'
-  * rspec, '~> 2.5.0'
-  * simplecov, '>= 0.4.0'
-  * yard, '~> 0.6.0'
+  * sdp
+  * rtp
+  * parslet
 
 == INSTALL:
 
