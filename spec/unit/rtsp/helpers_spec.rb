@@ -36,18 +36,6 @@ describe RTSP::Helpers do
         uri.path.should == ""
         uri.to_s.should == "rtsp://64.202.98.91:554"
       end
-
-      it "handles passing in a URI" do
-        uri = @my_object.build_resource_uri_from "rtsp://64.202.98.91"
-        lambda { @my_object.build_resource_uri_from uri
-          }.should raise_error
-      end
-
-      it "raises if not given a String" do
-        lambda do
-          @my_object.build_resource_uri_from URI.parse "rtsp://64.202.98.91"
-        end.should raise_exception RTSP::Error
-      end
     end
   end
 end

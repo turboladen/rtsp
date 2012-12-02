@@ -19,7 +19,6 @@ describe RTSP::Request do
         subject.should be_a RTSP::Request
         subject.method_type.should == :options
         subject.body.should be_empty
-        subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should be_nil
@@ -36,7 +35,6 @@ describe RTSP::Request do
         subject.should be_a RTSP::Request
         subject.method_type.should == :describe
         subject.body.should be_empty
-        subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://server.example.com/fizzle/foo"
@@ -53,7 +51,6 @@ describe RTSP::Request do
         subject.should be_a RTSP::Request
         subject.method_type.should == :announce
         subject.body.should be_a SDP::Description
-        subject.raw.should_not be_empty
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://server.example.com/fizzle/foo"
@@ -72,7 +69,6 @@ describe RTSP::Request do
         subject.should be_a RTSP::Request
         subject.method_type.should == :setup
         subject.body.should be_empty
-        subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://example.com/foo/bar/baz.rm"
@@ -95,7 +91,6 @@ describe RTSP::Request do
         subject.should be_a RTSP::Request
         subject.method_type.should == :play
         subject.body.should be_empty
-        subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://audio.example.com/audio"
@@ -112,7 +107,6 @@ describe RTSP::Request do
         subject.should be_a RTSP::Request
         subject.method_type.should == :pause
         subject.body.should be_empty
-        subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://example.com/fizzle/foo"
@@ -128,7 +122,6 @@ describe RTSP::Request do
         subject.should be_a RTSP::Request
         subject.method_type.should == :teardown
         subject.body.should be_empty
-        subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://example.com/fizzle/foo"
@@ -144,7 +137,6 @@ describe RTSP::Request do
         subject.should be_a RTSP::Request
         subject.method_type.should == :get_parameter
         subject.body.should == "packets_received\r\njitter\r\n"
-        subject.raw.should == raw_request
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://example.com/fizzle/foo"
@@ -161,7 +153,6 @@ describe RTSP::Request do
         subject.should be_a RTSP::Request
         subject.method_type.should == :set_parameter
         subject.body.should == "barparam: barstuff\r\n"
-        subject.raw.should == raw_request
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://example.com/fizzle/foo"
@@ -177,7 +168,6 @@ describe RTSP::Request do
         subject.should be_a RTSP::Request
         subject.method_type.should == :record
         subject.body.should be_empty
-        subject.raw.should be_nil
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://example.com/meeting/audio.en"

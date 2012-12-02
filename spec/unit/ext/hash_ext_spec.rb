@@ -2,40 +2,69 @@ require 'spec_helper'
 require 'ext/hash_ext'
 
 describe Hash do
-  describe "#to_headers_s" do
-    context "cseq" do
-      let(:headers) { { cseq: 123 } }
-      specify { headers.to_headers_s.should == "CSeq: 123\r\n" }
-    end
+  describe "#assemble_headers" do
+    pending
+  end
 
-    context "a value is a Hash" do
-      let(:headers) { { range: { npt: "0.000-" } } }
-      specify { headers.to_headers_s.should == "Range: npt=0.000-\r\n" }
-    end
+  describe "#transport_to_s" do
+    pending
+  end
 
-    context "a key has underscores" do
-      let(:headers) { { if_modified_since: "Sat, 29 Oct 1994 19:43:31 GMT" } }
-
-      it "converts the underscores to hyphens" do
-        headers.to_headers_s.should ==
-          "If-Modified-Since: Sat, 29 Oct 1994 19:43:31 GMT\r\n"
-      end
-    end
-
-    context "many pairs, mixed values" do
-      let(:headers) do
-        {
-          cache_control: ["no-cache", { max_age: 12345 }],
-          content_type: ['application/sdp', 'application/x-rtsp-mh']
-        }
-      end
-
+  describe "#session_to_s" do
+    context "with timeout" do
+      let(:session_hash) { { session_id: 1234, timeout: 5678 } }
       specify {
-        headers.to_headers_s.should ==
-          %Q{Cache-Control: no-cache;max_age=12345\r
-Content-Type: application/sdp, application/x-rtsp-mh\r
-}
-        }
+        subject.send(:session_values_to_s, session_hash).should ==
+          "1234;timeout=5678"
+      }
+    end
+
+    context "no timeout" do
+      let(:session_hash) { { session_id: 1234 } }
+      specify {
+        subject.send(:session_values_to_s, session_hash).should == "1234"
+      }
+    end
+  end
+
+  describe "#order_headers" do
+    pending
+  end
+
+  describe "#basic_header_values_to_s" do
+    context "param is a Hash" do
+      context "header field is a Symbol" do
+        context "single key/value pair" do
+          let(:values) { { field: "value" } }
+
+          specify {
+            subject.send(:basic_header_values_to_s, values).should ==
+              "field=value"
+          }
+        end
+
+        context "two key/value pairs" do
+          let(:values) { { f1: "v1", f2: "v2" } }
+
+          specify {
+            subject.send(:basic_header_values_to_s, values).should ==
+              "f1=v1;f2=v2"
+          }
+        end
+      end
+    end
+
+    context "param is a Array" do
+      context "header field is a Hash" do
+        pending "Not sure why this conditional is in the method..."
+
+        let(:values) { [{ field: { f1: "v1" } }] }
+
+        it "calls the same method again but on the field" do
+          subject.send(:basic_header_values_to_s, values).should ==
+            "field="
+        end
+      end
     end
   end
 end

@@ -31,16 +31,12 @@ module RTSP
 
     attr_reader :headers
     attr_reader :body
-    attr_writer :rtsp_version
+    attr_accessor :rtsp_version
 
-    # @param [Symbol] method_type The RTSP method to build and send.
-    # @param [String] request_uri The URL to communicate to.
-    def initialize(method_type, request_uri)
-      @method_type = method_type
-      @request_uri = build_resource_uri_from request_uri
-      @headers     = default_headers
-      @body        = ""
-      @version     = DEFAULT_VERSION
+    def initialize
+      @headers      = default_headers
+      @body         = ""
+      @rtsp_version = DEFAULT_RTSP_VERSION
     end
 
     # Adds the header and its value to the list of headers for the message.
@@ -122,8 +118,6 @@ module RTSP
 
     # @return [String] The message as a String.
     def to_s
-      return @raw if @raw
-
       message.to_s
     end
 

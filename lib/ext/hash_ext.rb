@@ -7,9 +7,7 @@ class Hash
   #
   # @return [String]
   def to_headers_s
-    header_string = assemble_headers
-
-    order_headers(header_string)
+    order_headers(assemble_headers)
   end
 
   private
@@ -21,51 +19,13 @@ class Hash
       if value.is_a?(Hash) || value.is_a?(Array)
         values = case header_name
         when "Content-Type"
-          values_to_s(value, ", ")
+          basic_header_values_to_s(value, ", ")
         when "Session"
-          v = "#{value[:session_id]}"
-
-          if value.has_key?(:timeout)
-            v << value[:timeout]
-          end
-
-          v
+          session_values_to_s(value)
         when "Transport"
-          v = "#{value[:streaming_protocol]}/#{value[:profile]}"
-
-          if value.has_key?(:lower_transport)
-            v << "/#{value[:lower_transport]}"
-          end
-
-          v << ";#{value[:broadcast_type]}"
-
-          if value.has_key? :interleaved
-            v << ";interleaved=#{value[:interleaved][:start]}-#{value[:interleaved][:end]}"
-          end
-
-          if value.has_key? :append
-            v << ";append"
-          end
-
-          [:destination, :ttl, :layers, :ssrc].each do |k|
-            if value.has_key?(k)
-              v << ";#{k}=#{value[k]}"
-            end
-          end
-
-          if value.has_key? :mode
-            v << ";mode=\"#{value[:mode]}\""
-          end
-
-          [:client_port, :server_port, :port].each do |k|
-            if value.has_key?(k)
-              v << ";#{k}=#{value[k][:rtp]}-#{value[k][:rtcp]}"
-            end
-          end
-
-          v
+          transport_values_to_s(value)
         else
-          values_to_s(value)
+          basic_header_values_to_s(value)
         end
 
         result << "#{header_name}: #{values}\r\n"
@@ -75,6 +35,65 @@ class Hash
 
       result
     end
+  end
+
+  # Takes the values from the +transport_hash+ and turns them into a String,
+  # which is ready to add to the Transport header.
+  #
+  # @param [Hash] transport_hash The Hash of params that make up the transport
+  #   header values.
+  # @return [String] The Transport header values as a String.
+  def transport_values_to_s(transport_hash)
+    v = "#{transport_hash[:streaming_protocol]}/#{transport_hash[:profile]}"
+
+    if transport_hash.has_key?(:lower_transport)
+      v << "/#{transport_hash[:lower_transport]}"
+    end
+
+    v << ";#{transport_hash[:broadcast_type]}"
+
+    if transport_hash.has_key? :interleaved
+      v << ";interleaved=#{transport_hash[:interleaved][:start]}"
+      v << "-#{transport_hash[:interleaved][:end]}"
+    end
+
+    if transport_hash.has_key? :append
+      v << ";append"
+    end
+
+    [:destination, :ttl, :layers, :ssrc].each do |k|
+      if transport_hash.has_key?(k)
+        v << ";#{k}=#{transport_hash[k]}"
+      end
+    end
+
+    if transport_hash.has_key? :mode
+      v << ";mode=\"#{transport_hash[:mode]}\""
+    end
+
+    [:client_port, :server_port, :port].each do |k|
+      if transport_hash.has_key?(k)
+        v << ";#{k}=#{transport_hash[k][:rtp]}-#{transport_hash[k][:rtcp]}"
+      end
+    end
+
+    v
+  end
+
+  # Takes the values from the +session_hash+ and turns them into a String,
+  # which is ready to add to the Session header.
+  #
+  # @param [Hash] session_hash The Hash of params that make up the session
+  #   header values.
+  # @return [String] The Session header values as a String.
+  def session_values_to_s(session_hash)
+    v = "#{session_hash[:session_id]}"
+
+    if session_hash.has_key?(:timeout)
+      v << ";timeout=#{session_hash[:timeout]}"
+    end
+
+    v
   end
 
   def order_headers(header_string)
@@ -112,16 +131,17 @@ class Hash
   # @param [String] separator The character to use to separate multiple
   #   values that define a header.
   # @return [String] The header values as a single string.
-  def values_to_s(values, separator=";")
+  def basic_header_values_to_s(values, separator=";")
     result = values.inject("") do |values_string, (header_field, header_field_value)|
-      if header_field.is_a? Symbol
+      values_string << if header_field.is_a? Symbol
         "#{header_field}=#{header_field_value}"
-      elsif header_field.is_a? Hash
-        values_string << values_to_s(header_field)
+      #elsif header_field.is_a? Hash
+      #  basic_header_values_to_s(header_field)
       else
-        values_string << header_field.to_s
+        header_field.to_s
       end
 
+      puts "values string: #{values_string}"
       values_string + separator
     end
 

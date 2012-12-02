@@ -49,7 +49,7 @@ describe RTSP::Client do
 
   describe "#options" do
     let(:message) do
-      m = double "RTSP::Message"
+      m = double "RTSP::Request"
       m.should_receive(:with_headers).with(cseq: 1).and_return m
       m.should_receive(:add_headers).with({})
 
@@ -57,11 +57,11 @@ describe RTSP::Client do
     end
 
     let(:response) do
-      double "RTSP::Response", public: [:a_method]
+      double "RTSP::Request", headers: { public: [:a_method] }
     end
 
-    it "creates a RTSP::Message.options from @server_uri" do
-      RTSP::Message.should_receive(:options).with('rtsp://localhost:554').
+    it "creates a RTSP::Request.options from @server_uri" do
+      RTSP::Request.should_receive(:options).with('rtsp://localhost:554').
         and_return message
       subject.should_receive(:request).with(message).and_yield(response)
       subject.should_receive(:extract_supported_methods_from).with [:a_method]
@@ -71,7 +71,7 @@ describe RTSP::Client do
 
   describe "#describe" do
     let(:message) do
-      m = double "RTSP::Message"
+      m = double "RTSP::Request"
       m.should_receive(:with_headers).with(cseq: 1).and_return m
       m.should_receive(:add_headers).with({})
 
@@ -79,15 +79,15 @@ describe RTSP::Client do
     end
 
     let(:response) do
-      r = double "RTSP::Response"
+      r = double "RTSP::Request"
       r.should_receive(:body).and_return "the body"
-      r.should_receive(:content_base).and_return "content"
+      r.should_receive(:headers).and_return content_base: "content"
 
       r
     end
 
     before do
-      RTSP::Message.should_receive(:describe).with('rtsp://localhost:554').
+      RTSP::Request.should_receive(:describe).with('rtsp://localhost:554').
         and_return message
       subject.should_receive(:request).with(message).and_yield(response)
       subject.should_receive(:build_resource_uri_from).with("content").
@@ -108,7 +108,7 @@ describe RTSP::Client do
 
   describe "#announce" do
     let(:message) do
-      message = double "RTSP::Message"
+      message = double "RTSP::Request"
       message.should_receive(:with_headers).with(cseq: 1).and_return message
       message.should_receive(:add_headers).with({})
       message.should_receive(:body=).with('description')
@@ -120,7 +120,7 @@ describe RTSP::Client do
     let(:url) { 'rtsp://neato:9000' }
 
     it "creates and sends an announce request with request_url and description" do
-      RTSP::Message.should_receive(:announce).with(url).and_return message
+      RTSP::Request.should_receive(:announce).with(url).and_return message
       subject.should_receive(:request).with(message)
       subject.announce(url, description)
     end
@@ -129,7 +129,7 @@ describe RTSP::Client do
   describe "#setup" do
     let(:message) do
       subject.stub(:request_transport).and_return "transport"
-      message = double "RTSP::Message"
+      message = double "RTSP::Request"
       message.should_receive(:with_headers).
         with(cseq: 1, transport: "transport").and_return message
       message.should_receive(:add_headers).with({})
@@ -139,29 +139,27 @@ describe RTSP::Client do
 
     let(:track_url) { 'rtsp://server/track1' }
     let(:response) do
-      r = double "RTSP::Response"
-      r.should_receive(:session).and_return session
-      r.should_receive(:transport).and_return transport
+      r = double "RTSP::Request"
+      r.stub(:headers).and_return({
+        session: session,
+        transport: transport
+      })
 
       r
     end
 
     let(:transport) do
-      t = double "@transport"
-      t.should_receive(:[]).with(:transport_protocol).twice.and_return "RTP"
-      t.stub_chain(:[], :[]).and_return 1
-      t.should_receive(:[]).with(:destination).and_return "destination"
-
-      t
+      {
+        streaming_protocol: "RTP", profile: "AVP", broadcast_type: "unicast",
+        client_port: { rtp: 6789, rtcp: 9876 }
+      }
     end
 
-    let(:transport_parser) { double "RTSP::TransportParser", parse: transport }
-    let(:session) { 1 }
+    let(:session) { { session_id: 1 } }
 
     before do
-      RTSP::Message.should_receive(:setup).with(track_url).and_return message
+      RTSP::Request.should_receive(:setup).with(track_url).and_return message
       subject.should_receive(:request).with(message).and_yield response
-      RTSP::TransportParser.stub(:new).and_return transport_parser
 
       subject.setup(track_url)
     end
@@ -227,7 +225,7 @@ describe RTSP::Client do
 
   describe "#pause" do
     let(:message) do
-      m = double "RTSP::Message"
+      m = double "RTSP::Request"
       m.should_receive(:with_headers).with(cseq: 1, session: 1).and_return m
       m.should_receive(:add_headers).with({})
 
@@ -235,7 +233,7 @@ describe RTSP::Client do
     end
 
     before do
-      RTSP::Message.should_receive(:pause).and_return message
+      RTSP::Request.should_receive(:pause).and_return message
       subject.instance_variable_set(:@session, { session_id: 1 })
       subject.should_receive(:request).with(message).and_yield
     end
@@ -267,7 +265,7 @@ describe RTSP::Client do
 
   describe "#teardown" do
     let(:message) do
-      m = double "RTSP::Message"
+      m = double "RTSP::Request"
       m.should_receive(:with_headers).with(cseq: 1, session: 1).and_return m
       m.should_receive(:add_headers).with({})
 
@@ -275,7 +273,7 @@ describe RTSP::Client do
     end
 
     before do
-      RTSP::Message.should_receive(:teardown).and_return message
+      RTSP::Request.should_receive(:teardown).and_return message
       subject.instance_variable_set(:@session, { session_id: 1 })
       subject.instance_variable_set(:@session_state, :playing)
       subject.should_receive(:request).with(message).and_yield
@@ -295,7 +293,7 @@ describe RTSP::Client do
 
   describe "#get_parameter" do
     let(:message) do
-      m = double "RTSP::Message"
+      m = double "RTSP::Request"
       m.should_receive(:with_headers).with(cseq: 1).and_return m
       m.should_receive(:add_headers).with({})
       m.should_receive(:body=).with(body)
@@ -306,7 +304,7 @@ describe RTSP::Client do
     let(:body) { "body" }
 
     it "sends the request" do
-      RTSP::Message.should_receive(:get_parameter).and_return message
+      RTSP::Request.should_receive(:get_parameter).and_return message
       subject.should_receive(:request).with(message)
 
       subject.get_parameter('rtsp://localhost/some_track', body)
@@ -315,7 +313,7 @@ describe RTSP::Client do
 
   describe "#set_parameter" do
     let(:message) do
-      m = double "RTSP::Message"
+      m = double "RTSP::Request"
       m.should_receive(:with_headers).with(cseq: 1).and_return m
       m.should_receive(:add_headers).with({})
       m.should_receive(:body=).with(body)
@@ -326,7 +324,7 @@ describe RTSP::Client do
     let(:body) { "body" }
 
     it "sends the request" do
-      RTSP::Message.should_receive(:set_parameter).and_return message
+      RTSP::Request.should_receive(:set_parameter).and_return message
       subject.should_receive(:request).with(message)
 
       subject.set_parameter('rtsp://localhost/some_track', body)
@@ -335,7 +333,7 @@ describe RTSP::Client do
 
   describe "#record" do
     let(:message) do
-      m = double "RTSP::Message"
+      m = double "RTSP::Request"
       m.should_receive(:with_headers).with(cseq: 1, session: 1).and_return m
       m.should_receive(:add_headers).with({})
 
@@ -343,7 +341,7 @@ describe RTSP::Client do
     end
 
     before do
-      RTSP::Message.should_receive(:record).and_return message
+      RTSP::Request.should_receive(:record).and_return message
       subject.instance_variable_set(:@session, { session_id: 1 })
       subject.instance_variable_set(:@session_state, :playing)
       subject.should_receive(:request).with(message).and_yield
@@ -356,7 +354,7 @@ describe RTSP::Client do
     end
   end
 
-  describe "#send_message" do
+  describe "#send_request" do
     it "raises if the send takes longer than the timeout" do
       pending "until I figure out how to test the time out raises"
     end

@@ -1,6 +1,6 @@
 module RTSP
   module Global
     DEFAULT_RTSP_PORT = 554
-    DEFAULT_VERSION = '1.0'
+    DEFAULT_RTSP_VERSION = '1.0'
   end
 end

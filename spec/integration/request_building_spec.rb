@@ -162,9 +162,18 @@ User-Agent: RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})
 
     context "with default sequence, transport, and client_port values" do
       it "builds the request" do
-        request = RTSP::Request.setup(stream).with_headers({
-          transport: ["RTP/AVP", "multicast", { :client_port => "9000-9001" }] }).
-          to_s
+        request = RTSP::Request.setup(stream).
+          with_headers({
+            transport: {
+              streaming_protocol: "RTP",
+              profile: "AVP",
+              broadcast_type: "multicast",
+              client_port: {
+                rtp: 9000,
+                rtcp: 9001
+              }
+            }
+          }).to_s
 
         request.should == %Q{SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 1\r
@@ -178,8 +187,12 @@ Transport: RTP/AVP;multicast;client_port=9000-9001\r
     context "with default transport, client_port, and routing values" do
       it "builds the request" do
         request = RTSP::Request.setup(stream).with_headers({
-          transport: ["RTP/AVP", "multicast", { :client_port => "9000-9001" }],
-          cseq: 2345 }).to_s
+          transport: {
+            streaming_protocol: "RTP",
+            profile: "AVP",
+            broadcast_type: "multicast",
+            client_port: { rtp: 9000, rtcp: 9001 }
+          }, cseq: 2345 }).to_s
 
         request.should == %Q{SETUP rtsp://1.2.3.4:554/stream1 RTSP/1.0\r
 CSeq: 2345\r
@@ -254,7 +267,7 @@ Range: npt=0.000\r
     end
   end
 
-  context "builds a TEARDOWN string" do
+  context "a TEARDOWN string" do
     context "with required Request values" do
       it "builds the request" do
         request = RTSP::Request.teardown(stream).to_s
