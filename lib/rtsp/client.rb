@@ -172,11 +172,11 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-30 RFC 2326, Section 10.1.
     def options(additional_headers={})
       message = RTSP::Request.options(@server_uri.to_s).with_headers({
-        cseq: @cseq })
+        'CSeq' => @cseq })
       message.add_headers additional_headers
 
       request(message) do |response|
-        @supported_methods = extract_supported_methods_from(response.headers[:public])
+        @supported_methods = extract_supported_methods_from(response.headers['Public'])
       end
     end
 
@@ -192,14 +192,14 @@ module RTSP
     # @see #aggregate_control_track
     def describe additional_headers={}
       message = RTSP::Request.describe(@server_uri.to_s).with_headers({
-        cseq: @cseq })
+        'CSeq' => @cseq })
       message.add_headers additional_headers
 
       request(message) do |response|
         @session_description = response.body
         #@session_start_time =   response.body.start_time
         #@session_stop_time =    response.body.stop_time
-        @content_base = build_resource_uri_from response.headers[:content_base]
+        @content_base = build_resource_uri_from response.headers['Content-Base']
 
         @media_control_tracks    = media_control_tracks
         @aggregate_control_track = aggregate_control_track
@@ -217,7 +217,7 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-32 RFC 2326, Section 10.3.
     def announce(request_url, description, additional_headers={})
-      message = RTSP::Request.announce(request_url).with_headers({ cseq: @cseq })
+      message = RTSP::Request.announce(request_url).with_headers('CSeq' => @cseq)
       message.add_headers additional_headers
       message.body = description.to_s
 
@@ -245,7 +245,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-33 RFC 2326, Section 10.4.
     def setup(track, additional_headers={})
       message = RTSP::Request.setup(track).with_headers({
-        cseq: @cseq, transport: request_transport })
+        'CSeq' => @cseq, 'Transport' => request_transport })
       message.add_headers additional_headers
 
       request(message) do |response|
@@ -253,8 +253,8 @@ module RTSP
           @session_state = :ready
         end
 
-        @session   = response.headers[:session]
-        @transport = response.headers[:transport]
+        @session   = response.headers['Session']
+        @transport = response.headers['Transport']
 
         unless @transport[:transport_protocol].nil?
           @capturer.transport_protocol = @transport[:transport_protocol]
@@ -277,7 +277,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-34 RFC 2326, Section 10.5.
     def play(track, additional_headers={}, &block)
       message = RTSP::Request.play(track).with_headers({
-        cseq: @cseq, session: @session[:session_id] })
+        'CSeq' => @cseq, 'Session' => @session[:session_id] })
       message.add_headers additional_headers
 
       request(message) do
@@ -299,7 +299,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-36 RFC 2326, Section 10.6.
     def pause(track, additional_headers={})
       message = RTSP::Request.pause(track).with_headers({
-        cseq: @cseq, session: @session[:session_id] })
+        'CSeq' => @cseq, 'Session' => @session[:session_id] })
       message.add_headers additional_headers
 
       request(message) do
@@ -318,7 +318,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-37 RFC 2326, Section 10.7.
     def teardown(track, additional_headers={})
       message = RTSP::Request.teardown(track).with_headers({
-        cseq: @cseq, session: @session[:session_id] })
+        'CSeq' => @cseq, 'Session' => @session[:session_id] })
       message.add_headers additional_headers
 
       request(message) do
@@ -335,7 +335,7 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-37 RFC 2326, Section 10.8.
     def get_parameter(track, body="", additional_headers={})
-      message = RTSP::Request.get_parameter(track).with_headers({ cseq: @cseq })
+      message = RTSP::Request.get_parameter(track).with_headers('CSeq' => @cseq)
       message.add_headers additional_headers
       message.body = body
 
@@ -350,7 +350,7 @@ module RTSP
     # @return [RTSP::Response]
     # @see http://tools.ietf.org/html/rfc2326#page-38 RFC 2326, Section 10.9.
     def set_parameter(track, parameters, additional_headers={})
-      message = RTSP::Request.set_parameter(track).with_headers({ cseq: @cseq })
+      message = RTSP::Request.set_parameter(track).with_headers('CSeq' => @cseq)
       message.add_headers additional_headers
       message.body = parameters
 
@@ -365,7 +365,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-39 RFC 2326, Section 10.11.
     def record(track, additional_headers={})
       message = RTSP::Request.record(track).with_headers({
-        cseq: @cseq, session: @session[:session_id] })
+        'CSeq' => @cseq, 'Session' => @session[:session_id] })
       message.add_headers additional_headers
 
       request(message) { @session_state = :recording }
@@ -385,11 +385,14 @@ module RTSP
       #compare_sequence_number response.cseq
       @cseq += 1
 
+      log "Got response:"
+      log response.inspect
+
       if response.code.to_s =~ /2../
         yield response if block_given?
       elsif response.code.to_s =~ /(4|5)../
-        if response.headers.has_key?(:connection) &&
-          response.headers[:connection] == 'Close'
+        if response.headers.has_key?('Connection') &&
+          response.headers['Connection'] == 'Close'
           reset_state
         end
 

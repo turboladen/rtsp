@@ -144,8 +144,8 @@ module RTSP
     def default_headers
       headers = {}
 
-      headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      headers[:date] = Time.now.httpdate
+      headers['CSeq'] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
+      headers['Date'] = Time.now.httpdate
 
       headers
     end

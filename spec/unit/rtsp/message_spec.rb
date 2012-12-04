@@ -124,22 +124,30 @@ a=control:trackID=1\r
     context "Session header contains session-id and timeout" do
       it "creates a :session reader with value being a Hash with key/value" do
         subject.parse_head(SETUP_RESPONSE_WITH_SESSION_TIMEOUT)
-        subject.headers.should have_key :session
-        subject.headers[:session].should == { session_id: 118, timeout: 49 }
+        subject.headers.should have_key 'Session'
+        subject.headers['Session'].should == { session_id: 118, timeout: 49 }
       end
     end
 
     context "Session header contains just session-id" do
       it "creates a :session reader with value being a Hash with key/value" do
         subject.parse_head(SETUP_RESPONSE)
-        subject.headers[:session].should == { session_id: 118 }
+        subject.headers['Session'].should == { session_id: 118 }
+      end
+    end
+
+    context "header uses Cseq instead of CSeq" do
+      it "converts the header name to CSeq" do
+        subject.parse_head(NO_CSEQ_VALUE_RESPONSE)
+        subject.headers.should have_key 'CSeq'
+        subject.headers.should_not have_key 'Cseq'
       end
     end
 
     context "header has no value" do
       it "returns empty value string" do
         subject.parse_head(NO_CSEQ_VALUE_RESPONSE)
-        subject.headers[:cseq].should == ""
+        subject.headers['CSeq'].should == ""
       end
     end
   end

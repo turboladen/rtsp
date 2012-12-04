@@ -150,6 +150,8 @@ module RTSP
           next
         end
 
+        line.sub! /Cseq/, "CSeq"
+
         if line.include? "Session: "
           value = {}
           line =~ /Session: (\d+)/
@@ -159,15 +161,16 @@ module RTSP
             value[:timeout] = $1.to_i
           end
 
-          @headers[:session] = value
+          @headers['Session'] = value
         elsif line.include? "Transport: "
           transport_data = line.match(/\S+$/).to_s
           transport_parser = RTSP::TransportParser.new
-          @headers[:transport] = transport_parser.parse(transport_data)
+          @headers['Transport'] = transport_parser.parse(transport_data)
         elsif line.include? ": "
           header_and_value = line.strip.split(":", 2)
-          header_name = header_and_value.first.downcase.gsub(/-/, "_").to_sym
-          value = header_and_value[1].strip
+          header_name = header_and_value.first
+          value = header_and_value.size > 1 ? header_and_value[1].strip : ''
+
           @headers[header_name] = Integer(value) rescue value
         end
       end
