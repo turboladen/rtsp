@@ -7,25 +7,25 @@ describe RTSP::Message do
   let(:stream) { "rtsp://1.2.3.4/stream1" }
 
   describe "#header" do
-    it "raises if the header type isn't a Symbol" do
-      expect { subject.header "hi", "everyone" }.to raise_error RTSP::Error
+    it "raises if the header type isn't a String" do
+      expect { subject.header :hi, "everyone" }.to raise_error RTSP::Error
     end
   end
 
   describe "#with_headers" do
     it "calls #add_headers and returns an RTSP::Message" do
-      new_headers = { test: 'test' }
+      new_headers = { 'Test' => 'test' }
       subject.should_receive(:add_headers).with(new_headers)
 
-      result = subject.with_headers({ test: "test" })
+      result = subject.with_headers('Test' => "test")
       result.should be_a RTSP::Message
     end
   end
 
   describe "#with_headers_and_body" do
     it "returns an RTSP::Message" do
-      new_headers_and_body = { test: 'test', body: 'the body' }
-      subject.should_receive(:with_headers).with({ test: 'test' })
+      new_headers_and_body = { 'Test' => 'test', body: 'the body' }
+      subject.should_receive(:with_headers).with('Test' => 'test')
       subject.should_receive(:with_body).with('the body')
 
       result = subject.with_headers_and_body(new_headers_and_body)
@@ -42,7 +42,7 @@ describe RTSP::Message do
     end
 
     it "adds the Content-Length header to reflect the body" do
-      subject.headers[:content_length].should == new_body.size
+      subject.headers['Content-Length'].should == new_body.size
     end
   end
 
@@ -173,7 +173,7 @@ a=control:trackID=1\r
       end
 
       it "returns an SDP::Description" do
-        subject.instance_variable_set(:@headers, { content_type: 'application/sdp' })
+        subject.instance_variable_set(:@headers, { 'Content-Type' => 'application/sdp' })
         body = subject.parse_body description.to_s
         body.should be_a SDP::Description
         body.username.should == "me"

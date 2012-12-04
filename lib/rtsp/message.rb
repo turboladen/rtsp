@@ -20,7 +20,7 @@ module RTSP
   #
   # You can then build it like a standard message:
   #   message = RTSP::Message.barrel_roll("192.168.1.10").with_headers({
-  #   cseq: 123, content_type: "video/x-m4v" })
+  #   'CSeq' => 123, 'Content-Type' => "video/x-m4v" })
   class Message
     extend RTSP::Global
     include RTSP::Helpers
@@ -41,13 +41,13 @@ module RTSP
 
     # Adds the header and its value to the list of headers for the message.
     #
-    # @param [Symbol] type The header type.
+    # @param [String] type The header type.
     # @param [*] value The value to set the header field to.
     def header(type, value)
-      if type.is_a? Symbol
+      if type.is_a? String
         @headers[type] = value
       else
-        raise RTSP::Error, "Header type must be a Symbol (i.e. :cseq)."
+        raise RTSP::Error, "Header type must be a String (i.e. 'CSeq')."
       end
     end
 
@@ -55,14 +55,14 @@ module RTSP
     # new Message to add headers you want.
     #
     # @example Simple header
-    #   RTSP::Message.options("192.168.1.10").with_headers({ cseq: @cseq })
+    #   RTSP::Message.options("192.168.1.10").with_headers({ 'CSeq' => @cseq })
     # @example Multi-word header
-    #   RTSP::Message.options("192.168.1.10").with_headers({ user_agent:
+    #   RTSP::Message.options("192.168.1.10").with_headers({ 'User-Agent' =>
     #   'My RTSP Client 1.0' })   # => "OPTIONS 192.168.1.10 RTSP 1.0\r\n
     #                             #     CSeq: 1\r\n
     #                             #     User-Agent: My RTSP Client 1.0\r\n"
     # @param [Hash] new_headers The headers to add to the Request.  The Hash
-    #   key of each will be converted from snake_case to Rtsp-Style.
+    #   key of each will be converted from snake_case to RTSP-Style.
     # @return [RTSP::Message]
     def with_headers(new_headers)
       add_headers new_headers
@@ -105,7 +105,7 @@ module RTSP
     #
     # @param [String] new_body
     def add_body new_body
-      add_headers({ content_length: new_body.length })
+      add_headers('Content-Length' => new_body.length)
       @body = new_body
     end
 
@@ -186,7 +186,8 @@ module RTSP
         body.gsub!(/^(\r\n|\n)/, '')
       end
 
-      @body = if @headers[:content_type] && @headers[:content_type].include?("application/sdp")
+      @body = if @headers['Content-Type'] &&
+        @headers['Content-Type'].include?("application/sdp")
         SDP.parse body
       else
         body
@@ -245,7 +246,7 @@ module RTSP
     # @return [String] The header values as a single string.
     def values_to_s(values, separator=";")
       result = values.inject("") do |values_string, (header_field, header_field_value)|
-        if header_field.is_a? Symbol
+        if header_field.is_a? String
           values_string << "#{header_field}=#{header_field_value}"
         elsif header_field.is_a? Hash
           values_string << values_to_s(header_field)
