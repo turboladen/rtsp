@@ -154,7 +154,7 @@ module RTSP
           log "Received response:"
           socket_data.first.each_line { |line| log line.strip }
 
-          RTSP::Response.new socket_data.first
+          RTSP::Response.parse socket_data.first
         end
       rescue Timeout::Error
         raise RTSP::Error, "Request took more than #{@connection.timeout} seconds to send."

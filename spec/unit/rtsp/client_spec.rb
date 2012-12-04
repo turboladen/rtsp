@@ -50,14 +50,14 @@ describe RTSP::Client do
   describe "#options" do
     let(:message) do
       m = double "RTSP::Request"
-      m.should_receive(:with_headers).with(cseq: 1).and_return m
+      m.should_receive(:with_headers).with('CSeq' => 1).and_return m
       m.should_receive(:add_headers).with({})
 
       m
     end
 
     let(:response) do
-      double "RTSP::Request", headers: { public: [:a_method] }
+      double "RTSP::Request", headers: { 'Public' => [:a_method] }
     end
 
     it "creates a RTSP::Request.options from @server_uri" do
@@ -72,7 +72,7 @@ describe RTSP::Client do
   describe "#describe" do
     let(:message) do
       m = double "RTSP::Request"
-      m.should_receive(:with_headers).with(cseq: 1).and_return m
+      m.should_receive(:with_headers).with('CSeq' => 1).and_return m
       m.should_receive(:add_headers).with({})
 
       m
@@ -81,7 +81,7 @@ describe RTSP::Client do
     let(:response) do
       r = double "RTSP::Request"
       r.should_receive(:body).and_return "the body"
-      r.should_receive(:headers).and_return content_base: "content"
+      r.should_receive(:headers).and_return 'Content-Base' => "content"
 
       r
     end
@@ -109,7 +109,7 @@ describe RTSP::Client do
   describe "#announce" do
     let(:message) do
       message = double "RTSP::Request"
-      message.should_receive(:with_headers).with(cseq: 1).and_return message
+      message.should_receive(:with_headers).with('CSeq' => 1).and_return message
       message.should_receive(:add_headers).with({})
       message.should_receive(:body=).with('description')
 
@@ -131,7 +131,7 @@ describe RTSP::Client do
       subject.stub(:request_transport).and_return "transport"
       message = double "RTSP::Request"
       message.should_receive(:with_headers).
-        with(cseq: 1, transport: "transport").and_return message
+        with('CSeq' => 1, 'Transport' => "transport").and_return message
       message.should_receive(:add_headers).with({})
 
       message
@@ -141,8 +141,8 @@ describe RTSP::Client do
     let(:response) do
       r = double "RTSP::Request"
       r.stub(:headers).and_return({
-        session: session,
-        transport: transport
+        'Session' => session,
+        'Transport' => transport
       })
 
       r
@@ -226,7 +226,7 @@ describe RTSP::Client do
   describe "#pause" do
     let(:message) do
       m = double "RTSP::Request"
-      m.should_receive(:with_headers).with(cseq: 1, session: 1).and_return m
+      m.should_receive(:with_headers).with('CSeq' => 1, 'Session' => 1).and_return m
       m.should_receive(:add_headers).with({})
 
       m
@@ -266,7 +266,7 @@ describe RTSP::Client do
   describe "#teardown" do
     let(:message) do
       m = double "RTSP::Request"
-      m.should_receive(:with_headers).with(cseq: 1, session: 1).and_return m
+      m.should_receive(:with_headers).with('CSeq' => 1, 'Session' => 1).and_return m
       m.should_receive(:add_headers).with({})
 
       m
@@ -294,7 +294,7 @@ describe RTSP::Client do
   describe "#get_parameter" do
     let(:message) do
       m = double "RTSP::Request"
-      m.should_receive(:with_headers).with(cseq: 1).and_return m
+      m.should_receive(:with_headers).with('CSeq' => 1).and_return m
       m.should_receive(:add_headers).with({})
       m.should_receive(:body=).with(body)
 
@@ -314,7 +314,7 @@ describe RTSP::Client do
   describe "#set_parameter" do
     let(:message) do
       m = double "RTSP::Request"
-      m.should_receive(:with_headers).with(cseq: 1).and_return m
+      m.should_receive(:with_headers).with('CSeq' => 1).and_return m
       m.should_receive(:add_headers).with({})
       m.should_receive(:body=).with(body)
 
@@ -334,7 +334,7 @@ describe RTSP::Client do
   describe "#record" do
     let(:message) do
       m = double "RTSP::Request"
-      m.should_receive(:with_headers).with(cseq: 1, session: 1).and_return m
+      m.should_receive(:with_headers).with('CSeq' => 1, 'Session' => 1).and_return m
       m.should_receive(:add_headers).with({})
 
       m

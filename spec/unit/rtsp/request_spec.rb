@@ -1,6 +1,7 @@
 require 'spec_helper'
 require 'rtsp/request'
 
+
 describe RTSP::Request do
   RTSP::Request.instance_variable_get(:@method_types).each do |method|
     it "adds a User-Agent header to the #{method} method" do
@@ -22,9 +23,9 @@ describe RTSP::Request do
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should be_nil
-        subject.headers[:cseq].should == 1
-        subject.headers[:require].should == 'implicit-play'
-        subject.headers[:proxy_require].should == 'gzipped-messages'
+        subject.headers['CSeq'].should == 1
+        subject.headers['Require'].should == 'implicit-play'
+        subject.headers['Proxy-Require'].should == 'gzipped-messages'
       end
     end
 
@@ -38,8 +39,8 @@ describe RTSP::Request do
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://server.example.com/fizzle/foo"
-        subject.headers[:cseq].should == 312
-        subject.headers[:accept].should ==
+        subject.headers['CSeq'].should == 312
+        subject.headers['Accept'].should ==
           "application/sdp, application/rtsl, application/mheg"
       end
     end
@@ -54,11 +55,11 @@ describe RTSP::Request do
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://server.example.com/fizzle/foo"
-        subject.headers[:cseq].should == 312
-        subject.headers[:date].should == "23 Jan 1997 15:35:06 GMT"
-        subject.headers[:session].should == { session_id: 47112344 }
-        subject.headers[:content_type].should == "application/sdp"
-        subject.headers[:content_length].should == 332
+        subject.headers['CSeq'].should == 312
+        subject.headers['Date'].should == "23 Jan 1997 15:35:06 GMT"
+        subject.headers['Session'].should == { session_id: 47112344 }
+        subject.headers['Content-Type'].should == "application/sdp"
+        subject.headers['Content-Length'].should == 332
       end
     end
 
@@ -72,8 +73,8 @@ describe RTSP::Request do
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://example.com/foo/bar/baz.rm"
-        subject.headers[:cseq].should == 302
-        subject.headers[:transport].should == {
+        subject.headers['CSeq'].should == 302
+        subject.headers['Transport'].should == {
           streaming_protocol: 'RTP',
           profile: 'AVP',
           broadcast_type: 'unicast',
@@ -94,9 +95,9 @@ describe RTSP::Request do
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://audio.example.com/audio"
-        subject.headers[:cseq].should == 835
-        subject.headers[:session].should == { session_id: 12345678 }
-        subject.headers[:range].should == "npt=10-15"
+        subject.headers['CSeq'].should == 835
+        subject.headers['Session'].should == { session_id: 12345678 }
+        subject.headers['Range'].should == "npt=10-15"
       end
     end
 
@@ -110,8 +111,8 @@ describe RTSP::Request do
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://example.com/fizzle/foo"
-        subject.headers[:cseq].should == 834
-        subject.headers[:session].should == { session_id: 12345678 }
+        subject.headers['CSeq'].should == 834
+        subject.headers['Session'].should == { session_id: 12345678 }
       end
     end
 
@@ -125,8 +126,8 @@ describe RTSP::Request do
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://example.com/fizzle/foo"
-        subject.headers[:cseq].should == 892
-        subject.headers[:session].should == { session_id: 12345678 }
+        subject.headers['CSeq'].should == 892
+        subject.headers['Session'].should == { session_id: 12345678 }
       end
     end
 
@@ -140,9 +141,9 @@ describe RTSP::Request do
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://example.com/fizzle/foo"
-        subject.headers[:cseq].should == 431
-        subject.headers[:content_length].should == 15
-        subject.headers[:session].should == { session_id: 12345678 }
+        subject.headers['CSeq'].should == 431
+        subject.headers['Content-Length'].should == 15
+        subject.headers['Session'].should == { session_id: 12345678 }
       end
     end
 
@@ -156,8 +157,8 @@ describe RTSP::Request do
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://example.com/fizzle/foo"
-        subject.headers[:cseq].should == 421
-        subject.headers[:content_length].should == 20
+        subject.headers['CSeq'].should == 421
+        subject.headers['Content-Length'].should == 20
       end
     end
 
@@ -171,9 +172,9 @@ describe RTSP::Request do
 
         subject.rtsp_version.should == "1.0"
         subject.uri.should == "rtsp://example.com/meeting/audio.en"
-        subject.headers[:cseq].should == 954
-        subject.headers[:session].should == { session_id: 12345678 }
-        subject.headers[:conference].should == "128.16.64.19/32492374"
+        subject.headers['CSeq'].should == 954
+        subject.headers['Session'].should == { session_id: 12345678 }
+        subject.headers['Conference'].should == "128.16.64.19/32492374"
       end
     end
   end

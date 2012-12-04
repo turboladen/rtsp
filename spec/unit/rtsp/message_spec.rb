@@ -140,7 +140,6 @@ a=control:trackID=1\r
       it "converts the header name to CSeq" do
         subject.parse_head(NO_CSEQ_VALUE_RESPONSE)
         subject.headers.should have_key 'CSeq'
-        subject.headers.should_not have_key 'Cseq'
       end
     end
 

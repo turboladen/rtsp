@@ -107,20 +107,20 @@ module RTSP
     def default_headers
       headers = {}
 
-      headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
-      headers[:user_agent] ||= USER_AGENT
+      headers['CSeq'] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
+      headers['User-Agent'] ||= USER_AGENT
 
       case @method_type
       when :describe
-        headers[:accept] = RTSP_ACCEPT_TYPE
+        headers['Accept'] = RTSP_ACCEPT_TYPE
       when :announce
-        headers[:content_type] = RTSP_ACCEPT_TYPE
+        headers['Content-Type'] = RTSP_ACCEPT_TYPE
       when :play
-        headers[:range] = "npt=#{RTSP_DEFAULT_NPT}"
+        headers['Range'] = "npt=#{RTSP_DEFAULT_NPT}"
       when :get_parameter
-        headers[:content_type] = 'text/parameters'
+        headers['Content-Type'] = 'text/parameters'
       when :set_parameter
-        headers[:content_type] = 'text/parameters'
+        headers['Content-Type'] = 'text/parameters'
       else
         {}
       end

@@ -174,6 +174,8 @@ module RTSP
           @headers[header_name] = Integer(value) rescue value
         end
       end
+
+      @headers = Rack::Utils::HeaderHash.new(@headers)
     end
 
     # Reads through each line of the RTSP response body and parses it if

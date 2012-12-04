@@ -131,14 +131,20 @@ module RTSP
     #
     # @param [String] line The String containing the status line info.
     def extract_status_line(line)
-      line =~ /(RTSP|HTTP)\/(\d\.\d) (\d\d\d) ([^\r\n]+)/
-      @rtsp_version   = $2
-      @code           = $3.to_i
-      @status_message = $4
+      /(RTSP|HTTP)\/(?<rtsp_version>\d.\d) (?<code>\d\d\d) (?<status_message>[^\r\n]+)/ =~
+        line
+
+      @rtsp_version = rtsp_version
+      @code = code.to_i
+      @status_message = status_message
 
       if @rtsp_version.nil?
         raise RTSP::Error, "Status line corrupted: #{line}"
       end
+    end
+
+    def status_line
+      "RTSP/#{@rtsp_version} #{@code} #{@status_message}\r\n"
     end
 
     def default_headers
