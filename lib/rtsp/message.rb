@@ -1,4 +1,7 @@
 require 'sdp'
+require 'rack'
+require 'rack/utils'
+
 require_relative 'error'
 require_relative 'global'
 require_relative 'helpers'
@@ -37,6 +40,19 @@ module RTSP
       @headers      = default_headers
       @body         = ""
       @rtsp_version = DEFAULT_RTSP_VERSION
+
+      @env = {
+        'RACK_INPUT' => @body,
+        'RACK_ERRORS' => STDERR,
+        'CONTENT_LENGTH' => @body.size,
+        'rack.version' => Rack::VERSION,
+        'rack.errors' => RTSP::Logger.logger,
+        'rack.input' => '',
+        'rack.multithread' => false,
+        'rack.multiprocess' => false,
+        'rack.run_once' => false,
+        'rack.logger' => RTSP::Logger.logger
+      }
     end
 
     # Adds the header and its value to the list of headers for the message.
@@ -82,7 +98,6 @@ module RTSP
     def with_headers_and_body(new_stuff)
       with_body(new_stuff[:body])
       new_stuff.delete(:body)
-
       with_headers(new_stuff)
 
       self
@@ -213,6 +228,14 @@ module RTSP
       me
     end
 
+    def remote_address=(address)
+      @env['REMOTE_ADDR'] = address
+    end
+
+    def remote_port=(port)
+      @env['REMOTE_PORT'] = port.to_s
+    end
+
     protected
 
     def default_headers
@@ -237,31 +260,6 @@ module RTSP
 
     def status_line
       "This shouldn't get called.  Inheriting classes should redefine this.\r\n"
-    end
-
-    # Creates an attr_reader with the name given and sets it to the value
-    # that's given.
-    #
-    # @param [*] values The header values to put to string.
-    # @param [String] separator The character to use to separate multiple
-    #   values that define a header.
-    # @return [String] The header values as a single string.
-    def values_to_s(values, separator=";")
-      result = values.inject("") do |values_string, (header_field, header_field_value)|
-        if header_field.is_a? String
-          values_string << "#{header_field}=#{header_field_value}"
-        elsif header_field.is_a? Hash
-          values_string << values_to_s(header_field)
-        else
-          values_string << header_field.to_s
-        end
-      end
-
-      instance_variable_set("@#{name}", value)
-
-      define_singleton_method name.to_sym do
-        instance_variable_get "@#{name}".to_sym
-      end
     end
   end
 end

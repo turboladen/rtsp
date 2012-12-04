@@ -1,5 +1,3 @@
-require_relative 'symbol_ext'
-
 class Hash
 
   # Turns headers from Hash(es) into a String, where each element
@@ -7,14 +5,17 @@ class Hash
   #
   # @return [String]
   def to_headers_s
-    order_headers(assemble_headers)
+    #order_headers(assemble_headers)
+    assemble_headers
   end
 
   private
 
+=begin
   def assemble_headers
     self.inject("") do |result, (key, value)|
-      header_name = key.to_header_name
+      #header_name = key.to_header_name
+      header_name = key.is_a?(Symbol) ? key.to_header_name : key
 
       if value.is_a?(Hash) || value.is_a?(Array)
         values = case header_name
@@ -36,7 +37,16 @@ class Hash
       result
     end
   end
+=end
+  def assemble_headers
+    self.inject('') do |result, (field_name, value)|
+      result << "#{field_name}: #{value}\r\n"
 
+      result
+    end
+  end
+
+=begin
   # Takes the values from the +transport_hash+ and turns them into a String,
   # which is ready to add to the Transport header.
   #
@@ -147,4 +157,5 @@ class Hash
 
     result.sub!(/#{separator}$/, '') if result.end_with? separator
   end
+=end
 end

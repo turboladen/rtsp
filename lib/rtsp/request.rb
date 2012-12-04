@@ -1,10 +1,13 @@
 require_relative 'message'
+require_relative 'logger'
 
 module RTSP
 
   # Parses raw request data from the server/client and turns it into
   # attr_readers.
   class Request < Message
+    include LogSwitch::Mixin
+
     USER_AGENT =
       "RubyRTSP/#{RTSP::VERSION} (Ruby #{RUBY_VERSION}-p#{RUBY_PATCHLEVEL})"
 
@@ -44,6 +47,9 @@ module RTSP
           "#{self.class} received nil or empty string--this shouldn't happen."
       end
 
+      RTSP::Logger.log "Got request:"
+      RTSP::Logger.log raw_request
+
       /^(?<method_type>\w+)/ =~ raw_request
 
       new(method_type.downcase.to_sym) do |new_request|
@@ -61,6 +67,7 @@ module RTSP
 
     attr_reader :uri
     attr_reader :method_type
+    attr_reader :env
 
     # @param [Symbol] method_type The RTSP method to build and send.
     # @param [String] request_uri The URL to include in the message.
@@ -75,6 +82,7 @@ module RTSP
 
       super()
 
+      @env['REQUEST_METHOD'] = method_type.to_s.upcase
       yield self if block_given?
     end
 
