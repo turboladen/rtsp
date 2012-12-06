@@ -10,39 +10,29 @@ class ClientTester < Thor
   include Thor::Actions
 
   desc "soma", "Pulls a stream from SomaFM"
+  method_options capture_file: :boolean, duration: :numeric
   def soma
     url = "rtsp://64.202.98.91/sa.sdp"
-    pull_stream url
+    pull_stream url, options[:capture_file], options[:numeric]
   end
 
   desc "sarix", "Pulls a stream from a Sarix camera"
+  method_options capture_file: :boolean, duration: :numeric
   def sarix
     url = "rtsp://10.221.222.242/stream1"
-    pull_stream url
+    pull_stream url, options[:capture_file], options[:numeric]
   end
 
   desc "nsm", "Pulls a stream from a NSM"
+  method_options capture_file: :boolean, duration: :numeric
   def nsm
     url = "rtsp://10.221.222.12/?deviceid=uuid:0ed8f1e9-0ce2-987c-4649-db3ae7aa3a04"
-    pull_stream url
+    pull_stream url, options[:capture_file], options[:numeric]
   end
 
   no_tasks do
-    def pull_stream(url)
-      #cap_file = File.new("soma_cap.rtsp", "wb")
-      url = "rtsp://64.202.98.91/sa.sdp"
+    def pull_stream(url, capture_file=false, duration=5)
       client = RTSP::Client.new(url)
-
-      #client.capturer.rtp_file = cap_file
-      # client = RTSP::Client.new(url) do |client, capturer|
-      #   description = SDP.parse(open("http://test/description.sdp"))
-      #   client.timeout = 30
-      #   client.socket = TCPSocket.new
-      #   client.interleave = true
-      #   capturer.file = Tempfile.new "test"
-      #   capturer.capture_port = 8555
-      #   capturer.protocol = :tcp
-      # end
 
       client.options
       client.describe
@@ -54,32 +44,31 @@ class ClientTester < Thor
       puts "aggregate track: #{aggregate_track}"
 
       client.setup media_track
-      #client.setup media_track, :transport => "RTP/AVP;unicast;client_port=9000-9001"
-      #client.setup media_track, :transport => "RTP/AVP/TCP;unicast;interleaved=0-1"
-      #client[media_track].setup
-      #client.media_control_tracks.play
-      #client.play(aggregate_track)
-      client.play(aggregate_track) do |packet|
-        this_packet = packet.sequence_number
-        puts "RTP sequence: #{this_packet}"
-        puts "payload type", packet.payload_type
 
-        if defined? last_packet
-          puts "last: #{last_packet}"
-          diff = this_packet - last_packet
-          if diff != 1
-            puts "ZOMG!!!!!!!! PACKET DIFF: #{diff}"
+      if capture_file
+        client.play(aggregate_track)
+      else
+        client.play(aggregate_track) do |packet|
+          this_packet = packet.sequence_number
+          puts "RTP sequence: #{this_packet}"
+          puts "payload type", packet.payload_type
+
+          if defined? last_packet
+            puts "last: #{last_packet}"
+            diff = this_packet - last_packet
+            if diff != 1
+              puts "ZOMG!!!!!!!! PACKET DIFF: #{diff}"
+            end
           end
-        end
 
-        last_packet = packet.sequence_number
+          last_packet = packet.sequence_number
+        end
       end
 
-      sleep 50
-      #client[aggregate_track].play
+      sleep duration
       client.teardown aggregate_track
-      p client.capturer.capture_file.path
-      p client.capturer.capture_file.size
+      puts "Capture file path: #{client.capturer.capture_file.path}"
+      puts "Capture file size: #{client.capturer.capture_file.size}"
     end
   end
 end
