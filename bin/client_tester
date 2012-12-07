@@ -13,25 +13,27 @@ class ClientTester < Thor
   method_options capture_file: :boolean, duration: :numeric
   def soma
     url = "rtsp://64.202.98.91/sa.sdp"
-    pull_stream url, options[:capture_file], options[:duration]
+    pull_stream url, options
   end
 
   desc "sarix", "Pulls a stream from a Sarix camera"
   method_options capture_file: :boolean, duration: :numeric
   def sarix
     url = "rtsp://10.221.222.242/stream1"
-    pull_stream url, options[:capture_file], options[:duration]
+    pull_stream url, options
   end
 
   desc "nsm", "Pulls a stream from a NSM"
   method_options capture_file: :boolean, duration: :numeric
   def nsm
     url = "rtsp://10.221.241.208/?deviceid=uuid:0f4b187e-d6dd-414d-9400-1b0d2ee225a1&starttime=2012-12-06T12:20:25&endtime=2012-12-07T01:39:09"
-    pull_stream url, options[:capture_file], options[:duration]
+    pull_stream url, options
   end
 
   no_tasks do
-    def pull_stream(url, capture_file=false, duration=5)
+    def pull_stream(url, options={})
+      capture_file = options[:capture_file] || false
+      duration = options[:duration] || 5
       client = RTSP::Client.new(url)
 
       client.options
