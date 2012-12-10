@@ -143,16 +143,16 @@ module RTSP
     # @raise [RTSP::Error] If the timeout value is reached and the server hasn't
     #   responded.
     def send_request request
-      log "Sending #{request.method_type.upcase} to #{request.uri}"
-      request.to_s.each_line { |line| log line.strip }
+      RTSP::Logger.log "Sending #{request.method_type.upcase} to #{request.uri}"
+      request.to_s.each_line { |line| RTSP::Logger.log line.strip }
 
       begin
         response = Timeout::timeout(@connection.timeout) do
           @connection.socket.send(request.to_s, 0)
           socket_data = @connection.socket.recvfrom MAX_BYTES_TO_RECEIVE
 
-          log "Received response:"
-          socket_data.first.each_line { |line| log line.strip }
+          RTSP::Logger.log "Received response:"
+          socket_data.first.each_line { |line| RTSP::Logger.log line.strip }
 
           RTSP::Response.parse socket_data.first
         end
@@ -285,7 +285,7 @@ module RTSP
           raise RTSP::Error, "Session not set up yet.  Run #setup first."
         end
 
-        log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
+        RTSP::Logger.log "Capturing RTP data on port #{@transport[:client_port][:rtp]}"
         @capturer.start(&block)
         @session_state = :playing
       end
@@ -385,8 +385,9 @@ module RTSP
       #compare_sequence_number response.cseq
       @cseq += 1
 
-      log "Got response:"
-      log response.inspect
+      RTSP::Logger.log "Got response:"
+      RTSP::Logger.log response.inspect
+      RTSP::Logger.log ""
 
       if response.code.to_s =~ /2../
         yield response if block_given?
@@ -415,11 +416,11 @@ module RTSP
     #
     # @return [String] The URL as a String.
     def aggregate_control_track
-      aggregate_control = @session_description.attributes.find_all do |a|
-        a[:attribute] == "control"
+      aggregate_control = @session_description.session_section.attributes.find_all do |a|
+        a.attribute == "control"
       end
 
-      "#{@content_base}#{aggregate_control.first[:value].gsub(/\*/, "")}"
+      "#{@content_base}#{aggregate_control.first.value.gsub(/\*/, "")}"
     end
 
     # Extracts the value of the "control" attribute from all media sections of
@@ -435,9 +436,9 @@ module RTSP
       if @session_description.nil?
         tracks << ""
       else
-        @session_description.media_sections.each do |media_section|
-          media_section[:attributes].each do |a|
-            tracks << "#{@content_base}#{a[:value]}" if a[:attribute] == "control"
+        @session_description.media_descriptions.each do |media_section|
+          media_section.attributes.each do |a|
+            tracks << "#{@content_base}#{a.value}" if a.attribute == "control"
           end
         end
       end
@@ -502,9 +503,6 @@ module RTSP
         raise RTSP::Error, "Session number not retrieved from server yet.  Run SETUP first."
       end
     end
-
   end
 end
-
-RTSP::Logger.log = false
 
