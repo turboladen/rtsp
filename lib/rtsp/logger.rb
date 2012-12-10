@@ -7,3 +7,4 @@ module RTSP
 end
 
 RTSP::Logger.log_class_name = true
+RTSP::Logger.log = false
