@@ -2,11 +2,11 @@ PATH
   remote: .
   specs:
     rtsp (0.4.3)
-      log_switch (>= 0.3.0)
+      log_switch (>= 0.4.0)
       parslet (>= 1.1.0)
       rack (~> 1.4.1)
-      rtp (>= 0.1.3)
-      sdp (~> 0.2.6)
+      rtp (>= 0.1.5)
+      sdp (~> 1.0.0.alpha)
 
 PATH
   remote: ../rtp
@@ -20,8 +20,8 @@ PATH
 PATH
   remote: ../sdp
   specs:
-    sdp (0.2.9)
-      parslet (>= 1.1.0)
+    sdp (1.0.0.alpha)
+      log_switch (>= 0.4.0)
 
 GEM
   remote: http://rubygems.org/
