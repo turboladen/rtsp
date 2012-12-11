@@ -282,7 +282,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-34 RFC 2326, Section 10.5.
     def play(track, additional_headers={}, &block)
       message = RTSP::Request.play(track).with_headers({
-        'CSeq' => @cseq, 'Session' => @session[:session_id] })
+        'CSeq' => @cseq, 'Session' => @session[:id] })
       message.add_headers additional_headers
 
       request(message) do
@@ -304,7 +304,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-36 RFC 2326, Section 10.6.
     def pause(track, additional_headers={})
       message = RTSP::Request.pause(track).with_headers({
-        'CSeq' => @cseq, 'Session' => @session[:session_id] })
+        'CSeq' => @cseq, 'Session' => @session[:id] })
       message.add_headers additional_headers
 
       request(message) do
@@ -323,7 +323,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-37 RFC 2326, Section 10.7.
     def teardown(track, additional_headers={})
       message = RTSP::Request.teardown(track).with_headers({
-        'CSeq' => @cseq, 'Session' => @session[:session_id] })
+        'CSeq' => @cseq, 'Session' => @session[:id] })
       message.add_headers additional_headers
 
       request(message) do
@@ -370,7 +370,7 @@ module RTSP
     # @see http://tools.ietf.org/html/rfc2326#page-39 RFC 2326, Section 10.11.
     def record(track, additional_headers={})
       message = RTSP::Request.record(track).with_headers({
-        'CSeq' => @cseq, 'Session' => @session[:session_id] })
+        'CSeq' => @cseq, 'Session' => @session[:id] })
       message.add_headers additional_headers
 
       request(message) { @session_state = :recording }
@@ -490,8 +490,8 @@ module RTSP
     # @raise [RTSP::Error] If the server returns a Session value that's different
     #   from what the client sent.
     def compare_session_number server_session
-      if @session[:session_id] != server_session
-        message = "Session number mismatch.  Client: #{@session[:session_id]}, Server: #{server_session}"
+      if @session[:id] != server_session
+        message = "Session number mismatch.  Client: #{@session[:id]}, Server: #{server_session}"
         raise RTSP::Error, message
       end
     end

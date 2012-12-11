@@ -169,12 +169,9 @@ module RTSP
 
         if line.include? "Session: "
           value = {}
-          line =~ /Session: (\d+)/
-          value[:session_id] = $1.to_i
-
-          if line =~ /timeout=(.+)/
-            value[:timeout] = $1.to_i
-          end
+          match = line.match(/Session: (?<id>\d+)(;timeout=(?<timeout>\d+))?/)
+          value[:id] = match[:id]
+          value[:timeout] = match[:timeout] if match[:timeout]
 
           @headers['Session'] = value
         elsif line.include? "Transport: "
