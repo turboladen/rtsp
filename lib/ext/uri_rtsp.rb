@@ -1,14 +1,22 @@
 require 'uri'
 
 module URI
-  class RTSP < Generic
+  class RTSP < HTTP
     DEFAULT_PORT = 554
+
+    def request_uri
+      to_s
+    end
   end
 
   @@schemes['RTSP'] = RTSP
 
-  class RTSPU < Generic
+  class RTSPU < HTTP
     DEFAULT_PORT = 554
+
+    def request_uri
+      to_s
+    end
   end
 
   @@schemes['RTSPU'] = RTSPU
