@@ -5,6 +5,7 @@ require 'socket'
 require_relative '../ext/time_ext'
 
 require_relative 'abstract_stream'
+require_relative 'application_dsl'
 require_relative 'error'
 require_relative 'logger'
 require_relative 'server'
@@ -13,6 +14,7 @@ require_relative 'server'
 
 module RTSP
   class Application
+    include RTSP::ApplicationDSL
     include LogSwitch::Mixin
 
     # The SDP description that describes all of the streams.  Per the RFC
@@ -69,125 +71,6 @@ module RTSP
         :user_agent)
 =end
 
-    def self.inherited(subclass)
-
-    end
-
-      def self.stream(path)
-        puts "stream path: #{path}"
-        klass = create_stream_class(path)
-
-        yield klass
-
-        @stream_types ||= {}
-        @stream_types[path] = klass
-        @description ||= default_description
-        @description.media_sections << klass.description
-        RTSP::Logger.log "Updated description: #{@description}"
-        add_routes_for(path)
-      end
-
-      def self.add_routes_for(stream)
-        add_route(:options)
-        add_route(:describe, stream)
-      end
-
-      def self.add_route(verb, stream=nil)
-        @routes ||= {}
-        @routes[verb.to_sym] = stream
-      end
-
-      def self.supported_methods
-        @routes.keys.map { |verb| verb.to_s.upcase }
-      end
-
-      def self.create_stream_class(path)
-        Class.new(::RTSP::AbstractStream) do
-          def initialize
-            super()
-            @path = path
-          end
-        end
-      end
-
-    # Handles the options request.
-    #
-    # @param [String] client_hostname
-    # @return [RTSP::Response] Response headers and body.
-    def self.options(env)
-      RTSP::Response.new(200).with_headers({
-        'CSeq' => env['RTSP_CSEQ'],
-        'Public' => self.supported_methods.join(', ')
-      })
-    end
-
-    def self.describe(env)
-      if env['RTSP_ACCEPT'] &&
-        env['RTSP_ACCEPT'].match(/application\/sdp/)
-        content_type = 'application/sdp'
-      else
-        RTSP::Logger.log "Unknown Accept types: #{env['RTSP_ACCEPT']}", :warn
-        return RTSP::Response.new(451).with_headers('CSeq' => env['RTSP_CSEQ'])
-      end
-
-      p @description[:session_section].delete_if { |k, v| v.nil? || v.to_s.empty? }
-=begin
-      unless @description.valid?
-        raise "Incomplete or erroneous description: #{@description.errors}"
-      end
-=end
-
-      RTSP::Response.new(200).with_headers_and_body({
-        'CSeq' => env['RTSP_CSEQ'],
-        'Content-Type' => content_type,
-        'Content-Base' => env['PATH_INFO'],
-        body: @description.to_s
-      })
-    end
-
-    def self.setup_rtp_sender(type)
-      case type
-      when :socat
-        @rtp_sender = RTP::Sender.instance
-        @rtp_sender.stream_module = RTP::Senders::Socat
-
-        yield @rtp_sender if block_given?
-
-=begin
-      when :indirection
-        # Get remote server's URL
-        server_url = yield()
-
-        # Get description from the remote RTSP server
-        require_relative 'client'
-        client = RTSP::Client.new(server_url)
-        response = client.describe
-        @description = response.body
-
-        # Get the control URL for the main remote presentation and set that for
-        # this URL
-        control = @description.attributes.find { |a| a[:attribute] == "control" }
-        self.url = control[:value]
-
-        # Get the control URL for the first media section so we can get the
-        # Stream object that was setup in configuration.
-        media_control =
-          @description.media_sections.first[:attributes].find { |a| a[:attribute] == "control" }
-        redirected_stream = stream_at(media_control[:value])
-
-        # Create a socket to redirect the RTP data that we'll start receiving.
-        redirected_socket = UDPSocket.new
-        redirected_socket.bind('0.0.0.0', redirected_stream.client_rtp_port)
-        client.capturer.rtp_file = redirected_socket
-
-        # Setup
-        media_track = client.media_control_tracks.first
-        aggregate_track = client.aggregate_control_track
-        client.setup media_track
-        client.play aggregate_track
-=end
-      end
-    end
 
     def self.run!
       app = new
@@ -205,35 +88,6 @@ module RTSP
       self.class.send(request_method, env).rack_response
     end
 
-    private
-
-    # @return [SDP::Description]
-    def self.default_description
-      sdp = SDP::Description.new
-      sdp.username = Etc.getlogin
-      sdp.id = Time.now.to_ntp
-      sdp.version = sdp.id
-      sdp.network_type = "IN"
-      sdp.address_type = "IP4"
-
-      sdp.unicast_address = UDPSocket.open do |s|
-        s.connect('64.233.187.99', 1); s.addr.last
-      end
-
-      sdp.name = "Ruby RTSP Stream"
-      sdp.information = "This is a Ruby RTSP stream"
-      sdp.connection_network_type = "IN"
-      sdp.connection_address_type = "IP4"
-      sdp.connection_address = sdp.unicast_address
-      sdp.start_time = 0
-      sdp.stop_time = 0
-
-      sdp.attributes << { tool: "RubyRTSP #{RTSP::VERSION}" }
-      sdp.attributes << { control: "*" }
-      # User must still define media section.
-
-      sdp
-    end
 =begin
     # Handles the describe request.
     #
