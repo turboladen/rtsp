@@ -83,7 +83,7 @@ module RTSP
     def call(env)
       request_method = env['REQUEST_METHOD'].downcase.to_sym
 
-      RTSP::Logger.log "Received #{request_method} request from #{env['rtsp.remote_address']}:#{env['remote_port']}"
+      RTSP::Logger.log "Application received #{request_method.upcase} request from #{env['rtsp.remote_address']}:#{env['rtsp.remote_port']}"
 
       self.class.send(request_method, env).rack_response
     end
@@ -99,34 +99,6 @@ module RTSP
       description = @stream_server.description(request.multicast?, request.stream_index)
 
       [[], description]
-    end
-    def describe(session, request)
-      log "Received DESCRIBE request from #{session.remote_address}"
-
-      if request.headers[:accept] && request.headers[:accept].match(/application\/sdp/)
-        content_type = 'application/sdp'
-      else
-        log "Unknown Accept types: #{request.headers[:accept]}", :warn
-        return RTSP::Response.new(451).with_headers('CSeq' => session.cseq).to_s
-      end
-
-      p request
-      p request.uri
-      p @stream_list
-      RTSP::Response.new(200).with_headers_and_body({
-        'CSeq' => session.cseq,
-        'Content-Type' => content_type,
-        'Content-Base' => request.uri,
-        body: @stream_list[request.uri].description
-      }).to_s
-    end
-
-    # Handles the announce request.
-    #
-    # @param [RTSP::Request] request
-    # @return [Array<Array<String>>] Response headers and body.
-    def announce(request)
-      []
     end
 
     # Handles the setup request.
@@ -168,65 +140,6 @@ module RTSP
       [response]
     end
 
-    # Handles the get_parameter request.
-    #
-    # @param [RTSP::Request] request
-    # @return [Array<Array<String>>] Response headers and body.
-    def get_parameter(request)
-      log "Received GET_PARAMETER request from #{request.remote_host}"
-      " Pending Implementation"
-
-      [[]]
-    end
-
-    # Handles the set_parameter request.
-    #
-    # @param [RTSP::Request] request
-    # @return [Array<Array<String>>] Response headers and body.
-    def set_parameter(request)
-      log "Received SET_PARAMETER request from #{request.remote_host}"
-      " Pending Implementation"
-
-      [[]]
-    end
-
-    # Handles the redirect request.
-    #
-    # @param [RTSP::Request] request
-    # @return [Array<Array<String>>] Response headers and body.
-    def redirect(request)
-      log "Received REDIRECT request from #{request.remote_host}"
-      " Pending Implementation"
-
-      [[]]
-    end
-
-    # Handles the teardown request.
-    #
-    # @param [RTSP::Request] request
-    # @return [Array<Array<String>>] Response headers and body.
-    def teardown(request)
-      log "Received TEARDOWN request from #{request.remote_host}"
-      sid = request.session[:session_id]
-      @stream_server.stop_streaming sid
-
-      [[]]
-    end
-
-    # Handles a pause request.
-    #
-    # @param [RTSP::Request] request
-    # @return [Array<Array<String>>] Response headers and body.
-    def pause(request)
-      log "Received PAUSE request from #{request.remote_host}"
-      response = []
-      sid = request.session[:session_id]
-      response << "Session: #{sid}"
-      @stream_server.disconnect sid
-
-      [response]
-    end
-
     # Adds the headers to the response.
     #
     # @param [RTSP::Request] request
@@ -252,19 +165,6 @@ module RTSP
 
       result.flatten.join "\r\n"
     end
-
-    # Handles unsupported RTSP requests.
-    #
-    # @param [Symbol] method_name Method name to be called.
-    # @param [Array] args Arguments to be passed in to the method.
-    # @param [Proc] block A block of code to be passed to a method.
-    #def method_missing(method_name, *args, &block)
-    #  log("Received request for #{method_name} (not implemented)", :warn)
-
-    #  [[], "Not Implemented"]
-    #end
-
-
 
     private
 
