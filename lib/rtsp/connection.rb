@@ -13,6 +13,10 @@ module RTSP
     attr_reader :cseq
     attr_accessor :app
 
+    def initialize(host, port)
+      @host, @port = host, port
+    end
+
     def receive_data(data)
       request = RTSP::Request.parse(data)
 
@@ -20,8 +24,8 @@ module RTSP
 
       request.env['REQUEST_METHOD'] = request.method_type.to_s.upcase
       request.env['SERVER_SOFTWARE'] = 'RubyRTSP server CHANGE ME'
-      request.env['SERVER_NAME'] = URI(request.uri).hostname
-      request.env['SERVER_PORT'] = 5554.to_s
+      request.env['SERVER_NAME'] = @host
+      request.env['SERVER_PORT'] = @port
       request.env['SCRIPT_NAME'] = ''
       request.env['PATH_INFO'] = URI(request.uri).path
       request.env['QUERY_STRING'] = URI(request.uri).query || ''

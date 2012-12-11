@@ -12,7 +12,7 @@ module RTSP
 
       def connect
         @signature = EventMachine.start_server(@host, @port, RTSP::Connection,
-          &method(:initialize_connection))
+          @host, @port, &method(:initialize_connection))
       end
 
       def close_connection
