@@ -11,6 +11,9 @@ require_relative 'logger'
 require_relative 'request'
 require_relative 'response'
 
+require_relative '../ext/uri_rtsp'
+
+
 module RTSP
 
   # This is the main interface to an RTSP server.  A client object uses a couple
@@ -153,6 +156,7 @@ module RTSP
 
           RTSP::Logger.log "Received response:"
           socket_data.first.each_line { |line| RTSP::Logger.log line.strip }
+          RTSP::Logger.log "   "
 
           RTSP::Response.parse socket_data.first
         end
@@ -438,7 +442,7 @@ module RTSP
       else
         @session_description.media_descriptions.each do |media_section|
           media_section.attributes.each do |a|
-            tracks << "#{@content_base}#{a.value}" if a.type == "control"
+            tracks << media_control_url(a.value) if a.type == "control"
           end
         end
       end
@@ -447,6 +451,16 @@ module RTSP
     end
 
     private
+
+    # Builds a full URL based on the given value.
+    #
+    # @param [String] value
+    # @return [String] The absolute URL to the stream.
+    def media_control_url(value)
+      uri = URI(value)
+
+      uri.scheme ? value : "#{@content_base}#{value}"
+    end
 
     # Sets state related variables back to their starting values;
     # +@session_state+ is set to +:init+; +@session+ is set to 0.
