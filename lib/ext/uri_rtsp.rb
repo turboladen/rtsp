@@ -7,6 +7,10 @@ module URI
     def request_uri
       to_s
     end
+
+    def multicast?
+      !!host.match(/^239/)
+    end
   end
 
   @@schemes['RTSP'] = RTSP
@@ -16,6 +20,10 @@ module URI
 
     def request_uri
       to_s
+    end
+
+    def multicast?
+      !!host.match(/^239/)
     end
   end
 
