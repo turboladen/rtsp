@@ -148,6 +148,7 @@ module RTSP
     def send_request request
       RTSP::Logger.log "Sending #{request.method_type.upcase} to #{request.uri}"
       request.to_s.each_line { |line| RTSP::Logger.log line.strip }
+      RTSP::Logger.log " "
 
       begin
         response = Timeout::timeout(@connection.timeout) do
@@ -248,10 +249,6 @@ module RTSP
     # @return [RTSP::Response] The response formatted as a Hash.
     # @see http://tools.ietf.org/html/rfc2326#page-33 RFC 2326, Section 10.4.
     def setup(track, additional_headers={})
-      uri = URI(track)
-      @capturer.ip_address = uri.host
-      @capturer.rtp_port = uri.port
-
       message = RTSP::Request.setup(track).with_headers({
         'CSeq' => @cseq, 'Transport' => request_transport })
       message.add_headers additional_headers
