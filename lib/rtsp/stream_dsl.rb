@@ -1,3 +1,6 @@
+require_relative '../ext/uri_rtsp'
+
+
 module RTSP
 
   # This provides the DSL methods to Field classes and instances which make
@@ -10,9 +13,9 @@ module RTSP
 
     module DSLMethods
       attr_accessor :type
-      attr_accessor :source
+      attr_accessor :source_url
+      attr_accessor :destination_path
       attr_reader :codec
-      attr_reader :description
 
       def codec=(new_codec)
         case new_codec
@@ -21,6 +24,10 @@ module RTSP
           description.media.port ||= 6780
           description.media.protocol ||= "RTP/AVP"
           description.media.format ||= 98
+
+          description.add_field :attribute
+          description.attributes.last.type = 'control'
+          description.attributes.last.value = control_url
 
           description.add_field :attribute
           description.attributes.last.type = 'rtpmap'
@@ -36,15 +43,60 @@ module RTSP
       end
 
       def description
-        @description ||= SDP::Groups::MediaDescription.new.seed!
+        return @description if @description
+
+        @description = SDP::Groups::MediaDescription.new
+        @description.add_field :connection_data
+        @description.seed!
+
+        @description
+      end
+
+      def destination_ip=(ip)
+        description.connection_data.connection_address = ip
+        description.attributes.first.value = control_url
+      end
+
+      def destination_ip
+        description.connection_data.connection_address
       end
 
       def destination_port=(new_port)
-        @description.port = new_port
+        description.media.port = new_port
+        description.attributes.first.value = control_url
       end
 
       def destination_port
-        @description.port
+        description.media.port
+      end
+
+      def destination_protocol=(new_protocol)
+        @destination_protocol = new_protocol
+        description.attributes.first.value = control_url
+      end
+
+      def destination_port
+        description.media.port
+      end
+
+      def multicast?
+        !!description.connection_data.connection_address.match(/^239/)
+      end
+
+      # @return [String]
+      def control_url
+        scheme = if @destination_protocol.nil? || @destination_protocol == :tcp
+          "rtsp"
+        elsif @destination_protocol == :udp
+          "rtspu"
+        else
+          raise "Invalid destination protocol for control URL: #{@destination_protocol}"
+        end
+
+        url = URI("#{scheme}://#{destination_ip}:#{destination_port}")
+        url.path = @destination_path
+
+        url.to_s
       end
     end
   end
