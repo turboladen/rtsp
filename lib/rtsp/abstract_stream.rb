@@ -1,60 +1,34 @@
-require_relative 'logger'
 require 'sdp/description'
+
+require_relative 'stream_dsl'
+require_relative 'logger'
 
 
 module RTSP
+  # This class is used by RTSP::Application for templating streams that users
+  # define for the app to serve up.  The Application further defines a stream
+  # class (that inherits from this) at run time, given the info from the user
+  # while defining the application.
+  #
+  # This class should probably never be instantiated manually.
   class AbstractStream
-    # This should just be a media section
-    @@description = {}
-    @@destination_port = 6780
+    include RTSP::StreamDSL
+    include LogSwitch::Mixin
 
-    def self.type=(type)
-      @@type = type
-    end
+    # The SDP description for the stream.  This should only be the media section
+    # of a description, and should thus use a SDP::Groups::MediaDescription.
+    attr_reader :description
 
-    def self.source=(source)
-      @@source = source
-    end
 
-    def self.destination_port=(port)
-      @@destination_port = port
-    end
+    # The object used for sending the actual stream data.
+    attr_accessor :streamer
 
-    def self.codec=(codec)
-      @@codec = codec
+    # The relative path on which the stream is hosted.
+    attr_accessor :path
 
-      case codec
-      when :h264
-        @@description = {
-          media: :video,
-          port: @@destination_port,
-          format: 98,
-          protocol: "RTP/AVP",
-          attributes: [
-            {
-              attribute: 'rtpmap',
-              value: '98 H264/90000'
-            },
-            {
-              attribute: 'fmtp',
-              value: "98 packetization-mode=1;profile-level-id=428032;" +
-                  "sprop-parameter-sets=Z0KAMtoAgAMEwAQAAjKAAAr8gYAAAYhMAABMS0IvfjAA" +
-                  "ADEJgAAJiWhF78CA,aM48gA=="
-            }
-          ]
-        }
-      end
-    end
-
-    def self.description
-      @@description
-    end
-
-    attr_reader :streamer
-
-    def initialize(path, streamer)
-      @path = path
-      @streamer = streamer
+    def initialize
+      @description = self.class.description
+      log "Description: #{@description}"
     end
 
     def play
