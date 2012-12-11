@@ -385,10 +385,6 @@ module RTSP
       #compare_sequence_number response.cseq
       @cseq += 1
 
-      RTSP::Logger.log "Got response:"
-      RTSP::Logger.log response.inspect
-      RTSP::Logger.log ""
-
       if response.code.to_s =~ /2../
         yield response if block_given?
       elsif response.code.to_s =~ /(4|5)../
@@ -417,10 +413,14 @@ module RTSP
     # @return [String] The URL as a String.
     def aggregate_control_track
       aggregate_control = @session_description.session_section.attributes.find_all do |a|
-        a.attribute == "control"
+        a.type == "control"
       end
 
-      "#{@content_base}#{aggregate_control.first.value.gsub(/\*/, "")}"
+      if aggregate_control.empty?
+        ''
+      else
+        "#{@content_base}#{aggregate_control.first.value.gsub(/\*/, "")}"
+      end
     end
 
     # Extracts the value of the "control" attribute from all media sections of
@@ -438,7 +438,7 @@ module RTSP
       else
         @session_description.media_descriptions.each do |media_section|
           media_section.attributes.each do |a|
-            tracks << "#{@content_base}#{a.value}" if a.attribute == "control"
+            tracks << "#{@content_base}#{a.value}" if a.type == "control"
           end
         end
       end
