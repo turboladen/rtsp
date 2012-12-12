@@ -109,6 +109,7 @@ module RTSP
       # @param [Array] env The Rack environment.
       # @return [RTSP::Response] Response headers and body.
       # @todo If aggregate stream is requested, add all stream types to the new session.
+      # @todo Requested Transport might be for multiple streams--does this parse right?
       def setup(env)
         cseq = env['RTSP_CSEQ']
         stream_class = @stream_types[env['PATH_INFO']]
@@ -151,10 +152,14 @@ module RTSP
 
         [response]
 =end
+        transports = session.streams.map do |stream|
+          stream.transport_data(env)
+        end.join(',')
+
         RTSP::Response.new(200).with_headers({
           'CSeq' => env['RTSP_CSEQ'],
           'Session' => "#{session.id};timeout=#{session.timeout}",
-          'Transport' => session.transport_data(env)
+          'Transport' => transports
         })
       end
 

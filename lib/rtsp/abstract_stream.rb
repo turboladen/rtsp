@@ -30,8 +30,16 @@ module RTSP
       self.class.transport_protocol
     end
 
+    def transport_address_type
+      multicast? ? :multicast : :unicast
+    end
+
     def multicast?
       self.class.multicast?
+    end
+
+    def control_url
+      self.class.control_url
     end
 
     def play
@@ -45,6 +53,42 @@ module RTSP
     # The object used for sending the actual stream data.
     def rtp_sender
       self.class.rtp_sender
+    end
+
+    def lower_transport
+      self.class.lower_transport
+    end
+
+    # @todo Figure out lower transport for TCP
+    # @todo interleave streams
+    # @todo setup listener for sever_port
+    def transport_data(env)
+      RTSP::Logger.log "Session transport info..."
+
+      destination_address = env['rtsp.remote_address']
+      requested = env['RTSP_TRANSPORT']
+
+      transport = "#{transport_protocol}"
+      transport << "/#{rtp_sender.socket_type}" if rtp_sender.socket_type == :TCP
+      transport << ";#{transport_address_type}"
+      transport << ";destination=#{destination_address}"
+
+      if transport_address_type == :multicast
+        rtp_port = (requested[:port][:rtp] || rtp_sender.rtp_port).to_i
+        rtcp_port = (requested[:port][:rtcp] || rtp_sender.rtcp_port).to_i
+
+        transport << ";ttl=4"
+        transport << ";port=#{rtp_port}-#{rtcp_port}"
+      else
+        rtp_port = (requested[:client_port][:rtp] || rtp_sender.rtp_port).to_i
+        rtcp_port = (requested[:client_port][:rtcp] ||rtp_sender.rtcp_port).to_i
+
+        transport << ";client_port=#{rtp_port}-#{rtcp_port}"
+        transport << ";server_port=#{rtp_port + 100}-#{rtcp_port + 100}"
+        transport << ";ssrc=#{rtp_sender.ssrc}"
+      end
+
+      transport
     end
   end
 end

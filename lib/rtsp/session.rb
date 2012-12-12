@@ -102,63 +102,6 @@ module RTSP
       Time.now - @updated >= @timeout
     end
 
-    # @todo Figure out lower transport for TCP
-    # @todo interleave streams
-    # @todo multiple streams
-    # @todo setup listener for sever_port
-    def transport_data(env)
-      RTSP::Logger.log "Session transport info..."
-
-      destination_address = env['rtsp.remote_address']
-      requested = env['RTSP_TRANSPORT']
-
-      transport = "#{transport_protocol};#{transport_address_type}"
-      transport << ";destination=#{destination_address}"
-
-      if transport_address_type == :multicast
-        multicast_ports = requested[:port][:rtp], requested[:port][:rtcp] ||
-          @streams.first.rtp_sender.rtp_port, @streams.first.rtp_sender.rtcp_port
-
-        transport << ";ttl=4"
-        transport << ";port=#{multicast_ports.first}-#{multicast_ports.last}"
-      else
-        rtp_port = requested[:client_port][:rtp] || @streams.first.rtp_sender.rtp_port
-        rtcp_port = requested[:client_port][:rtcp] ||@streams.first.rtp_sender.rtcp_port
-
-        transport << ";client_port=#{rtp_port}-#{rtcp_port}"
-        transport << ";server_port=#{rtp_port}-#{rtcp_port}"
-        transport << ";ssrc=#{@streams.first.rtp_sender.ssrc}"
-      end
-
-      transport
-    end
-
-    def transport_address_type
-      ip_address_types = @streams.map(&:multicast?).map do |type|
-        type == true ? :multicast : :unicast
-      end.uniq
-
-      unless ip_address_types.size == 1
-        message = "Multiple transport IP address types specified for session.  "
-        message << "Picking the first one: #{ip_address_types.first}"
-        warn message
-      end
-
-      ip_address_types.first
-    end
-
-    def transport_protocol
-      protocols = @streams.map(&:transport_protocol).uniq
-
-      unless protocols.size == 1
-        message = "Multiple transport protocols specified for session.  "
-        message << "Picking the first one: #{protocol.first}"
-        warn message
-      end
-
-      protocols.first
-    end
-
     def start_cleanup_timer(expired_callback)
       @cleanup_callback ||= expired_callback
 

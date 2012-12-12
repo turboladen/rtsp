@@ -14,6 +14,7 @@ class MyServer < RTSP::Application
     stream.ip_addressing_type :unicast
     stream.destination_port 6770
     stream.transport_protocol "RTP/AVP"
+    stream.lower_transport "TCP"
   end
 
   stream '/stream2' do |stream|
@@ -24,6 +25,7 @@ class MyServer < RTSP::Application
     stream.ip_addressing_type :multicast
     stream.destination_port 6780
     stream.transport_protocol "RTP/AVP"
+    stream.lower_transport "UDP"
   end
 end
 

@@ -97,20 +97,30 @@ module RTSP
         description.media.protocol = new_protocol
       end
 
+      def lower_transport(new_transport=nil)
+        return rtp_sender.socket_type if new_transport.nil?
+
+        unless new_transport.to_s.match(/udp|tcp/i)
+          raise "Unknown lower transport type: #{new_transport}.  Must be UDP or TCP"
+        end
+
+        rtp_sender.socket_type = new_transport
+      end
+
       def multicast?
         m = description.connection_data.connection_address.match(/^(?<octet>\d\d?\d?)/)
 
         m[:octet].to_i >= 224 && m[:octet].to_i <= 239
       end
 
+      #-------------------------------------------------------------------------
+      # Privates
+      private
+
       # @return [String]
       def control_url
         @mount_path[0] == ?/ ? @mount_path.sub(/\//, '') : @mount_path
       end
-
-      #-------------------------------------------------------------------------
-      # Privates
-      private
 
       def setup_rtp_sender(type)
         case type
