@@ -1,4 +1,5 @@
 require_relative '../ext/time_ext'
+require_relative 'logger'
 
 
 module RTSP
@@ -16,16 +17,19 @@ module RTSP
   # Objects of this type are used by RTSP::Applications and RTSP::Clients to keep
   # track of their session state and manage the resources associated to them.
   class Session
+    include LogSwitch::Mixin
 
     # The identifier that labels this session.
-    attr_reader :session_id
+    attr_reader :id
 
-    attr_reader :path
-
-    # @return [RTSP::AbstractStream]
-    attr_reader :stream
+    # @return [Array<RTSP::AbstractStream>] The list of streams associated with
+    #   the session.
+    attr_reader :streams
 
     attr_reader :state
+
+    # The number of seconds before the session expires.  Defaults to 60.
+    attr_reader :timeout
 
     # A session's state indicates where it's at in the process of sending or
     # receiving a stream.  Can be:
@@ -41,10 +45,11 @@ module RTSP
     attr_accessor :state
 
     def initialize
-      @stream = nil
-      @session_id = Time.now.to_ntp
+      @streams = []
+      @id = Time.now.to_ntp.to_s
       @state = :init
-      @path = ''
+      @timeout = 60
+      @updated = Time.now
     end
 
 =begin
@@ -64,11 +69,62 @@ module RTSP
         return false
       end
 
-      @stream.play
+      updated
+      @state = :playing
+      @streams.each(&:play)
+    end
+
+    def playing?
+      @state == :playing
     end
 
     def pause
-      @stream.pause
+      updated
+      @state = :ready
+      @streams.each(&:pause)
+    end
+
+    def ready?
+      @state == :ready
+    end
+
+    def record
+      updated
+      @state = :recording
+      @streams.each(&:record)
+    end
+
+    def recording?
+      @state == :recording
+    end
+
+    def expired?
+      Time.now - @updated >= @timeout
+    end
+
+    def start_cleanup_timer(expired_callback)
+      @cleanup_callback ||= expired_callback
+
+      @cleanup_timer = EventMachine::Timer.new(@timeout) do
+        if expired?
+          expired_callback.call(@id)
+        else
+          restart_cleanup_timer
+        end
+      end
+    end
+
+    def restart_cleanup_timer
+      start_cleanup_timer(@cleanup_callback)
+    end
+
+    private
+
+    def updated
+      @updated = Time.now
+      RTSP::Logger.log "Session #{@id} updated at #{@updated}"
+      @cleanup_timer.cancel
+      restart_cleanup_timer
     end
   end
 end
