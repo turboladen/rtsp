@@ -464,8 +464,9 @@ module RTSP
     # @return [String] The absolute URL to the stream.
     def media_control_url(value)
       uri = URI(value)
+      value = value[0] == ?/ ? value.sub(/^\S/, '') : value
 
-      uri.scheme ? value : "#{@content_base}#{value}"
+      uri.scheme ? value : "#{@content_base}/#{value}"
     end
 
     # Sets state related variables back to their starting values;
