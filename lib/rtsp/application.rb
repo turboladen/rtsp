@@ -22,9 +22,9 @@ module RTSP
     #   A presentation description contains information about one or more media
     #   streams within a presentation, such as the set of encodings, network
     #   addresses and information about the content.
-    attr_reader :description
+    #attr_reader :description
 
-    attr_accessor :session
+    #attr_accessor :session
     #attr_accessor :app
 
 

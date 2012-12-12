@@ -1,4 +1,6 @@
 require_relative 'logger'
+require_relative 'session'
+require_relative 'session_manager'
 
 
 module RTSP
@@ -13,12 +15,22 @@ module RTSP
 
       def stream(path)
         puts "Setting up new stream at: #{path}"
-
-        stream_class = create_stream_class(path)
         @description ||= default_description
         @stream_types ||= {}
 
+        stream_class = instance_eval <<-STREAM
+          class ::RTSP::Stream#{path.sub(/^\//, '').camel_case} < RTSP::AbstractStream
+            self
+          end
+        STREAM
+
+        stream_class.mount_path = path
+
         yield stream_class
+
+        if @stream_types.has_key? path
+          raise "Can't define more than 1 stream at the same path.  Path: #{path}"
+        end
 
         @stream_types[path] = stream_class
         @description.add_group stream_class.description
@@ -30,64 +42,17 @@ module RTSP
       def add_routes_for(stream)
         add_route(:options)
         add_route(:describe, stream)
+        add_route(:setup, stream)
       end
 
-      def add_route(verb, stream=nil)
+      def add_route(verb, stream_path=nil)
         @routes ||= {}
-        @routes[verb.to_sym] = stream
+        @routes[verb.to_sym] ||= []
+        @routes[verb.to_sym] << stream_path
       end
 
       def supported_methods
-        @routes.keys.map { |verb| verb.to_s.upcase }
-      end
-
-      def create_stream_class(path)
-        Class.new(::RTSP::AbstractStream)
-      end
-
-      def setup_rtp_sender(type)
-        case type
-        when :socat
-          @rtp_sender = RTP::Sender.instance
-          @rtp_sender.stream_module = RTP::Senders::Socat
-
-          yield @rtp_sender if block_given?
-
-
-=begin
-      when :indirection
-        # Get remote server's URL
-        server_url = yield()
-
-        # Get description from the remote RTSP server
-        require_relative 'client'
-        client = RTSP::Client.new(server_url)
-        response = client.describe
-        @description = response.body
-
-        # Get the control URL for the main remote presentation and set that for
-        # this URL
-        control = @description.attributes.find { |a| a[:attribute] == "control" }
-        self.url = control[:value]
-
-        # Get the control URL for the first media section so we can get the
-        # Stream object that was setup in configuration.
-        media_control =
-          @description.media_sections.first[:attributes].find { |a| a[:attribute] == "control" }
-        redirected_stream = stream_at(media_control[:value])
-
-        # Create a socket to redirect the RTP data that we'll start receiving.
-        redirected_socket = UDPSocket.new
-        redirected_socket.bind('0.0.0.0', redirected_stream.client_rtp_port)
-        client.capturer.rtp_file = redirected_socket
-
-        # Setup
-        media_track = client.media_control_tracks.first
-        aggregate_track = client.aggregate_control_track
-        client.setup media_track
-        client.play aggregate_track
-=end
-        end
+        @routes.keys.map { |verb| verb.to_s.upcase }.uniq
       end
 
       private
@@ -102,7 +67,7 @@ module RTSP
         end
 
         sdp.session_section.add_field "a=tool:RubyRTSP #{RTSP::VERSION}"
-        sdp.session_section.add_field "a=control:*"
+        #sdp.session_section.add_field "a=control:*"
 
         sdp
       end
@@ -123,22 +88,103 @@ module RTSP
       # @param [Array] env The Rack environment.
       # @return [RTSP::Response] Response headers and body.
       def describe(env)
+        cseq = env['RTSP_CSEQ']
+
         if env['RTSP_ACCEPT'] &&
           env['RTSP_ACCEPT'].match(/application\/sdp/)
           content_type = 'application/sdp'
         else
           RTSP::Logger.log "Unknown Accept types: #{env['RTSP_ACCEPT']}", :warn
-          return RTSP::Response.new(451).with_headers('CSeq' => env['RTSP_CSEQ'])
+          return parameter_not_understood(cseq)
         end
 
         RTSP::Response.new(200).with_headers_and_body({
-          'CSeq' => env['RTSP_CSEQ'],
+          'CSeq' => cseq,
           'Content-Type' => content_type,
-          'Content-Base' => env['PATH_INFO'],
+          'Content-Base' => content_base(env),
           body: @description.to_s
         })
       end
 
+      # @param [Array] env The Rack environment.
+      # @return [RTSP::Response] Response headers and body.
+      # @todo If aggregate stream is requested, add all stream types to the new session.
+      def setup(env)
+        cseq = env['RTSP_CSEQ']
+        stream_class = @stream_types[env['PATH_INFO']]
+        return not_found(cseq) if stream_class.nil?
+
+        # Set up Transport based on request for multicast/unicast
+
+        if env['RTSP_SESSION']
+          requested_session = env['RTSP_SESSION']
+
+          if sessions.has_key? requested_session[:id]
+            return RTSP::Response(200).with_headers({
+              'CSeq' => cseq,
+              'Session' => requested_session[:id],
+              #'Transport' => ''
+            })
+          else
+            return session_not_found(cseq)
+          end
+        end
+
+        RTSP::Logger.log "Requested Transport info: #{env['RTSP_TRANSPORT']}"
+        stream = stream_class.new
+        p stream
+        session = RTSP::Session.new
+        session.streams << stream
+        p session
+        sessions.add session
+
+        p env
+=begin
+        @session = @session.next
+        server_port = @stream_server.setup_streamer(@session,
+          request.transport_url, request.stream_index)
+        response = []
+        transport = generate_transport(request, server_port)
+        response << "Transport: #{transport.join}"
+        response << "Session: #{@session}"
+        response << "\r\n"
+
+        [response]
+=end
+        RTSP::Response.new(200).with_headers({
+          'CSeq' => env['RTSP_CSEQ'],
+          'Session' => "#{session.id};timeout=#{session.timeout}",
+          'Transport' => session.transport_data(env)
+        })
+      end
+
+      def sessions
+        @sessions ||= RTSP::SessionManager.new
+      end
+
+      def content_base(env)
+        scheme = env['rack.url_scheme']
+        host = env['SERVER_NAME']
+        port = env['SERVER_PORT']
+        path = env['PATH_INFO']
+        url = "#{scheme}://#{host}"
+        url << ":#{port}" unless port.to_s.empty?
+        url << path
+
+        url
+      end
+
+      def not_found(cseq)
+        RTSP::Response.new(404).with_headers('CSeq' => cseq)
+      end
+
+      def parameter_not_understood(cseq)
+        RTSP::Response(451).with_headers('CSeq' => cseq)
+      end
+
+      def session_not_found(cseq)
+        RTSP::Response(454).with_headers('CSeq' => cseq)
+      end
     end
   end
 end

@@ -19,24 +19,32 @@ module RTSP
     # of a description, and should thus use a SDP::Groups::MediaDescription.
     attr_reader :description
 
-
-    # The object used for sending the actual stream data.
-    attr_accessor :streamer
-
     # The relative path on which the stream is hosted.
     attr_accessor :path
 
     def initialize
       @description = self.class.description
-      log "Description: #{@description}"
+    end
+
+    def transport_protocol
+      self.class.transport_protocol
+    end
+
+    def multicast?
+      self.class.multicast?
     end
 
     def play
-      @streamer.play
+      rtp_sender.play
     end
 
     def pause
-      @streamer.pause
+      rtp_sender.pause
+    end
+
+    # The object used for sending the actual stream data.
+    def rtp_sender
+      self.class.rtp_sender
     end
   end
 end

@@ -1,4 +1,6 @@
+require 'socket'
 require_relative '../ext/uri_rtsp'
+require 'rtp/sender'
 
 
 module RTSP
@@ -12,13 +14,27 @@ module RTSP
 
 
     module DSLMethods
-      attr_accessor :type
-      attr_accessor :source_url
-      attr_accessor :destination_path
-      attr_reader :codec
+      attr_accessor :source
+      attr_accessor :mount_path
+      attr_reader :rtp_sender
 
-      def codec=(new_codec)
-        case new_codec
+      def type(new_type=nil)
+        return @type if new_type.nil?
+
+        case new_type
+        when :socat
+          @rtp_sender = RTP::Sender.new(new_type)
+        end
+      end
+
+      def source(new_source=nil)
+        return @source if new_source.nil?
+      end
+
+      def codec(new_codec=nil)
+        return @codec if new_codec.nil?
+
+        @code = case new_codec
         when :h264
           description.media.type = :video
           description.media.port ||= 6780
@@ -52,53 +68,77 @@ module RTSP
         @description
       end
 
-      def destination_ip=(ip)
-        description.connection_data.connection_address = ip
-        description.attributes.first.value = control_url
+      def ip_addressing_type(new_type=nil)
+        if new_type.nil?
+          return multicast? ? :multicast : :unicast
+        end
+
+        unless [:unicast, :multicast].include? new_type
+          raise "Unknown IP addressing type: #{new_type}"
+        end
+
+        if new_type == :multicast
+          description.connection_data.connection_address = multicast_ip
+        else
+          description.connection_data.connection_address = local_ip
+        end
       end
 
-      def destination_ip
-        description.connection_data.connection_address
-      end
+      def destination_port(new_port=nil)
+        return description.media.port if new_port.nil?
 
-      def destination_port=(new_port)
         description.media.port = new_port
-        description.attributes.first.value = control_url
       end
 
-      def destination_port
-        description.media.port
-      end
+      def transport_protocol(new_protocol=nil)
+        description.media.protocol ||= 'RTP/AVP'
+        return description.media.protocol if new_protocol.nil?
 
-      def destination_protocol=(new_protocol)
-        @destination_protocol = new_protocol
-        description.attributes.first.value = control_url
-      end
-
-      def destination_port
-        description.media.port
+        description.media.protocol = new_protocol
       end
 
       def multicast?
-        m = description.connection_data.connection_address.match(/^(?<octet>\d\d?\d\?)/)
+        m = description.connection_data.connection_address.match(/^(?<octet>\d\d?\d?)/)
 
         m[:octet].to_i >= 224 && m[:octet].to_i <= 239
       end
 
       # @return [String]
       def control_url
-        scheme = if @destination_protocol.nil? || @destination_protocol == :tcp
-          "rtsp"
-        elsif @destination_protocol == :udp
-          "rtspu"
-        else
-          raise "Invalid destination protocol for control URL: #{@destination_protocol}"
+        @mount_path[0] == ?/ ? @mount_path.sub(/\//, '') : @mount_path
+      end
+
+      #-------------------------------------------------------------------------
+      # Privates
+      private
+
+      def setup_rtp_sender(type)
+        case type
+        when :socat
+          @rtp_sender = RTP::Sender.instance
+          @rtp_sender.stream_module = RTP::Senders::Socat
+
+          yield @rtp_sender if block_given?
+
         end
+      end
 
-        url = URI("#{scheme}://#{destination_ip}:#{destination_port}")
-        url.path = @destination_path
+      def multicast_ip
+        '224.2.0.1'
+      end
 
-        url.to_s
+      # Gets the local IP address.
+      #
+      # @return [String] The IP address.
+      def local_ip
+        orig, Socket.do_not_reverse_lookup = Socket.do_not_reverse_lookup, true  # turn off reverse DNS resolution temporarily
+
+        UDPSocket.open do |s|
+          s.connect '64.233.187.99', 1
+          s.addr.last
+        end
+      ensure
+        Socket.do_not_reverse_lookup = orig
       end
     end
   end
