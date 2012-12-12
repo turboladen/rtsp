@@ -261,7 +261,12 @@ module RTSP
         @session   = response.headers['Session']
         @transport = response.headers['Transport']
 
-        unless @transport[:transport_protocol].nil?
+        unless @transport
+          raise RTSP::Error,
+            "No Transport header received from server; can't continue"
+        end
+
+        unless @transport[:transport_protocol]
           @capturer.transport_protocol = @transport[:transport_protocol]
         end
 
