@@ -4,7 +4,8 @@ require 'thor'
 require './lib/rtsp/client'
 require 'bundler/setup'
 
-RTSP::Client.log = true
+RTSP::Logger.log = true
+
 
 class ClientTester < Thor
   include Thor::Actions
@@ -13,6 +14,20 @@ class ClientTester < Thor
   method_options capture_file: :boolean, duration: :numeric
   def soma
     url = "rtsp://64.202.98.91/sa.sdp"
+    pull_stream url, options
+  end
+
+  desc "local", "Pulls a stream from rtsp://localhost/test"
+  method_options capture_file: :boolean, duration: :numeric
+  def local
+    url = "rtsp://localhost:5554"
+    pull_stream url, options
+  end
+
+  desc "aus", "Pulls a stream from Australia!"
+  method_options capture_file: :boolean, duration: :numeric
+  def aus
+    url = "rtsp://dmzosx001.dpa.act.gov.au/medium"
     pull_stream url, options
   end
 
@@ -48,9 +63,11 @@ class ClientTester < Thor
       client.setup media_track
 
       if capture_file
-        client.play(aggregate_track)
+        #client.play(aggregate_track)
+        client.play(media_track)
       else
-        client.play(aggregate_track) do |packet|
+        #client.play(aggregate_track) do |packet|
+        client.play(media_track) do |packet|
           this_packet = packet.sequence_number
           puts "RTP sequence: #{this_packet}"
           puts "payload type", packet.payload_type
@@ -68,7 +85,8 @@ class ClientTester < Thor
       end
 
       sleep duration
-      client.teardown aggregate_track
+      #client.teardown aggregate_track
+      client.teardown media_track
       puts "Capture file path: #{client.capturer.capture_file.path}"
       puts "Capture file size: #{client.capturer.capture_file.size}"
     end
