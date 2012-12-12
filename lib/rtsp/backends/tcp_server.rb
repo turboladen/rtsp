@@ -4,6 +4,8 @@ require_relative 'base'
 module RTSP
   module Backends
     class TCPServer < Base
+      SCHEME = 'rtsp'
+
       def initialize(host, port)
         @host = host
         @port = port
@@ -20,7 +22,7 @@ module RTSP
       end
 
       def location
-        "#{@host}:#{@port} (TCP)"
+        "#{SCHEME}://#{@host}:#{@port}"
       end
     end
   end
