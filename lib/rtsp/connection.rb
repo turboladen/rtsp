@@ -1,4 +1,5 @@
 require 'rack/utils'
+require 'socket'
 
 require_relative 'logger'
 require_relative 'request'
@@ -24,7 +25,7 @@ module RTSP
 
       request.env['REQUEST_METHOD'] = request.method_type.to_s.upcase
       request.env['SERVER_SOFTWARE'] = 'RubyRTSP server CHANGE ME'
-      request.env['SERVER_NAME'] = @host
+      request.env['SERVER_NAME'] = Socket.gethostname
       request.env['SERVER_PORT'] = @port
       request.env['SCRIPT_NAME'] = ''
       request.env['PATH_INFO'] = URI(request.uri).path
