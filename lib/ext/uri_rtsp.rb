@@ -9,7 +9,9 @@ module URI
     end
 
     def multicast?
-      !!host.match(/^239/)
+      m = host.match(/^(?<octet>\d\d?\d?)/)
+
+      m[:octet].to_i >= 224 && m[:octet].to_i <= 239
     end
   end
 
@@ -23,7 +25,9 @@ module URI
     end
 
     def multicast?
-      !!host.match(/^239/)
+      m = host.match(/^(?<octet>\d\d?\d?)/)
+
+      m[:octet].to_i >= 224 && m[:octet].to_i <= 239
     end
   end
 

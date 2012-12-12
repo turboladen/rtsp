@@ -80,7 +80,9 @@ module RTSP
       end
 
       def multicast?
-        !!description.connection_data.connection_address.match(/^239/)
+        m = description.connection_data.connection_address.match(/^(?<octet>\d\d?\d\?)/)
+
+        m[:octet].to_i >= 224 && m[:octet].to_i <= 239
       end
 
       # @return [String]
