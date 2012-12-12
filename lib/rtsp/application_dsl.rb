@@ -115,8 +115,6 @@ module RTSP
         stream_class = @stream_types[env['PATH_INFO']]
         return not_found(cseq) if stream_class.nil?
 
-        # Set up Transport based on request for multicast/unicast
-
         if env['RTSP_SESSION']
           requested_session = env['RTSP_SESSION']
 
@@ -133,25 +131,10 @@ module RTSP
 
         RTSP::Logger.log "Requested Transport info: #{env['RTSP_TRANSPORT']}"
         stream = stream_class.new
-        p stream
         session = RTSP::Session.new
         session.streams << stream
-        p session
         sessions.add session
 
-        p env
-=begin
-        @session = @session.next
-        server_port = @stream_server.setup_streamer(@session,
-          request.transport_url, request.stream_index)
-        response = []
-        transport = generate_transport(request, server_port)
-        response << "Transport: #{transport.join}"
-        response << "Session: #{@session}"
-        response << "\r\n"
-
-        [response]
-=end
         transports = session.streams.map do |stream|
           stream.transport_data(env)
         end.join(',')
