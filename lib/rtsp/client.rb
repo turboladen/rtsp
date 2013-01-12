@@ -2,6 +2,7 @@ require 'socket'
 require 'tempfile'
 require 'timeout'
 require 'rtp/receiver'
+require "base64"
 
 require_relative 'transport_parser'
 require_relative 'error'
@@ -61,6 +62,15 @@ module RTSP
     # @return [URI] The URI that points to the RTSP server's resource.
     attr_reader :server_uri
 
+    # @return [String] The user used to send Authorization headers on 401 response
+    attr_accessor :server_user
+    
+    # @return [String] The password used to send Authorization headers on 401 response
+    attr_accessor :server_password
+    
+    # @return [Fixnum] The number of tries to send Authorization header when receiving 401
+    attr_accessor :max_authorization_tries
+    
     # @return [Fixnum] Also known as the "sequence" number, this starts at 1 and
     #   increments after every request to the server.  It is reset after
     #   calling #teardown.
@@ -116,11 +126,14 @@ module RTSP
 
       @connection.server_url = server_url || @connection.server_url
       @server_uri            = build_resource_uri_from(@connection.server_url)
+      @server_user           = @server_uri.user
+      @server_password       = @server_uri.password
       @connection.timeout    ||= 30
       @connection.socket     ||= TCPSocket.new(@server_uri.host, @server_uri.port)
       @connection.do_capture ||= true
       @connection.interleave ||= false
 
+      @max_authorization_tries = 3
       @cseq = 1
       reset_state
     end
@@ -383,9 +396,10 @@ module RTSP
       response = send_message message
       #compare_sequence_number response.cseq
       @cseq += 1
-
       if response.code.to_s =~ /2../
         yield response if block_given?
+      elsif response.code == 401
+        send_authorization(message)
       elsif response.code.to_s =~ /(4|5)../
         if (defined? response.connection) && response.connection == 'Close'
           reset_state
@@ -441,7 +455,23 @@ module RTSP
     end
 
     private
-
+    
+    # Resends a message with an Authorization header when possible
+    # @param [RTSP:Message] message The message that must be repeated with Authorization
+    def send_authorization(message)
+      if @max_authorization_tries == 0
+        raise RTSP::Error, "Max number of Authorization tries reached"
+      end
+      if @server_user and @server_password
+        credentials = "#{@server_user}:#{@server_password}"
+        headers = { :authorization => "Basic #{Base64.strict_encode64(credentials)}"}
+        @max_authorization_tries -= 1
+        new_message = RTSP::Message.send(message.method_type.to_sym,@server_uri.to_s).with_headers(headers)
+        new_message.add_headers message.headers
+        request(new_message)
+      end
+    end
+    
     # Sets state related variables back to their starting values;
     # +@session_state+ is set to +:init+; +@session+ is set to 0.
     def reset_state

@@ -83,6 +83,7 @@ module RTSP
       @headers     = default_headers
       @body        = ""
       @version     = DEFAULT_VERSION
+      
     end
 
     # Adds the header and its value to the list of headers for the message.
@@ -171,6 +172,13 @@ module RTSP
     # @return [Hash] The default headers for the given method.
     def default_headers
       headers = {}
+
+      if @request_uri.user and @request_uri.password
+        credentials = "#{@request_uri.user}:#{@request_uri.password}"
+        headers[:authorization] = "Basic #{Base64.strict_encode64(credentials)}"
+        @request_uri.user = nil
+        @request_uri.password = nil
+      end
 
       headers[:cseq] ||= RTSP_DEFAULT_SEQUENCE_NUMBER
       headers[:user_agent] ||= USER_AGENT
