@@ -68,9 +68,6 @@ module RTSP
     # @return [String] The password used to send Authorization headers on 401 response
     attr_accessor :server_password
     
-    # @return [Fixnum] The number of tries to send Authorization header when receiving 401
-    attr_accessor :max_authorization_tries
-    
     # @return [Fixnum] Also known as the "sequence" number, this starts at 1 and
     #   increments after every request to the server.  It is reset after
     #   calling #teardown.
@@ -459,9 +456,6 @@ module RTSP
     # Resends a message with an Authorization header when possible
     # @param [RTSP:Message] message The message that must be repeated with Authorization
     def send_authorization(message)
-      if @max_authorization_tries == 0
-        raise RTSP::Error, "Max number of Authorization tries reached"
-      end
       if @server_user and @server_password
         credentials = "#{@server_user}:#{@server_password}"
         headers = { :authorization => "Basic #{Base64.strict_encode64(credentials)}"}
