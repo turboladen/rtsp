@@ -61,12 +61,6 @@ module RTSP
 
     # @return [URI] The URI that points to the RTSP server's resource.
     attr_reader :server_uri
-
-    # @return [String] The user used to send Authorization headers on 401 response
-    attr_accessor :server_user
-    
-    # @return [String] The password used to send Authorization headers on 401 response
-    attr_accessor :server_password
     
     # @return [Fixnum] Also known as the "sequence" number, this starts at 1 and
     #   increments after every request to the server.  It is reset after
@@ -123,8 +117,6 @@ module RTSP
 
       @connection.server_url = server_url || @connection.server_url
       @server_uri            = build_resource_uri_from(@connection.server_url)
-      @server_user           = @server_uri.user
-      @server_password       = @server_uri.password
       @connection.timeout    ||= 30
       @connection.socket     ||= TCPSocket.new(@server_uri.host, @server_uri.port)
       @connection.do_capture ||= true
@@ -144,6 +136,20 @@ module RTSP
       @server_uri = build_resource_uri_from new_url
     end
 
+    # The user to be used in Basic Authentication
+    #
+    # @param [String] user
+    def server_user=(user)
+      @server_uri.user = user
+    end
+
+    # The password to be used in Basic Authentication
+    #
+    # @param [String] password
+    def server_password=(password)
+      @server_uri.password = password
+    end
+    
     # Sends the message over the socket.
     #
     # @param [RTSP::Message] message
@@ -456,10 +462,9 @@ module RTSP
     # Resends a message with an Authorization header when possible
     # @param [RTSP:Message] message The message that must be repeated with Authorization
     def send_authorization(message)
-      if @server_user and @server_password
-        credentials = "#{@server_user}:#{@server_password}"
-        headers = { :authorization => "Basic #{Base64.strict_encode64(credentials)}"}
-        @max_authorization_tries -= 1
+      if @server_uri.user and @server_uri.password
+        credentials = Base64.strict_encode64("#{@server_uri.user}:#{@server_uri.password}")
+        headers = { :authorization => "Basic #{credentials}" }
         new_message = RTSP::Message.send(message.method_type.to_sym,@server_uri.to_s).with_headers(headers)
         new_message.add_headers message.headers
         request(new_message)
