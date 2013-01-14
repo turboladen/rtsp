@@ -2,6 +2,7 @@ require 'socket'
 require 'tempfile'
 require 'timeout'
 require 'rtp/receiver'
+require "base64"
 
 require_relative 'transport_parser'
 require_relative 'error'
@@ -60,7 +61,7 @@ module RTSP
 
     # @return [URI] The URI that points to the RTSP server's resource.
     attr_reader :server_uri
-
+    
     # @return [Fixnum] Also known as the "sequence" number, this starts at 1 and
     #   increments after every request to the server.  It is reset after
     #   calling #teardown.
@@ -121,6 +122,7 @@ module RTSP
       @connection.do_capture ||= true
       @connection.interleave ||= false
 
+      @max_authorization_tries = 3
       @cseq = 1
       reset_state
     end
@@ -134,6 +136,20 @@ module RTSP
       @server_uri = build_resource_uri_from new_url
     end
 
+    # The user to be used in Basic Authentication
+    #
+    # @param [String] user
+    def server_user=(user)
+      @server_uri.user = user
+    end
+
+    # The password to be used in Basic Authentication
+    #
+    # @param [String] password
+    def server_password=(password)
+      @server_uri.password = password
+    end
+    
     # Sends the message over the socket.
     #
     # @param [RTSP::Message] message
@@ -383,9 +399,10 @@ module RTSP
       response = send_message message
       #compare_sequence_number response.cseq
       @cseq += 1
-
       if response.code.to_s =~ /2../
         yield response if block_given?
+      elsif response.code == 401
+        send_authorization(message)
       elsif response.code.to_s =~ /(4|5)../
         if (defined? response.connection) && response.connection == 'Close'
           reset_state
@@ -441,7 +458,19 @@ module RTSP
     end
 
     private
-
+    
+    # Resends a message with an Authorization header when possible
+    # @param [RTSP:Message] message The message that must be repeated with Authorization
+    def send_authorization(message)
+      if @server_uri.user and @server_uri.password
+        credentials = Base64.strict_encode64("#{@server_uri.user}:#{@server_uri.password}")
+        headers = { :authorization => "Basic #{credentials}" }
+        new_message = RTSP::Message.send(message.method_type.to_sym,@server_uri.to_s).with_headers(headers)
+        new_message.add_headers message.headers
+        request(new_message)
+      end
+    end
+    
     # Sets state related variables back to their starting values;
     # +@session_state+ is set to +:init+; +@session+ is set to 0.
     def reset_state

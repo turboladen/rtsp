@@ -28,6 +28,19 @@ optparse = OptionParser.new do |opts|
   end
 
   #----------------------------------------------------------------------------
+  # Get options
+  opts.on('--options [URL]', "Get options from the given URL.") do |url|
+    if url.nil?
+      puts "Must pass in a URL."
+      exit
+    end
+
+    rtsp_client = RTSP::Client.new(url)
+    puts rtsp_client.options.body.inspect
+    exit
+  end
+
+  #----------------------------------------------------------------------------
   # Show available tracks
   opts.on('--show-tracks [URL]', "Show available tracks from the given URL.") do |url|
     if url.nil?
