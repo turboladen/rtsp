@@ -10,6 +10,14 @@ RTSP::Logger.log = true
 class ClientTester < Thor
   include Thor::Actions
 
+
+  desc "slcn", "Pulls a stream from SLCN Sports"
+  method_options capture_file: :boolean, duration: :numeric
+  def slcn
+    url = "rtsp://media-us-2.soundreach.net/slcn_sports.sdp"
+    pull_stream url, options
+  end
+
   desc "soma", "Pulls a stream from SomaFM"
   method_options capture_file: :boolean, duration: :numeric
   def soma
