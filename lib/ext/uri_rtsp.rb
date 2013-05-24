@@ -7,12 +7,6 @@ module URI
     def request_uri
       to_s
     end
-
-    def multicast?
-      m = host.match(/^(?<octet>\d\d?\d?)/)
-
-      m[:octet].to_i >= 224 && m[:octet].to_i <= 239
-    end
   end
 
   @@schemes['RTSP'] = RTSP
@@ -22,12 +16,6 @@ module URI
 
     def request_uri
       to_s
-    end
-
-    def multicast?
-      m = host.match(/^(?<octet>\d\d?\d?)/)
-
-      m[:octet].to_i >= 224 && m[:octet].to_i <= 239
     end
   end
 
