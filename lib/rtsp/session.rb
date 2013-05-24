@@ -64,14 +64,18 @@ module RTSP
     end
 =end
 
-    def play
+    def setup
+      @state = :ready
+    end
+
+    def play(start_time, stop_time)
       unless @state == :ready
         return false
       end
 
       updated
       @state = :playing
-      @streams.each(&:play)
+      @streams.each { |stream| stream.play(start_time, stop_time) }
     end
 
     def playing?

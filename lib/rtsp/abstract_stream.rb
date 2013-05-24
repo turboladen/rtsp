@@ -1,4 +1,5 @@
 require 'sdp/description'
+require 'rtp/session'
 
 require_relative 'stream_dsl'
 require_relative 'logger'
@@ -22,8 +23,17 @@ module RTSP
     # The relative path on which the stream is hosted.
     attr_accessor :path
 
+    attr_reader :rtp_session
+
     def initialize
       @description = self.class.description
+
+      destination = {
+        protocol: self.class.destination.protocol,
+        port: self.class.destination.start_port
+      }
+
+      @rtp_session = RTP::Session.new(destination, self.class.source)
     end
 
     def transport_protocol
@@ -42,8 +52,8 @@ module RTSP
       self.class.control_url
     end
 
-    def play
-      rtp_sender.play
+    def play(start_time, stop_time)
+      rtp_sender.play(start_time, stop_time)
     end
 
     def pause
@@ -56,7 +66,7 @@ module RTSP
     end
 
     def lower_transport
-      self.class.lower_transport
+      self.class.destination_protocol
     end
 
     # @todo Figure out lower transport for TCP

@@ -43,6 +43,7 @@ module RTSP
         add_route(:options)
         add_route(:describe, stream)
         add_route(:setup, stream)
+        add_route(:play, stream)
       end
 
       def add_route(verb, stream_path=nil)
@@ -51,8 +52,26 @@ module RTSP
         @routes[verb.to_sym] << stream_path
       end
 
+      # @return [Array]
       def supported_methods
         @routes.keys.map { |verb| verb.to_s.upcase }.uniq
+      end
+
+      # Methods that can be called while in the given state.
+      #
+      # @return [Array]
+      def allowed_methods(state)
+        case state
+        when :init
+          methods = supported_methods
+          methods.delete 'PLAY'
+          methods.delete 'PAUSE'
+          methods.delete 'RECORD'
+
+          methods
+        else
+          supported_methods
+        end
       end
 
       private
@@ -134,15 +153,46 @@ module RTSP
         session = RTSP::Session.new
         session.streams << stream
         sessions.add session
+        session.setup
 
         transports = session.streams.map do |stream|
           stream.transport_data(env)
         end.join(',')
 
         RTSP::Response.new(200).with_headers({
-          'CSeq' => env['RTSP_CSEQ'],
+          'CSeq' => cseq,
           'Session' => "#{session.id};timeout=#{session.timeout}",
           'Transport' => transports
+        })
+      end
+
+      def play(env)
+        cseq = env['RTSP_CSEQ']
+        requested_session = env['RTSP_SESSION']
+
+        unless sessions.has_key? requested_session[:id]
+          return session_not_found(cseq)
+        end
+
+        session = sessions[requested_session[:id]]
+
+        unless session.state == :ready
+          puts "Current session state: #{session.state}"
+          return method_not_valid_in_this_state(cseq, session.state)
+        end
+
+        range = env['RTSP_RANGE']
+        m = range.match(/npt=(?<start>[^-]+)(-(?<stop>\S+))?/)
+        start = m[:start]
+        stop = m[:stop] if m[:stop]
+        #RTSP::Logger.log "Range: #{range}; start: #{start}; stop: #{stop}"
+        puts "Range: #{range}; start: #{start}; stop: #{stop}"
+        session.play(start, stop)
+
+        RTSP::Response.new(200).with_headers({
+          'CSeq' => cseq,
+          'Session' => "#{session.id};timeout=#{session.timeout}",
+          'Range' => "npt=#{start}-#{stop}"
         })
       end
 
@@ -167,11 +217,16 @@ module RTSP
       end
 
       def parameter_not_understood(cseq)
-        RTSP::Response(451).with_headers('CSeq' => cseq)
+        RTSP::Response.new(451).with_headers('CSeq' => cseq)
       end
 
       def session_not_found(cseq)
-        RTSP::Response(454).with_headers('CSeq' => cseq)
+        RTSP::Response.new(454).with_headers('CSeq' => cseq)
+      end
+
+      def method_not_valid_in_this_state(cseq, state)
+        RTSP::Response.new(455).with_headers('CSeq' => cseq,
+          'Allow' => allowed_methods(state))
       end
     end
   end

@@ -1,4 +1,5 @@
 require 'socket'
+require 'uri'
 require_relative '../ext/uri_rtsp'
 require 'rtp/sender'
 
@@ -14,36 +15,51 @@ module RTSP
 
 
     module DSLMethods
-      attr_accessor :source
+      attr_reader :type
+      attr_reader :source
+      attr_reader :codec
       attr_accessor :mount_path
       attr_reader :rtp_sender
 
-      def type(new_type=nil)
-        return @type if new_type.nil?
-
+      def type=(new_type)
         case new_type
         when :socat
-          @rtp_sender = RTP::Sender.new(new_type)
+          #@transporter.type = :socat
+          @type = new_type
         end
       end
 
-      def source(new_source=nil)
-        return @source if new_source.nil?
+      def source=(new_source)
+        uri = URI(new_source)
+
+        @source = {
+          protocol: uri.scheme,
+          ip: uri.host,
+          port: uri.port
+        }
       end
 
-      def codec(new_codec=nil)
-        return @codec if new_codec.nil?
+      def destination
+        unless defined? Struct::Destination
+          Struct.new("Destination", :ip_addressing_type, :protocol, :start_port)
+          Struct::Destination.instance_exec do
+            def ip_addressing_type=(type)
+              puts "HI!"
+            end
+          end
+        end
 
+        @destination ||= Struct::Destination.new(:unicast, :UDP, 6780)
+        @destination.ip_addressing_type = "pants"
+      end
+
+      def codec=(new_codec)
         @code = case new_codec
         when :h264
           description.media.type = :video
           description.media.port ||= 6780
           description.media.protocol ||= "RTP/AVP"
           description.media.format ||= 98
-
-          description.add_field :attribute
-          description.attributes.last.type = 'control'
-          description.attributes.last.value = control_url
 
           description.add_field :attribute
           description.attributes.last.type = 'rtpmap'
@@ -58,6 +74,7 @@ module RTSP
         end
       end
 
+      # Not part of the DSL
       def description
         return @description if @description
 
@@ -65,9 +82,22 @@ module RTSP
         @description.add_field :connection_data
         @description.seed!
 
+        description.add_field :attribute
+        description.attributes.last.type = 'control'
+        description.attributes.last.value = control_url
+
+        # Until RTP does RTCP, this needs to be here
+        @description.add_field :bandwidth
+        @description.bandwidths.last.modifier = 'RS'
+        @description.bandwidths.last.value = 0
+        @description.add_field :bandwidth
+        @description.bandwidths.last.modifier = 'RR'
+        @description.bandwidths.last.value = 0
+
         @description
       end
 
+=begin
       def ip_addressing_type(new_type=nil)
         if new_type.nil?
           return multicast? ? :multicast : :unicast
@@ -89,28 +119,11 @@ module RTSP
 
         description.media.port = new_port
       end
-
-      def transport_protocol(new_protocol=nil)
-        description.media.protocol ||= 'RTP/AVP'
-        return description.media.protocol if new_protocol.nil?
-
-        description.media.protocol = new_protocol
-      end
-
-      def lower_transport(new_transport=nil)
-        return rtp_sender.socket_type if new_transport.nil?
-
-        unless new_transport.to_s.match(/udp|tcp/i)
-          raise "Unknown lower transport type: #{new_transport}.  Must be UDP or TCP"
-        end
-
-        rtp_sender.socket_type = new_transport
-      end
+=end
 
       def multicast?
-        m = description.connection_data.connection_address.match(/^(?<octet>\d\d?\d?)/)
-
-        m[:octet].to_i >= 224 && m[:octet].to_i <= 239
+        Addrinfo.ip(description.connection_data.connection_address).ipv4_multicast? ||
+          Addrinfo.ip(description.connection_data.connection_address).ipv6_multicast?
       end
 
       #-------------------------------------------------------------------------
@@ -122,6 +135,7 @@ module RTSP
         @mount_path[0] == ?/ ? @mount_path.sub(/\//, '') : @mount_path
       end
 
+=begin
       def setup_rtp_sender(type)
         case type
         when :socat
@@ -132,6 +146,7 @@ module RTSP
 
         end
       end
+=end
 
       def multicast_ip
         '224.2.0.1'
@@ -140,6 +155,7 @@ module RTSP
       # Gets the local IP address.
       #
       # @return [String] The IP address.
+=begin
       def local_ip
         orig, Socket.do_not_reverse_lookup = Socket.do_not_reverse_lookup, true  # turn off reverse DNS resolution temporarily
 
@@ -150,6 +166,7 @@ module RTSP
       ensure
         Socket.do_not_reverse_lookup = orig
       end
+=end
     end
   end
 end
