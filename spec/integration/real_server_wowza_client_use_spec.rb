@@ -3,7 +3,7 @@ adapted from
 https://github.com/turboladen/rtsp
 original copyright notice follows:
 
-Copyright © 2011 sloveless, mkirby
+Copyright © 2011 sloveless, mkirby, nmccready
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of 
 this software and associated documentation files (the “Software”), to deal in 
@@ -32,7 +32,9 @@ describe "Real Server (Wowza) Client use" do
   # block to show raw output for debugging
   def setup(url)
     response = subject.setup(@mediaUrl) do |transport|
-      puts "SETUP RAW RESPONSE #{transport}"
+      puts "SETUP RAW RESPONSE, Trasport: #{transport}"
+      #by using a block we can now check the error location of the where the
+      #problem begins
       #puts "Pre-ERROR @ RESPONSE #{transport[35]}"
       #puts "Pre-ERROR @ RESPONSE #{transport[36]}"
       #puts "ERROR @ RESPONSE #{transport[37]}"
@@ -68,51 +70,50 @@ describe "Real Server (Wowza) Client use" do
   #  describe "#describe" do
   #    before do
   #      puts "Before describe"
-  #      #@response = subject.describe
+  #      @response = subject.describe
   #      puts "Response field = #{@response}"
   #    end
-    
-  #    it "extracts the aggregate control track" do
-  #      subject.aggregate_control_track.should == 
-  #        "rtsp://#{configatron.rtsp_server_wowza.url}/sa.sdp/"
-  #    end
-
-  #    it "extracts the media control tracks" do
-  #      subject.media_control_tracks.should == ["rtsp://64.202.98.91:554/sa.sdp/trackID=1"]
-  #    end
+  #    
+  #      it "extracts the aggregate control track" do
+  #        puts "Agg  #{subject.aggregate_control_track}"
+  #          "rtsp://#{configatron.rtsp_server_wowza.url}/sa.sdp/"
+  #      end
   #
-  #    it "extracts the SDP object" do
-  #      subject.instance_variable_get(:@session_description).should ==
-  #        @response.body
-  #    end
-  #
-  #    it "extracts the Content-Base header" do
-  #      subject.instance_variable_get(:@content_base).should ==
-  #        URI.parse("rtsp://64.202.98.91:554/sa.sdp/")
-  #    end
-  #
-  #    it "returns a Response" do
-  #      @response.should be_a RTSP::Response
-  #    end
-  #  end
-  #
-  #    describe "#announce" do
-  #      it "returns a Response" do
-  #        @url = "media2.tripsmarter.com/LiveTV/BTV"
-  #        sdp = SDP::Description.new
-  #        rtspUrl = configatron.rtsp_server_wowza.media_url
-  #        subject.setup(rtspUrl)
-  #        response = subject.announce(rtspUrl, sdp)
-  #        response.should be_a RTSP::Response
+  #      it "extracts the media control tracks" do
+  #        subject.media_control_tracks.should == ["rtsp://64.202.98.91:554/sa.sdp/trackID=1"]
+  #      end
+  #  
+  #      it "extracts the SDP object" do
+  #        subject.instance_variable_get(:@session_description).should ==
+  #          @response.body
+  #      end
+  #  
+  #      it "extracts the Content-Base header" do
+  #        subject.instance_variable_get(:@content_base).should ==
+  #          URI.parse("rtsp://64.202.98.91:554/sa.sdp/")
+  #      end
+  #  
+  #     it "returns a Response" do
+  #        @response.should be_a RTSP::Response
   #      end
   #    end
-  #
+  
+  describe "#announce" do
+    it "returns a Response" do
+      sdp = SDP::Description.new
+      subject.setup(@mediaUrl)
+      response = subject.announce(@mediaUrl, sdp)
+      response.should be_a RTSP::Response
+    end
+  end
+  
   describe "#setup" do
     after do
       subject.teardown(@mediaUrl)
     end
     
     it "extracts the session number" do
+      #RTSP::Client.log = true
       subject.session.should be_empty
       setup(@mediaUrl)
       subject.session[:session_id].to_i.should >= 0
@@ -233,17 +234,17 @@ describe "Real Server (Wowza) Client use" do
   #
   #    after do
   #      subject.teardown('rtsp://localhost/some_track')
-      #    end
-      #
-      #    it "returns a Response" do
-      #      response = subject.record("rtsp://localhost/some_track")
-      #      response.is_a?(RTSP::Response).should be_true
-      #    end
-      #
-      #    it "changes the session_state to :recording" do
-      #      subject.session_state.should == :ready
-      #      subject.record("rtsp://localhost/some_track")
-      #      subject.session_state.should == :recording
-      #    end
-      #  end
-      end
+  #    end
+  #
+  #    it "returns a Response" do
+  #      response = subject.record("rtsp://localhost/some_track")
+  #      response.is_a?(RTSP::Response).should be_true
+  #    end
+  #
+  #    it "changes the session_state to :recording" do
+  #      subject.session_state.should == :ready
+  #      subject.record("rtsp://localhost/some_track")
+  #      subject.session_state.should == :recording
+  #    end
+  #  end
+end
