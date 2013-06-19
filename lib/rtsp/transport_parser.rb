@@ -79,10 +79,33 @@ module RTSP
       transport_specifier >>
         (semi_colon >> broadcast_type.as(:broadcast_type)).maybe >>
         (semi_colon >> destination).maybe >>
+        # server permutation
+      (semi_colon >> server_port.as(:server_port)).maybe >>
+        (semi_colon >> client_port.as(:client_port)).maybe >>
+        (semi_colon >> source).maybe >>
+        
+        (semi_colon >> server_port.as(:server_port)).maybe >>
         (semi_colon >> source).maybe >>
         (semi_colon >> client_port.as(:client_port)).maybe >>
+        # client permutation
+      (semi_colon >> client_port.as(:client_port)).maybe >>  
         (semi_colon >> server_port.as(:server_port)).maybe >>
-        (semi_colon >> interleaved.as(:interleaved)).maybe >>
+        (semi_colon >> source).maybe >>
+        
+        (semi_colon >> client_port.as(:client_port)).maybe >>  
+        (semi_colon >> source).maybe >>
+        (semi_colon >> server_port.as(:server_port)).maybe >>
+        
+        # source permutation
+      (semi_colon >> source).maybe >>
+        (semi_colon >> client_port.as(:client_port)).maybe >>  
+        (semi_colon >> server_port.as(:server_port)).maybe >>
+
+        (semi_colon >> source).maybe >>
+        (semi_colon >> server_port.as(:server_port)).maybe >>
+        (semi_colon >> client_port.as(:client_port)).maybe >>  
+        #end permutations for client_port,server_port, and source
+      (semi_colon >> interleaved.as(:interleaved)).maybe >>
         (semi_colon >> ttl).maybe >>
         (semi_colon >> port.as(:port)).maybe >>
         (semi_colon >> ssrc).maybe >>

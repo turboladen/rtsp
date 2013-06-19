@@ -1,7 +1,11 @@
 require 'time'
 
 class FakeRTSPServer
+  #allowing the order of things to be mucked with
+  attr_accessor :setup_maybeSource_maybePorts
+  
   def initialize(*args)
+    @setup_maybeSource_maybePorts = "source=10.221.222.235;client_port=9000-9001;server_port=6700-6701"
   end
 
   def send(*args)
@@ -66,7 +70,7 @@ class FakeRTSPServer
     %Q{RTSP/1.0 200 OK\r
 CSeq: #{@cseq}\r
 Date: #{Time.now.httpdate}\r
-Transport: RTP/AVP;unicast;destination=127.0.0.1;source=10.221.222.235;client_port=9000-9001;server_port=6700-6701\r
+Transport: RTP/AVP;unicast;destination=127.0.0.1;#{@setup_maybeSource_maybePorts}\r
 Session: #{@session}\r
 \r\n}
   end

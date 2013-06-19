@@ -5,7 +5,12 @@ require 'rtsp/client'
 describe "Client use" do
   subject do
     fake_rtsp_server = FakeRTSPServer.new
-
+    
+    if ! @setup_maybeSource_maybePorts.nil?
+      fake_rtsp_server.setup_maybeSource_maybePorts = 
+        @setup_maybeSource_maybePorts
+    end
+    #puts "SETUP: FakeRTSPServer::setup_maybeSource_maybePorts = #{fake_rtsp_server.setup_maybeSource_maybePorts}!!!!!!!!!!!!"
     RTSP::Client.new('http://localhost') do |connection|
       connection.socket = fake_rtsp_server
     end
@@ -66,7 +71,33 @@ describe "Client use" do
       subject.teardown("rtsp://localhost/some_track")
     end
 
-    it "extracts the session number" do
+    it "extracts the session number: default" do
+      subject.session.should be_empty
+      subject.setup("rtsp://localhost/some_track")
+      subject.session[:session_id].should == "1234567890"
+    end
+    # order is not specified in the RFC spec , i am a ruby noob, but parselet 
+    # does not seem to work well with things out of order
+    # is there a better altenative that is more like a JSON parser where order does not matter?
+    it "extracts the session number with a client_port then source in transport" do
+      @setup_maybeSource_maybePorts = 
+        "client_port=9000-9001;source=10.221.222.235;server_port=6700-6701"
+      subject.session.should be_empty
+      subject.setup("rtsp://localhost/some_track")
+      subject.session[:session_id].should == "1234567890"
+    end
+    
+    it "extracts the session number with a client_port,server_port,then source in transport" do
+      @setup_maybeSource_maybePorts = 
+        "client_port=9000-9001;server_port=6700-6701;source=10.221.222.235"
+      subject.session.should be_empty
+      subject.setup("rtsp://localhost/some_track")
+      subject.session[:session_id].should == "1234567890"
+    end
+    
+    it "extracts the session number with a server_port,client_port,then source in transport" do
+      @setup_maybeSource_maybePorts = 
+        "server_port=6700-6701;client_port=9000-9001;source=10.221.222.235"
       subject.session.should be_empty
       subject.setup("rtsp://localhost/some_track")
       subject.session[:session_id].should == "1234567890"
@@ -112,8 +143,8 @@ describe "Client use" do
     end
 
     it "returns a Response" do
-      RTSP::Client.log = true
-      RTP::Logger.log = true
+      RTSP::Client.log = false
+      RTP::Logger.log = false
       response = subject.play("rtsp://localhost/some_track")
       response.should be_a RTSP::Response
     end
