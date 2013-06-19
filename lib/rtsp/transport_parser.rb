@@ -81,7 +81,10 @@ module RTSP
         (semi_colon >> destination).maybe >>
         (semi_colon >> source).maybe >>
         (semi_colon >> client_port.as(:client_port)).maybe >>
+        (semi_colon >> source).maybe >>
         (semi_colon >> server_port.as(:server_port)).maybe >>
+        (semi_colon >> source).maybe >>
+        (semi_colon >> client_port.as(:client_port)).maybe >>
         (semi_colon >> interleaved.as(:interleaved)).maybe >>
         (semi_colon >> ttl).maybe >>
         (semi_colon >> port.as(:port)).maybe >>
