@@ -17,11 +17,16 @@ describe Kernel do
 end
 
 describe RTSP do
-  it "should have a VERSION constant" do
+  it "should have a VERSION constant: version is: #{RTSP::VERSION}" do
     RTSP.const_defined?('VERSION').should be_true
   end
-
-  it "has version 0.4.3" do
-    RTSP::VERSION.should == '0.4.3'
+  it "version should be set correctly" do
+    if RTSP::VERISON_IS_RELEASE
+      RTSP::VERSION.should == '0.4.4'
+    elsif RTSP::VERISON_IS_SNAPSHOT
+      RTSP::VERSION.should == '0.4.4-SNAPSHOT'
+    else
+      RTSP::VERSION.should == "0.4.4-#{Time.now.strftime("%Y%m%d-%H%M%S")}"
+    end
   end
 end
