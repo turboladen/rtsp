@@ -9,3 +9,6 @@ doc/
 pkg/
 *.rtsp
 .rbx/
+nbproject/
+# vim
+*.swp

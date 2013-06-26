@@ -269,8 +269,10 @@ module RTSP
 
         @session   = response.session
         parser     = RTSP::TransportParser.new
+        #pass up raw transport for debug and/or logging
+        yield response.transport if block_given?
         @transport = parser.parse(response.transport)
-
+          
         unless @transport[:transport_protocol].nil?
           @capturer.transport_protocol = @transport[:transport_protocol]
         end
