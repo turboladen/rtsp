@@ -2,235 +2,236 @@ require 'sdp'
 require 'spec_helper'
 require 'rtsp/client'
 
-describe "Client use" do
+
+describe 'Client use' do
   subject do
     fake_rtsp_server = FakeRTSPServer.new
     
-    if ! @setup_maybeSource_maybePorts.nil?
-      fake_rtsp_server.setup_maybeSource_maybePorts = 
+    if @setup_maybeSource_maybePorts
+      fake_rtsp_server.setup_maybeSource_maybePorts =
         @setup_maybeSource_maybePorts
     end
-    #puts "SETUP: FakeRTSPServer::setup_maybeSource_maybePorts = #{fake_rtsp_server.setup_maybeSource_maybePorts}!!!!!!!!!!!!"
+
     RTSP::Client.new('http://localhost') do |connection|
       connection.socket = fake_rtsp_server
     end
   end
 
-  describe "#options" do
+  describe '#options' do
     it "extracts the server's supported methods" do
       subject.options
       subject.supported_methods.should ==
         [:describe, :setup, :teardown, :play, :pause]
     end
 
-    it "returns a Response" do
+    it 'returns a Response' do
       response = subject.options
       response.should be_a RTSP::Response
     end
   end
 
-  describe "#describe" do
+  describe '#describe' do
     before do
       @response = subject.describe
     end
 
-    it "extracts the aggregate control track" do
-      subject.aggregate_control_track.should == "rtsp://64.202.98.91:554/sa.sdp/"
+    it 'extracts the aggregate control track' do
+      subject.aggregate_control_track.should == 'rtsp://64.202.98.91:554/sa.sdp/'
     end
 
-    it "extracts the media control tracks" do
-      subject.media_control_tracks.should == ["rtsp://64.202.98.91:554/sa.sdp/trackID=1"]
+    it 'extracts the media control tracks' do
+      subject.media_control_tracks.should == %w[rtsp://64.202.98.91:554/sa.sdp/trackID=1]
     end
 
-    it "extracts the SDP object" do
+    it 'extracts the SDP object' do
       subject.instance_variable_get(:@session_description).should ==
         @response.body
     end
 
-    it "extracts the Content-Base header" do
+    it 'extracts the Content-Base header' do
       subject.instance_variable_get(:@content_base).should ==
-        URI.parse("rtsp://64.202.98.91:554/sa.sdp/")
+        URI.parse('rtsp://64.202.98.91:554/sa.sdp/')
     end
 
-    it "returns a Response" do
+    it 'returns a Response' do
       @response.should be_a RTSP::Response
     end
   end
 
-  describe "#announce" do
-    it "returns a Response" do
+  describe '#announce' do
+    it 'returns a Response' do
       sdp = SDP::Description.new
-      subject.setup("rtsp://localhost/another_track")
-      response = subject.announce("rtsp://localhost/another_track", sdp)
+      subject.setup('rtsp://localhost/another_track')
+      response = subject.announce('rtsp://localhost/another_track', sdp)
       response.should be_a RTSP::Response
     end
   end
 
-  describe "#setup" do
+  describe '#setup' do
     after do
-      subject.teardown("rtsp://localhost/some_track")
+      subject.teardown('rtsp://localhost/some_track')
     end
 
-    it "extracts the session number: default" do
+    it 'extracts the session number: default' do
       subject.session.should be_empty
-      subject.setup("rtsp://localhost/some_track")
-      subject.session[:session_id].should == "1234567890"
+      subject.setup('rtsp://localhost/some_track')
+      subject.session[:session_id].should == '1234567890'
     end
     # order is not specified in the RFC spec , i am a ruby noob, but parselet 
     # does not seem to work well with things out of order
     # is there a better altenative that is more like a JSON parser where order does not matter?
-    it "extracts the session number with a client_port then source in transport" do
+    it 'extracts the session number with a client_port then source in transport' do
       @setup_maybeSource_maybePorts = 
-        "client_port=9000-9001;source=10.221.222.235;server_port=6700-6701"
+        'client_port=9000-9001;source=10.221.222.235;server_port=6700-6701'
       subject.session.should be_empty
-      subject.setup("rtsp://localhost/some_track")
-      subject.session[:session_id].should == "1234567890"
+      subject.setup('rtsp://localhost/some_track')
+      subject.session[:session_id].should == '1234567890'
     end
     
-    it "extracts the session number with a client_port,server_port,then source in transport" do
+    it 'extracts the session number with a client_port,server_port,then source in transport' do
       @setup_maybeSource_maybePorts = 
-        "client_port=9000-9001;server_port=6700-6701;source=10.221.222.235"
+        'client_port=9000-9001;server_port=6700-6701;source=10.221.222.235'
       subject.session.should be_empty
-      subject.setup("rtsp://localhost/some_track")
-      subject.session[:session_id].should == "1234567890"
+      subject.setup('rtsp://localhost/some_track')
+      subject.session[:session_id].should == '1234567890'
     end
     
-    it "extracts the session number with a server_port,client_port,then source in transport" do
+    it 'extracts the session number with a server_port,client_port,then source in transport' do
       @setup_maybeSource_maybePorts = 
-        "server_port=6700-6701;client_port=9000-9001;source=10.221.222.235"
+        'server_port=6700-6701;client_port=9000-9001;source=10.221.222.235'
       subject.session.should be_empty
-      subject.setup("rtsp://localhost/some_track")
-      subject.session[:session_id].should == "1234567890"
+      subject.setup('rtsp://localhost/some_track')
+      subject.session[:session_id].should == '1234567890'
     end
 
-    it "changes the session_state to :ready" do
-      subject.setup("rtsp://localhost/some_track")
+    it 'changes the session_state to :ready' do
+      subject.setup('rtsp://localhost/some_track')
       subject.session_state.should == :ready
     end
 
-    it "extracts the transport header info" do
+    it 'extracts the transport header info' do
       subject.instance_variable_get(:@transport).should be_nil
-      subject.setup("rtsp://localhost/some_track")
+      subject.setup('rtsp://localhost/some_track')
       subject.instance_variable_get(:@transport).should == {
-        streaming_protocol: "RTP",
-        profile: "AVP",
-        broadcast_type: "unicast",
-        destination: "127.0.0.1",
-        source: "10.221.222.235",
-        client_port: { rtp: "9000", rtcp: "9001" },
-        server_port: { rtp: "6700", rtcp: "6701" }
+        streaming_protocol: 'RTP',
+        profile: 'AVP',
+        broadcast_type: 'unicast',
+        destination: '127.0.0.1',
+        source: '10.221.222.235',
+        client_port: { rtp: '9000', rtcp: '9001' },
+        server_port: { rtp: '6700', rtcp: '6701' }
       }
     end
 
-    it "returns a Response" do
-      response = subject.setup("rtsp://localhost/some_track")
+    it 'returns a Response' do
+      response = subject.setup('rtsp://localhost/some_track')
       response.should be_a RTSP::Response
     end
   end
 
-  describe "#play" do
+  describe '#play' do
     before do
-      subject.setup("rtsp://localhost/some_track")
+      subject.setup('rtsp://localhost/some_track')
     end
 
     after do
       subject.teardown('rtsp://localhost/some_track')
     end
 
-    it "changes the session_state to :playing" do
-      subject.play("rtsp://localhost/some_track")
+    it 'changes the session_state to :playing' do
+      subject.play('rtsp://localhost/some_track')
       subject.session_state.should == :playing
     end
 
-    it "returns a Response" do
+    it 'returns a Response' do
       RTSP::Client.log = false
       RTP::Logger.log = false
-      response = subject.play("rtsp://localhost/some_track")
+      response = subject.play('rtsp://localhost/some_track')
       response.should be_a RTSP::Response
     end
   end
 
-  describe "#pause" do
+  describe '#pause' do
     before :each do
-      subject.setup("rtsp://localhost/some_track")
+      subject.setup('rtsp://localhost/some_track')
     end
 
     after do
       subject.teardown('rtsp://localhost/some_track')
     end
 
-    it "changes the session_state from :playing to :ready" do
-      subject.play("rtsp://localhost/some_track")
-      subject.pause("rtsp://localhost/some_track")
+    it 'changes the session_state from :playing to :ready' do
+      subject.play('rtsp://localhost/some_track')
+      subject.pause('rtsp://localhost/some_track')
       subject.session_state.should == :ready
     end
 
-    it "changes the session_state from :recording to :ready" do
-      subject.record("rtsp://localhost/some_track")
-      subject.pause("rtsp://localhost/some_track")
+    it 'changes the session_state from :recording to :ready' do
+      subject.record('rtsp://localhost/some_track')
+      subject.pause('rtsp://localhost/some_track')
       subject.session_state.should == :ready
     end
 
-    it "returns a Response" do
-      response = subject.pause("rtsp://localhost/some_track")
+    it 'returns a Response' do
+      response = subject.pause('rtsp://localhost/some_track')
       response.should be_a RTSP::Response
     end
   end
 
-  describe "#teardown" do
+  describe '#teardown' do
     before do
-      subject.setup("rtsp://localhost/some_track")
+      subject.setup('rtsp://localhost/some_track')
     end
 
-    it "changes the session_state to :init" do
+    it 'changes the session_state to :init' do
       subject.session_state.should_not == :init
-      subject.teardown("rtsp://localhost/some_track")
+      subject.teardown('rtsp://localhost/some_track')
       subject.session_state.should == :init
     end
 
-    it "changes the session_id back to 0" do
+    it 'changes the session_id back to 0' do
       subject.session.should_not be_empty
-      subject.teardown("rtsp://localhost/some_track")
+      subject.teardown('rtsp://localhost/some_track')
       subject.session.should be_empty
     end
 
-    it "returns a Response" do
-      response = subject.teardown("rtsp://localhost/some_track")
+    it 'returns a Response' do
+      response = subject.teardown('rtsp://localhost/some_track')
       response.should be_a RTSP::Response
     end
   end
 
-  describe "#get_parameter" do
-    it "returns a Response" do
-      response = subject.get_parameter("rtsp://localhost/some_track", "ping!")
+  describe '#get_parameter' do
+    it 'returns a Response' do
+      response = subject.get_parameter('rtsp://localhost/some_track', 'ping!')
       response.should be_a RTSP::Response
     end
   end
 
-  describe "#set_parameter" do
-    it "returns a Response" do
-      response = subject.set_parameter("rtsp://localhost/some_track", "ping!")
+  describe '#set_parameter' do
+    it 'returns a Response' do
+      response = subject.set_parameter('rtsp://localhost/some_track', 'ping!')
       response.should be_a RTSP::Response
     end
   end
 
-  describe "#record" do
+  describe '#record' do
     before :each do
-      subject.setup("rtsp://localhost/some_track")
+      subject.setup('rtsp://localhost/some_track')
     end
 
     after do
       subject.teardown('rtsp://localhost/some_track')
     end
 
-    it "returns a Response" do
-      response = subject.record("rtsp://localhost/some_track")
+    it 'returns a Response' do
+      response = subject.record('rtsp://localhost/some_track')
       response.is_a?(RTSP::Response).should be_true
     end
 
-    it "changes the session_state to :recording" do
+    it 'changes the session_state to :recording' do
       subject.session_state.should == :ready
-      subject.record("rtsp://localhost/some_track")
+      subject.record('rtsp://localhost/some_track')
       subject.session_state.should == :recording
     end
   end
