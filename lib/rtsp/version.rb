@@ -1,9 +1,13 @@
 module RTSP
-  # rtsp version
-  VERISON_IS_SNAPSHOT = false
-  VERISON_IS_RELEASE = false
-  version = "0.4.4"
-  snap_str =   "#{version}-SNAPSHOT"
-  daily_str  =  "#{version}-#{Time.now.strftime("%Y%m%d-%H%M%S")}"
-  VERSION = (VERISON_IS_RELEASE) ? version : ((VERISON_IS_SNAPSHOT) ? snap_str : daily_str )
+  SNAPSHOT = false
+  RELEASE = false
+  BASE_VERSION = '0.4.4'
+
+  VERSION = if RELEASE
+              BASE_VERSION
+            elsif SNAPSHOT
+              "#{BASE_VERSION}.SNAPSHOT"
+            else
+              "#{BASE_VERSION}.#{Time.now.strftime('%Y%m%d.%H%M%S')}"
+            end
 end
