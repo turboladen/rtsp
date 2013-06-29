@@ -5,7 +5,7 @@ class FakeRTSPServer
   attr_accessor :setup_maybeSource_maybePorts
   
   def initialize(*args)
-    @setup_maybeSource_maybePorts = "source=10.221.222.235;client_port=9000-9001;server_port=6700-6701"
+    @setup_maybeSource_maybePorts = 'source=10.221.222.235;client_port=9000-9001;server_port=6700-6701'
   end
 
   def send(*args)
