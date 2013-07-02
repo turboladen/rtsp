@@ -13,5 +13,6 @@ task :default => :spec
 task :test => :spec       # for `gem test`
 
 YARD::Rake::YardocTask.new do |t|
+  t.files = %w(lib/**/*.rb - ChangeLog.md)
   t.options = %w[--verbose]
 end
