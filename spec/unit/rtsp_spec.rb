@@ -18,7 +18,7 @@ end
 
 describe RTSP do
   describe '.release_version?' do
-    specify { RTSP.release_version?.should be_false }
+    specify { RTSP.release_version?.should be_true }
   end
 
   describe '.snapshot_version?' do

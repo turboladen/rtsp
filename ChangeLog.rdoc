@@ -1,3 +1,11 @@
+=== 0.4.4 / 2013-07-01
+
+* Improvements
+  * {gh-21}[htts://github.com/turboladen/rtsp/issues/21] Transport header
+    parser is now a little more flexible.  This functionality really needs a
+    rewrite, and should be done as part of
+    {gh-15}[htts://github.com/turboladen/rtsp/issues/15].
+
 === 0.4.3 / 2012-11-20
 
 * Bug fixes

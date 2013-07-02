@@ -1,6 +1,6 @@
 module RTSP
   SNAPSHOT = false
-  RELEASE = false
+  RELEASE = true
   BASE_VERSION = '0.4.4'
 
   VERSION = if RELEASE
