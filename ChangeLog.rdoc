@@ -4,7 +4,8 @@
   * {gh-21}[htts://github.com/turboladen/rtsp/issues/21] Transport header
     parser is now a little more flexible.  This functionality really needs a
     rewrite, and should be done as part of
-    {gh-15}[htts://github.com/turboladen/rtsp/issues/15].
+    {gh-15}[htts://github.com/turboladen/rtsp/issues/15]. Thanks
+    {nmccready}[http:github.com/nmccready]!
 
 === 0.4.3 / 2012-11-20
 
@@ -20,25 +21,29 @@
 * Other
   * Turned logging off by default.  To enable, simply do <tt>RTSP::Client.log = true</tt>
   * Updated to work with RTP 0.1.0.
-  * Can now inspect RTP packets during #play.
+  * Can now inspect RTP packets during {RTSP::Client#play}.
 
 === 0.4.1 / 2012-11-14
 
 * Bug fixes
-  * gh-16: Can now parse Session IDs to be alpha characters.  Thanks @greywolf-colorado!
+  * gh-16[https://github.com/turboladen/rtsp/issues/16]: Can now parse +Session+
+    IDs to be alpha characters.  Thanks
+    greywolf-colorado[http://github.com/greywolf-colorado]!
 
 * Improvements
-  * gh-17: Responses now handle HTTP responses.
+  * gh-17[https://github.com/turboladen/rtsp/issues/17]: Responses now handle
+    HTTP responses.
 
 === 0.4.0 / 2012-03-08
 
 * Improvements
-  * gh-11: Transport header parser bolstering:
+  * gh-11[https://github.com/turboladen/rtsp/issues/17]: Transport header
+    parser bolstering:
     * values that should be caps, will parse OK as lowercase now.
-      * :broadcast_type now parses 'multicast'.
-      * :destination now returns the value of the destination instead of
+      * +:broadcast_type+ now parses 'multicast'.
+      * +:destination+ now returns the value of the destination instead of
         "destination=x.x.x.x"
-      * :source now returns the value of the source instead of "source=x.x.x.x"
+      * +:source+ now returns the value of the source instead of "source=x.x.x.x"
       * Added parsing for fields:
         * ttl
         * port
@@ -46,9 +51,10 @@
         * channel
         * address
         * mode
-  * gh-10: Session header now detects timeout value.  This means that where use
+  * gh-10[https://github.com/turboladen/rtsp/issues/10]: +Session+ header now
+    detects timeout value.  This means that where use
     of the value extracted from this header used to be a simple Integer, now you
-    have a session Hash with :session_id and :timeout keys.
+    have a session Hash with +:session_id+ and +:timeout+ keys.
 
 === 0.3.0 / 2012-03-02
 
@@ -63,7 +69,8 @@
 === 0.2.2 / 2011-11-02
 
 * Bug fixes
-  * gh-6: .gemspec was missing +parslet+ dependency. Thanks [tindron[http://github.com/tindron]].
+  * gh-6[https://github.com/turboladen/rtsp/issues/6]: .gemspec was missing
+    +parslet+ dependency. Thanks tindron[http://github.com/tindron].
 
 * Improvements
   * Added a queue for listening and building the RTP file from the received data.
@@ -76,14 +83,16 @@
 === 0.2.0 / 2011-09-19
 
 * Bug fixes
-  * gh-5: Fixed 'Bad file descriptor' bug when capturing to file.
+  * gh-5[https://github.com/turboladen/rtsp/issues/5]: Fixed 'Bad file
+    descriptor' bug when capturing to file.
 
 * Improvements
-  * If RTSP::Capturer can't open port 9000, it increments by 1 and tries again,
+  * If {RTSP::Capturer} can't open port 9000, it increments by 1 and tries again,
     50 times, then raises.
-  * gh-4: Remove dependency on ore en lieu of standard gem commands.
+  * gh-4[https://github.com/turboladen/rtsp/issues/4]: Remove dependency on ore
+    en lieu of standard gem commands.
   * Participate in http://test.rubygems.org!
-  * Changed RTSP::Capturer init_*_server methods to take params in order to reduce
+  * Changed {RTSP::Capturer} init_*_server methods to take params in order to reduce
     dependency on state of the Capturer object.
 
 === 0.1.2 / 2011-04-14
@@ -94,16 +103,18 @@
 === 0.1.1 / 2011-04-14
 
 * Bug fixes
-  * gh-1: No longer use Socket::SO_REUSEADDR or Socket::SO_REUSEPORT.
-  * gh-2: rtsp_client now requires the installed rtsp/client.
+  * gh-1[https://github.com/turboladen/rtsp/issues/1]: No longer use
+    +Socket::SO_REUSEADDR+ or +Socket::SO_REUSEPORT+.
+  * gh-2[https://github.com/turboladen/rtsp/issues/2]: rtsp_client now requires
+    the installed rtsp/client.
 
 * Improvements
-  * Capturer#run's log message now says what it's logging.
+  * {RTSP::Capturer#run}'s log message now says what it's logging.
   * bin/rtsp_client:
     * Fixed bad description for --stream.
     * Added --version.
   * Updated README.rdoc:
-    * ...to clarify that REDIRECT isn't yet supported.
+    * ...to clarify that +REDIRECT+ isn't yet supported.
     * ...with brief usage on bin/rtsp_client.
 
 === 0.1.0 / 2011-04-12
