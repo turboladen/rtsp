@@ -77,9 +77,7 @@ describe 'Client use' do
       subject.setup('rtsp://localhost/some_track')
       subject.session[:session_id].should == '1234567890'
     end
-    # order is not specified in the RFC spec , i am a ruby noob, but parselet 
-    # does not seem to work well with things out of order
-    # is there a better altenative that is more like a JSON parser where order does not matter?
+
     it 'extracts the session number with a client_port then source in transport' do
       @setup_maybeSource_maybePorts = 
         'client_port=9000-9001;source=10.221.222.235;server_port=6700-6701'
