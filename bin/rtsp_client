@@ -3,6 +3,7 @@
 require 'tempfile'
 require 'optparse'
 require 'rtsp/client'
+require 'rtp/receiver'
 
 optparse = OptionParser.new do |opts|
   opts.banner = "Usage: #{__FILE__} [options] url"
@@ -63,14 +64,13 @@ optparse = OptionParser.new do |opts|
       exit
     end
 
-    rtsp_client = RTSP::Client.new(url) do |_, capturer|
-      capturer.capture_file = File.open("#{Dir.pwd}/rtsp_client_stream.rtp", "wb")
-    end
+    rtsp_client = RTSP::Client.new(url)
+    rtsp_client.capturer = RTP::Receiver.new(capture_file:
+      File.open("#{Dir.pwd}/rtsp_client_stream.rtp", "wb"))
 
     begin
       puts "Getting server options..."
       response = rtsp_client.options
-      puts "\tServer:             #{response.server}"
       puts "\tSupported methods:  #{response.public}"
       puts ""
 
@@ -104,10 +104,10 @@ optparse = OptionParser.new do |opts|
         end
         puts ""
 
-        if rtsp_client.capturer.rtp_file.size.zero?
+        if rtsp_client.capturer.capture_file.size.zero?
           puts "Captured 0 bytes.  Your firewall might be blocking the RTP traffic on port #{rtsp_client.capturer.rtp_port}."
         else
-          puts "RTP data captured to file: #{rtsp_client.capturer.rtp_file}"
+          puts "RTP data captured to file: #{rtsp_client.capturer.capture_file.path}"
         end
 
         puts "Tearing down..."
