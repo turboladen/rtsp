@@ -1,11 +1,11 @@
 === 0.4.4 / 2013-07-01
 
 * Improvements
-  * {gh-21}[htts://github.com/turboladen/rtsp/issues/21] Transport header
+  * {gh-21}[https://github.com/turboladen/rtsp/issues/21] Transport header
     parser is now a little more flexible.  This functionality really needs a
     rewrite, and should be done as part of
     {gh-15}[htts://github.com/turboladen/rtsp/issues/15]. Thanks
-    {nmccready}[http:github.com/nmccready]!
+    {nmccready}[http://github.com/nmccready]!
 
 === 0.4.3 / 2012-11-20
 
@@ -87,12 +87,12 @@
     descriptor' bug when capturing to file.
 
 * Improvements
-  * If {RTSP::Capturer} can't open port 9000, it increments by 1 and tries again,
+  * If +RTSP::Capturer+ can't open port 9000, it increments by 1 and tries again,
     50 times, then raises.
   * gh-4[https://github.com/turboladen/rtsp/issues/4]: Remove dependency on ore
     en lieu of standard gem commands.
   * Participate in http://test.rubygems.org!
-  * Changed {RTSP::Capturer} init_*_server methods to take params in order to reduce
+  * Changed +RTSP::Capturer+ init_*_server methods to take params in order to reduce
     dependency on state of the Capturer object.
 
 === 0.1.2 / 2011-04-14
@@ -109,7 +109,7 @@
     the installed rtsp/client.
 
 * Improvements
-  * {RTSP::Capturer#run}'s log message now says what it's logging.
+  * +RTSP::Capturer#run+'s log message now says what it's logging.
   * bin/rtsp_client:
     * Fixed bad description for --stream.
     * Added --version.
