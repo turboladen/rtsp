@@ -1,3 +1,9 @@
+=== 0.4.5 / 2013-10-21
+
+* Bug fixes
+  * {gh-22}[https://github.com/turboladen/rtsp/pull/22] Fixed to work with most
+    recent rtp gem release.  Thanks {tindron}[http://github.com/tindron]!
+
 === 0.4.4 / 2013-07-01
 
 * Improvements

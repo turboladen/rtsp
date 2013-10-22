@@ -28,7 +28,7 @@ describe RTSP do
   describe RTSP::VERSION do
     it 'is set correctly' do
       if RTSP.release_version?
-        RTSP::VERSION.should == '0.4.4'
+        RTSP::VERSION.should == '0.4.5'
       elsif RTSP.snapshot_version?
         RTSP::VERSION.should == '0.4.4.SNAPSHOT'
       else
