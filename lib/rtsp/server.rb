@@ -155,10 +155,11 @@ module RTSP
     def setup(request)
       RTSP::Server.log "Received SETUP request from #{request.remote_host}"
       @session = @session.next
+      multicast_check = request.transport.include?('multicast')
       server_port = @stream_server.setup_streamer(@session,
-        request.transport_url, request.stream_index)
+        request.transport_url, request.stream_index, multicast_check)
       response = []
-      transport = generate_transport(request, server_port)
+      transport = generate_transport(request, server_port, request.stream_index)
       response << "Transport: #{transport.join}"
       response << "Session: #{@session}"
       response << "\r\n"
@@ -289,13 +290,20 @@ module RTSP
     #
     # @param [RTSP::Request] Request object.
     # @param [Fixnum] server_port Port on which the stream_server is streaming from.
-    def generate_transport request, server_port
-      port_specifier = request.transport.include?("unicast") ? "client_port" : "port"
+    def generate_transport request, server_port, index=1
+      port_specifier = 'client_port'
       transport = request.transport.split(port_specifier)
-      transport[0] << "destination=#{request.remote_host};"
-      transport[0] << "source=#{@stream_server.interface_ip};"
       transport[1] = port_specifier + transport[1]
-      transport[1] << ";server_port=#{server_port}-#{server_port+1}"
+
+      if request.transport.include?("unicast")
+        transport[0] << "destination=#{request.remote_host};"
+        transport[1] << ";server_port=#{server_port}-#{server_port+1}"
+      else
+        transport[0] << "destination=#{@stream_server.source_ip[index - 1]};"
+        transport[1] << ";ttl=10"
+      end
+        
+      transport[0] << "source=#{@stream_server.interface_ip};"
 
       transport
     end

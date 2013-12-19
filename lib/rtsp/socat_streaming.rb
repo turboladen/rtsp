@@ -68,26 +68,34 @@ module RTSP
     # @param [String] transport_url Destination IP:port.
     # @param [Fixnum] index Stream index.
     # @return [Fixnum] The port the streamer will stream on.
-    def setup_streamer(sid, transport_url, index=1)
+    def setup_streamer(sid, transport_url, index=1, multicast=false)
       dest_ip, dest_port = transport_url.split ":"
+
       @rtcp_source_identifier ||= RTCP_SOURCE.pack("H*")
-      local_port = free_port(true)
-
-      @rtcp_threads[sid] = Thread.start do
-        s = UDPSocket.new
-        s.bind(@interface_ip, local_port+1)
-
-        loop do
-          begin
-            _, sender = s.recvfrom(36)
-            s.send(@rtcp_source_identifier, 0, sender[3], sender[1])
+      local_port = multicast ? @source_port[index - 1] : free_port(true)
+     
+      unless multicast
+        @rtcp_threads[sid] = Thread.start do
+          s = UDPSocket.new
+          s.bind(@interface_ip, local_port+1)
+ 
+          loop do
+            begin
+              _, sender = s.recvfrom(36)
+              s.send(@rtcp_source_identifier, 0, sender[3], sender[1])
+            end
           end
         end
       end
 
       @cleaner ||= Thread.start { cleanup_defunct }
       @processes ||= Sys::ProcTable.ps.map { |p| p.cmdline }
-      @sessions[sid] = build_socat(dest_ip, dest_port, local_port, index)
+
+      if multicast
+        @sessions[sid] = :multicast
+      else
+        @sessions[sid] = build_socat(dest_ip, dest_port, local_port, index)
+      end
 
       local_port
     end
@@ -100,7 +108,7 @@ module RTSP
     #
     # @param [String] session ID.
     def start_streaming sid
-      spawn_socat(sid, @sessions[sid])
+      spawn_socat(sid, @sessions[sid]) unless @sessions[sid] == :multicast
     end
 
     # Stop streaming for the requested session.
@@ -128,15 +136,15 @@ module RTSP
 v=0\r
 o=- 1345481255966282 1 IN IP4 #{@interface_ip}\r
 s=Session streamed by "Streaming Server"\r
-i=stream1\r
+i=stream1#{multicast ? 'm' : ''}\r
 t=0 0\r
 a=tool:LIVE555 Streaming Media v2007.07.09\r
 a=type:broadcast\r
 a=control:*\r
 a=range:npt=0-\r
 a=x-qt-text-nam:Session streamed by "Streaming Server"\r
-a=x-qt-text-inf:stream1\r
-m=video 0 RTP/AVP 96\r
+a=x-qt-text-inf:stream1#{multicast ? 'm' : ''}\r
+m=video #{multicast ? @source_port[stream_index - 1] : 0} RTP/AVP 96\r
 c=IN IP4 #{multicast ? "#{multicast_ip(stream_index)}/10" : "0.0.0.0"}\r
 a=rtpmap:#{rtp_map}\r
 a=fmtp:#{fmtp}\r
@@ -219,7 +227,10 @@ EOF
 
     # Disconnects all streams that are currently streaming.
     def disconnect_all_streams
-      @pids.values.each { |pid| Process.kill(9, pid.to_i) if pid.to_i > 1000 }
+      @pids.values.each do |pid|
+        Process.kill(9, pid.to_i) if pid.to_i > 1000 rescue Errno::ESRCH
+      end
+
       @sessions.clear
       @pids.clear
     end
