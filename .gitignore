@@ -12,6 +12,7 @@ coverage/
 .bundle/
 pkg/
 .loadpath
+Gemfile.lock
 
 # docs
 .yardoc/
