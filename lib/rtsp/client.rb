@@ -399,12 +399,17 @@ module RTSP
     # @raise [RTSP::Error] All 4xx & 5xx response codes & their messages.
     def request message
       response = send_message message
+      if response.code == 401
+        auth_message = get_authorization(message, response)
+        if not auth_message.nil?
+          message = auth_message
+          response = send_message auth_message
+        end
+      end
       #compare_sequence_number response.cseq
       @cseq += 1
       if response.code.to_s =~ /2../
         yield response if block_given?
-      elsif response.code == 401
-        send_authorization(message)
       elsif response.code.to_s =~ /(4|5)../
         if (defined? response.connection) && response.connection == 'Close'
           reset_state
@@ -463,14 +468,41 @@ module RTSP
     
     # Resends a message with an Authorization header when possible
     # @param [RTSP:Message] message The message that must be repeated with Authorization
-    def send_authorization(message)
+    def get_authorization(message, err401=nil)
       if @server_uri.user and @server_uri.password
-        credentials = Base64.strict_encode64("#{@server_uri.user}:#{@server_uri.password}")
-        headers = { :authorization => "Basic #{credentials}" }
-        new_message = RTSP::Message.send(message.method_type.to_sym,@server_uri.to_s).with_headers(headers)
-        new_message.add_headers message.headers
-        request(new_message)
+        if err401.respond_to?(:www_authenticate)
+          auth = err401.www_authenticate.split(", ")
+          auth = auth[0].split(" ", 2) + auth[1..-1]
+          auth_opt = {}
+          auth[1..-1].each do |z|
+            k,v = z.split("=", 2)
+            if v[0]=='"' and v[0]==v[-1]
+              v=v[1..-2]
+            end
+            auth_opt[k.to_sym]=v
+          end
+        else
+          auth = "Basic"
+        end
+        if auth[0]=="Basic"
+          credentials = Base64.strict_encode64("#{@server_uri.user}:#{@server_uri.password}")
+          headers = { :authorization => "Basic #{credentials}" }
+        elsif auth[0]=="Digest"
+          # Authorization: Digest username="admin", realm="LIVE555 Streaming Media", nonce="d98f67aa469f62b2f085df51da15f66a", uri="rtsp://172.28.1.91/mpeg4", response="a5cdbb33c755c9b925def9b176549391"
+          h1 = Digest::MD5.hexdigest("#{@server_uri.user}:#{auth_opt[:realm]}:#{@server_uri.password}")
+          h2 = Digest::MD5.hexdigest("#{message.method_type.to_s.upcase}:#{message.request_uri.to_s}")
+          res = Digest::MD5.hexdigest("#{h1}:#{auth_opt[:nonce]}:#{h2}")
+          auth_res = { :username => @server_uri.user, :realm => auth_opt[:realm],
+                       :nonce => auth_opt[:nonce], :uri => message.request_uri.to_s,
+                       :response => res }
+          headers = { :authorization => "Digest "+auth_res.map{|k,v| "#{k}=\"#{v}\""}.join(", ") }
+        else 
+          exit
+        end
+        new_message = RTSP::Message.send(message.method_type.to_sym,@server_uri.to_s).with_headers(message.headers).with_headers(headers)
+        return new_message
       end
+      nil
     end
     
     # Sets state related variables back to their starting values;
