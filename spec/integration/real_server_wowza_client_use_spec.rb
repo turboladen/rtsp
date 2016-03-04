@@ -100,10 +100,19 @@ describe "Real Server (Wowza) Client use" do
 
   describe "#announce" do
     it "returns a Response" do
+      pending
+
       sdp = SDP::Description.new
       subject.setup(@mediaUrl)
       response = subject.announce(@mediaUrl, sdp)
       response.should be_a RTSP::Response
+    end
+
+    it "returns an unauthorized error" do
+      sdp = SDP::Description.new
+      subject.setup(@mediaUrl)
+      expect { subject.announce(@mediaUrl, sdp) }.
+        to raise_error(RTSP::Error, '401: Unauthorized')
     end
   end
 
