@@ -28,6 +28,7 @@ http://www.ietf.org/rfc/rfc2326.txt}
   s.add_runtime_dependency 'parslet', '>= 1.1.0'
   s.add_runtime_dependency 'rtp', '>= 0.1.3'
   s.add_runtime_dependency 'sdp', '~> 0.2.6'
+  s.add_runtime_dependency 'log_switch', '~> 0.4.0'
 
   s.add_development_dependency 'bundler'
   s.add_development_dependency 'cucumber', '>= 1.1.0'
